@@ -1,0 +1,16 @@
+{
+  "name": "MoCatat - Keuangan",
+  "short_name": "MoCatat",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#249a95",
+  "icons": [
+    {
+      "src": "1789744567730.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

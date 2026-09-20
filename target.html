@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Target & Investasi - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
+
+        <header class="header-simple">
+            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
+            <span>Target & Investasi</span>
+        </header>
+
+        <div class="list-wrapper" id="target-container" style="padding-bottom: 80px;"></div>
+
+        <button class="fab-tambah" onclick="window.openTargetModal()">
+            <span class="material-icons-round">add</span> Tambah Target Baru
+        </button>
+
+        <div id="modal-target" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header"><h3 id="target-modal-title">Buat Baru</h3><button class="btn-close" onclick="window.closeModal('modal-target')"><span class="material-icons-round">close</span></button></div>
+                <div id="target-error-msg" class="error-msg"></div>
+                <input type="hidden" id="target-id">
+                
+                <div class="form-group"><label class="form-label">Jenis</label><div class="segmented-control" id="target-type-segment"><div class="segmented-btn active" onclick="window.selectTargetType('biasa')">Tabungan Biasa</div><div class="segmented-btn" onclick="window.selectTargetType('investasi')">Investasi</div></div><input type="hidden" id="target-type" value="biasa"></div>
+                <div class="form-group"><label class="form-label" id="label-name">Nama Tabungan / Tujuan</label><input type="text" id="target-name" class="form-input" placeholder="Misal: Beli Motor, Dana Darurat" required></div>
+                <div class="form-group"><label class="form-label" id="label-amount">Target Uang (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="target-amount" class="form-input format-rupiah" placeholder="Isi 0 jika tanpa target mutlak"></div>
+                <div class="form-group" id="group-current-amount"><label class="form-label" id="label-current-amount">Saldo Tabungan Saat Ini (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="target-current-amount" class="form-input format-rupiah" placeholder="0"></div>
+                <div class="form-group" id="group-deadline"><label class="form-label">Tenggat Waktu (Opsional)</label><input type="date" id="target-deadline" class="form-input"></div>
+                <button class="btn-submit" onclick="window.simpanTarget()">Simpan</button>
+            </div>
+        </div>
+
+        <div id="modal-action" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header"><h3 id="action-modal-title">Aksi</h3><button class="btn-close" onclick="window.closeModal('modal-action')"><span class="material-icons-round">close</span></button></div>
+                <div id="action-error-msg" class="error-msg"></div>
+                
+                <input type="hidden" id="action-target-id"><input type="hidden" id="action-type"> 
+
+                <div id="area-update-nilai" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Nilai Pasar Terkini (Rp)</label>
+                        <p style="font-size:12.5px; color:#64748b; margin-top:-6px; margin-bottom:12px; line-height: 1.4;">Masukkan nilai total portofolio Reksadana/Saham Anda saat ini secara keseluruhan.</p>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" id="update-amount" class="form-input format-rupiah" placeholder="0">
+                    </div>
+                </div>
+
+                <div id="area-transaksi" style="display:block;">
+                    <div class="form-group"><label class="form-label" id="action-wallet-label">Sumber Dana (Dompet)</label><div class="chip-group" id="action-wallet-chips"></div><input type="hidden" id="action-wallet"></div>
+                    <div class="form-group"><label class="form-label">Nominal (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="action-amount" class="form-input format-rupiah" placeholder="0"></div>
+                </div>
+                <button class="btn-submit" id="btn-action-submit" onclick="window.prosesAksiTarget()">Simpan</button>
+            </div>
+        </div>
+
+        <div id="custom-dialog" class="custom-dialog-overlay"><div class="custom-dialog-box"><div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div><h3 class="custom-dialog-title" id="dialog-title">Informasi</h3><p class="custom-dialog-msg" id="dialog-msg"></p><div class="custom-dialog-actions" id="dialog-actions"></div></div></div>
+    </div>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

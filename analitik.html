@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analitik - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
+
+        <header class="header-simple"><a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a><span>Statistik & Analitik</span></header>
+
+        <div class="list-wrapper" style="padding-bottom: 0;">
+            <div class="filter-container">
+                <select id="filter-stat-period" class="filter-input" onchange="window.renderStatistik()">
+                    <option value="today">Hari Ini</option>
+                    <option value="week">Minggu Ini</option>
+                    <option value="month" selected>Bulan Ini</option>
+                    <option value="all">Semua Waktu</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="list-wrapper" id="statistik-container" style="padding-top: 0;"></div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" style="display:flex;">
+            <div class="nav-item" onclick="window.location.href='index.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">home</span></div><span>Beranda</span></div>
+            <div class="nav-item" onclick="window.location.href='riwayat.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">history</span></div><span>Riwayat</span></div>
+            <div class="nav-item active"><div class="nav-icon-wrapper"><span class="material-icons-round">bar_chart</span></div><span>Analitik</span></div>
+            <div class="nav-item" onclick="window.location.href='index.html?tab=akun'"><div class="nav-icon-wrapper"><span class="material-icons-round">person</span></div><span>Akun</span></div>
+        </nav>
+    </div>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

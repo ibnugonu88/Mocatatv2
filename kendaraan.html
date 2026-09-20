@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monitor Kendaraan - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
+
+        <header class="header-simple">
+            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
+            <span>Monitor Kendaraan</span>
+        </header>
+
+        <div class="list-wrapper">
+            <div class="card" style="text-align: center;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 800; color: #1a1a1a; margin-bottom: 5px;">
+                    <span class="material-icons-round" style="color: #4338ca;">water_drop</span> Status Oli Motor
+                </div>
+                <div style="font-size: 13px; color: #777; font-weight: 600; margin-bottom: 10px;">Total Jarak Ditempuh</div>
+                <div style="font-size: 38px; font-weight: 800; color: #1a1a1a; letter-spacing: -1px; margin-bottom: 20px;">
+                    <span id="text-km-terkumpul">0</span><span style="font-size: 18px; color: #888; margin-left: 6px;">KM</span>
+                </div>
+
+                <div class="oil-alert" id="oil-alert-box" style="text-align: left;">
+                    <span class="material-icons-round">warning_amber</span> 
+                    <span>Waktunya ganti oli! Motor sudah menempuh jarak &ge; 2.000 KM.</span>
+                </div>
+
+                <div class="progress-text" style="text-align: left; margin-bottom: 8px;">
+                    <span style="color:#666;">Batas Aman Ganti Oli</span>
+                    <span style="color: #c62828;">2.000 KM</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="bar-oli" style="width: 0%; background-color: #249a95;"></div>
+                </div>
+
+                <button class="btn-submit btn-outline" onclick="window.resetOli()">
+                    <span class="material-icons-round" style="color: #249a95;">restart_alt</span> Reset Setelah Ganti Oli
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="material-icons-round" style="color: #ef6c00;">add_road</span> Catat Jarak Tempuh Harian
+                </div>
+                <div id="trip-control-container"></div>
+                <div id="km-list-container" style="margin-top: 20px; border-top: 1.5px solid #f1f5f9; padding-top: 20px;"></div>
+            </div>
+        </div>
+
+        <div id="custom-dialog" class="custom-dialog-overlay"><div class="custom-dialog-box"><div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div><h3 class="custom-dialog-title" id="dialog-title">Informasi</h3><p class="custom-dialog-msg" id="dialog-msg"></p><div class="custom-dialog-actions" id="dialog-actions"></div></div></div>
+    </div>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

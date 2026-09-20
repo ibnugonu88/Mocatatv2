@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kategori Transaksi - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
+
+        <header class="header-simple">
+            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
+            <span>Kategori & Anggaran</span>
+        </header>
+
+        <!-- KARTU RINGKASAN BARU -->
+        <div class="summary-grid">
+            <div class="summary-box in">
+                <span class="material-icons-round bg-icon" style="color: #2e7d32;">south_west</span>
+                <div class="summary-label">Uang Masuk</div>
+                <div class="summary-val" id="tot-masuk">Rp 0</div>
+            </div>
+            <div class="summary-box out">
+                <span class="material-icons-round bg-icon" style="color: #ef6c00;">north_east</span>
+                <div class="summary-label">Uang Keluar</div>
+                <div class="summary-val" id="tot-keluar">Rp 0</div>
+            </div>
+        </div>
+
+        <!-- TAB NAVIGASI BARU -->
+        <div class="modern-tabs">
+            <div class="modern-tab active" id="tab-out" onclick="window.switchMainTab('out')">Pengeluaran</div>
+            <div class="modern-tab" id="tab-in" onclick="window.switchMainTab('in')">Pemasukan</div>
+        </div>
+
+        <div class="list-wrapper" id="kategori-container" style="padding-top: 5px;"></div>
+
+        <!-- TOMBOL FAB BARU -->
+        <button class="fab-tambah" onclick="window.openKategoriModal()">
+            <span class="material-icons-round" style="font-size:20px;">add_circle</span> Kategori Baru
+        </button>
+
+        <div id="modal-kategori" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3 id="kat-modal-title">Tambah Kategori</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-kategori')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="kat-error-msg" class="error-msg"></div>
+                <input type="hidden" id="kat-id">
+                
+                <div class="form-group">
+                    <label class="form-label">Jenis Kategori</label>
+                    <div class="segmented-control" id="kat-type-segment">
+                        <div class="segmented-btn active" onclick="window.selectKatType('out')">Pengeluaran</div>
+                        <div class="segmented-btn" onclick="window.selectKatType('in')">Pemasukan</div>
+                    </div>
+                    <input type="hidden" id="kat-type" value="out">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Kategori</label>
+                    <input type="text" id="kat-name" class="form-input" placeholder="Misal: Makanan, Gaji" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Batas Anggaran / Target (Rp)</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="kat-budget" class="form-input format-rupiah" placeholder="Isi 0 jika tanpa batas" required>
+                </div>
+                <button class="btn-submit" onclick="window.simpanKategori()">Simpan Kategori</button>
+            </div>
+        </div>
+
+        <div id="custom-dialog" class="custom-dialog-overlay"><div class="custom-dialog-box"><div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div><h3 class="custom-dialog-title" id="dialog-title">Informasi</h3><p class="custom-dialog-msg" id="dialog-msg"></p><div class="custom-dialog-actions" id="dialog-actions"></div></div></div>
+    </div>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

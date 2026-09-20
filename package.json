@@ -1,0 +1,13 @@
+{
+  "name": "mocatat-notification",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MoCatat Firebase Cloud Messaging notification sender",
+  "main": "send.js",
+  "scripts": {
+    "start": "node send.js"
+  },
+  "dependencies": {
+    "firebase-admin": "11.11.1"
+  }
+}
