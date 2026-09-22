@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mocatat-cache-v1';
+const CACHE_NAME = 'mocatat-cache-v4';
 
 // Daftar aset statis yang perlu di-cache
 const urlsToCache = [

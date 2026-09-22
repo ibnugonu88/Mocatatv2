@@ -59,7 +59,8 @@ window.activeKatTab = 'out';
 // ==========================================
 // 2. GLOBAL UTILITIES
 // ==========================================
-window.generateUUID = () => { return crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); };window.escapeHTML = (str) => { return str === null || str === undefined ? '' : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); };
+window.generateUUID = () => { return crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); };
+window.escapeHTML = (str) => { return str === null || str === undefined ? '' : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); };
 window.getLocalDateString = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; };
 window.getLocalMonthString = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; };
 window.formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
@@ -229,15 +230,11 @@ if (auth) {
                     await window.saveDataToFirestore(); 
                 }
 
-                // =========================================
-                // TAMPILKAN UI SECARA INSTAN TANPA MENUNGGU TRANSAKSI
-                // =========================================
                 window.callPageRender(); 
                 
                 if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 500); }
                 else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 500); }
 
-                // LOAD TRANSAKSI DI BACKGROUND
                 getDocs(collection(db, "users", window.currentUserId, "transactions"))
                     .then((trxSnapshot) => {
                         window.transactions = [];
@@ -302,6 +299,16 @@ window.openModalTrans = function(type, trxId = null) {
     if(document.getElementById('input-grab-service')) document.getElementById('input-grab-service').value = '';
     document.querySelectorAll('.grab-chip').forEach(c => c.classList.remove('grab-active'));
 
+    // --- SUGGESTION LOKASI OTOMATIS ---
+    const dataList = document.getElementById('location-suggestions');
+    if(dataList) {
+        const uniqueLocs = [...new Set(window.transactions.map(t => t.location).filter(l => l && l.trim() !== ''))];
+        let opts = '';
+        uniqueLocs.forEach(loc => { opts += `<option value="${window.escapeHTML(loc)}"></option>`; });
+        dataList.innerHTML = opts;
+    }
+    // ----------------------------------
+
     let now = new Date(); let defaultTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     
     const dompetAktif = window.wallets.filter(w => !w.isArchived);
@@ -353,7 +360,22 @@ window.simpanTransaksi = async function() {
     if (isTransfer && walletId === targetWalletId) { errTrans.innerText = "Dompet tidak boleh sama!"; errTrans.style.display = 'block'; return; }
     
     const sourceWallet = window.wallets.find(w => String(w.id) === String(walletId)), targetWallet = isTransfer ? window.wallets.find(w => String(w.id) === String(targetWalletId)) : null, targetCat = isTransfer ? null : window.categories.find(c => String(c.id) === String(catId));
-    if ((type === 'out' || isTransfer) && amount > sourceWallet.balance) { errTrans.innerHTML = `Saldo tidak cukup! (Sisa: ${window.formatRupiah(sourceWallet.balance)})`; errTrans.style.display = 'block'; return; }
+    
+    let saldoTersedia = Number(sourceWallet.balance || 0);
+    if (trxId) {
+        const trxLama = window.transactions.find(t => String(t.id) === String(trxId));
+        if (trxLama && String(trxLama.walletId) === String(walletId)) {
+            if (trxLama.type === 'out' || trxLama.type === 'transfer') {
+                saldoTersedia += Number(trxLama.amount || 0);
+            }
+        }
+    }
+
+    if ((type === 'out' || isTransfer) && amount > saldoTersedia) { 
+        errTrans.innerHTML = `Saldo tidak cukup! (Sisa aktual: ${window.formatRupiah(saldoTersedia)})`; 
+        errTrans.style.display = 'block'; 
+        return; 
+    }
     
     if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Menyimpan..."; }
 
@@ -446,9 +468,23 @@ window.renderDashboard = function() {
     window.renderNotifications(); 
     let totalSaldo = 0; let wHTML = '';
     
+    window.wallets.forEach(wallet => { totalSaldo += Number(wallet.balance||0); });
+    
+    let totalAset = 0;
+    window.targets.forEach(t => {
+        let val = t.tipe === 'investasi' ? Number(t.nilaiTerkini || t.currentAmount || 0) : Number(t.currentAmount || 0);
+        totalAset += val;
+    });
+
+    let kekayaanBersih = totalSaldo + totalAset;
+    
     const dompetAktif = window.wallets.filter(w => !w.isArchived);
-    dompetAktif.forEach(wallet => { totalSaldo += Number(wallet.balance||0); wHTML += `<div class="wallet-card"><div class="wallet-name"><span class="material-icons-round ${wallet.colorClass}">${wallet.icon}</span> ${window.escapeHTML(wallet.name)}</div><div class="wallet-saldo">${window.formatRupiah(wallet.balance)}</div></div>`; });
-    walletContainer.innerHTML = wHTML; if(document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
+    dompetAktif.forEach(wallet => { wHTML += `<div class="wallet-card"><div class="wallet-name"><span class="material-icons-round ${wallet.colorClass}">${wallet.icon}</span> ${window.escapeHTML(wallet.name)}</div><div class="wallet-saldo">${window.formatRupiah(wallet.balance)}</div></div>`; });
+    walletContainer.innerHTML = wHTML; 
+    
+    if(document.getElementById('net-worth')) document.getElementById('net-worth').innerText = window.formatRupiah(kekayaanBersih);
+    if(document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
+    if(document.getElementById('total-asset')) document.getElementById('total-asset').innerText = window.formatRupiah(totalAset);
 
     const allocationCard = document.getElementById('smart-allocation-card');
     if (allocationCard) {
@@ -458,14 +494,14 @@ window.renderDashboard = function() {
             const btnTarget = document.getElementById('btn-masuk-target'); const btnReward = document.getElementById('btn-self-reward'); const teksSaran = document.getElementById('teks-saran-alokasi'); const judulSaran = document.getElementById('judul-saran-alokasi');
             if (sudahNabung) {
                 judulSaran.innerText = "Target Harian Selesai! 🎉"; judulSaran.style.color = "#2e7d32"; allocationCard.style.background = "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"; allocationCard.style.border = "1px solid #86efac"; allocationCard.querySelector('.material-icons-round').parentNode.style.background = "#bbf7d0"; allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#16a34a"; allocationCard.querySelector('.material-icons-round').innerText = "task_alt";
-                teksSaran.innerHTML = `Kewajiban nabung hari ini sudah beres. Sisa uang <strong style="color: #16a34a;">${window.formatRupiah(totalSaldo)}</strong> bebas kamu pakai buat jajan!`;
+                teksSaran.innerHTML = `Kewajiban nabung hari ini sudah beres. Sisa uang cair <strong style="color: #16a34a;">${window.formatRupiah(totalSaldo)}</strong> bebas kamu pakai buat jajan!`;
                 if(btnTarget) btnTarget.style.display = 'none'; if(btnReward) { btnReward.style.background = '#16a34a'; btnReward.style.color = 'white'; btnReward.innerText = "Nikmati Self-Reward ☕"; btnReward.onclick = () => window.customAlert('Enjoy! 🎉', 'Silakan pakai uang sisanya buat santai hari ini!'); }
             } else {
                 judulSaran.innerText = "Saran Alokasi Sisa Uang"; judulSaran.style.color = "#f57f17"; allocationCard.style.background = "linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)"; allocationCard.style.border = "1px solid #ffee58"; allocationCard.querySelector('.material-icons-round').parentNode.style.background = "#fff59d"; allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#f57f17"; allocationCard.querySelector('.material-icons-round').innerText = "lightbulb";
                 const saranNominal = Math.floor(totalSaldo * 0.2); let activeTargets = window.targets.filter(t => Number(t.currentAmount||0) < Number(t.targetAmount||0)); activeTargets.sort((a, b) => new Date(a.deadline||'2099-01-01') - new Date(b.deadline||'2099-01-01'));
                 let saranTargetText = "";
                 if (activeTargets.length > 0) { saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) ke target <strong>${window.escapeHTML(activeTargets[0].name)}</strong>!`; if(btnTarget) btnTarget.innerText = "Setor Tabungan"; } else { saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) buat target impianmu!`; if(btnTarget) btnTarget.innerText = "Buat Target Baru"; }
-                teksSaran.innerHTML = `Kamu punya saldo <strong style="color: #1a1a1a;">${window.formatRupiah(totalSaldo)}</strong>. ${saranTargetText}`;
+                teksSaran.innerHTML = `Kamu punya saldo cair <strong style="color: #1a1a1a;">${window.formatRupiah(totalSaldo)}</strong>. ${saranTargetText}`;
                 if(btnTarget) { btnTarget.style.display = 'block'; btnTarget.style.background = 'white'; btnTarget.style.border = '1.5px solid #fbc02d'; btnTarget.style.color = '#f57f17'; btnTarget.onclick = function() { if (activeTargets.length > 0) { window.location.href = `target.html?action=setor&id=${activeTargets[0].id}`; } else { window.location.href = `target.html?action=baru`; } }; }
                 if(btnReward) { btnReward.style.background = '#ffe0b2'; btnReward.style.color = '#ef6c00'; btnReward.innerText = "Self Reward"; btnReward.onclick = () => window.customAlert('Akses Ditolak!', 'Nabung dulu sebelum jajan! 🛑', 'warning'); }
             }
@@ -677,19 +713,22 @@ window.simpanDompet = async function() {
     if (!name) { errBox.innerText = "Nama dompet wajib diisi!"; errBox.style.display = 'block'; return; }
     let icon = type === 'bank' ? "account_balance" : (type === 'ewallet' ? "account_balance_wallet" : "payments"), colorClass = type === 'bank' ? "icon-bank" : (type === 'ewallet' ? "icon-ewallet" : "icon-cash"), todayStr = window.getLocalDateString();
     
+    // Waktu dicatat agar selisih dompet tidak nyangkut di paling bawah riwayat
+    let timeStr = String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0');
+    
     try {
         if (id) {
             const idx = window.wallets.findIndex(w => String(w.id) == String(id)); const oldBalance = Number(window.wallets[idx].balance||0); const selisih = newBalance - oldBalance;
             window.wallets[idx].name = name; window.wallets[idx].type = type; window.wallets[idx].icon = icon; window.wallets[idx].colorClass = colorClass;
             if (selisih !== 0) { 
-                const newTrx = { id: window.generateUUID(), type: selisih > 0 ? 'in' : 'out', amount: Math.abs(selisih), note: selisih > 0 ? 'Penyesuaian Saldo (Lebih)' : 'Penyesuaian Saldo (Kurang)', walletId: window.wallets[idx].id, walletName: name, categoryId: 999, categoryName: 'Penyesuaian Sistem', date: todayStr }; 
+                const newTrx = { id: window.generateUUID(), type: selisih > 0 ? 'in' : 'out', amount: Math.abs(selisih), note: selisih > 0 ? 'Penyesuaian Saldo (Lebih)' : 'Penyesuaian Saldo (Kurang)', walletId: window.wallets[idx].id, walletName: name, categoryId: 999, categoryName: 'Penyesuaian Sistem', date: todayStr, time: timeStr }; 
                 window.transactions.push(newTrx); 
                 await window.saveTransactionToDB(newTrx); 
             }
         } else {
             const newWalletId = window.generateUUID(); window.wallets.push({ id: newWalletId, name, type, balance: 0, icon, colorClass, isArchived: false }); 
             if (newBalance > 0) { 
-                const newTrx = { id: window.generateUUID(), type: 'in', amount: newBalance, note: 'Saldo Awal Dompet', walletId: newWalletId, walletName: name, categoryId: 999, categoryName: 'Penyesuaian Sistem', date: todayStr }; 
+                const newTrx = { id: window.generateUUID(), type: 'in', amount: newBalance, note: 'Saldo Awal Dompet', walletId: newWalletId, walletName: name, categoryId: 999, categoryName: 'Penyesuaian Sistem', date: todayStr, time: timeStr }; 
                 window.transactions.push(newTrx); 
                 await window.saveTransactionToDB(newTrx); 
             }
@@ -757,29 +796,23 @@ window.renderCategoryPage = function() {
         let progressHtml = '';
         let bud = Number(cat.budget||0);
         
-        // --- PERBAIKAN: MENGEMBALIKAN DESAIN SAMA PERSIS SEPERTI GAMBAR ASLI --- //
         if(bud > 0) {
             let pct = Math.min((realisasi / bud) * 100, 100); let pgColor = (window.activeKatTab === 'out' && pct >= 100) ? '#c62828' : ((window.activeKatTab === 'out' && pct > 75) ? '#ef6c00' : '#249a95'); if (window.activeKatTab === 'in') pgColor = pct >= 100 ? '#2e7d32' : '#249a95'; 
             let sisaTxt = ''; if (window.activeKatTab === 'out') { sisaTxt = realisasi > bud ? `<span style="color:#c62828;">Overbudget ${window.formatRupiah(realisasi - bud)}</span>` : `<span style="color:#94a3b8;">Sisa ${window.formatRupiah(bud - realisasi)}</span>`; } else { sisaTxt = realisasi >= bud ? `<span style="color:#2e7d32;">Target Tercapai!</span>` : `<span style="color:#94a3b8;">Kurang ${window.formatRupiah(bud - realisasi)}</span>`; }
             
-            // Jarak teks "Realisasi" dan "Sisa" dilebarkan dengan justify-content: space-between
             progressHtml = `<div class="progress-wrapper"><div class="progress-text-row" style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>Realisasi: <span style="color: ${pgColor}; font-weight: 800;">${window.formatRupiah(realisasi)}</span></span><span>${sisaTxt}</span></div><div class="progress-bg"><div class="progress-fill" style="width: ${pct}%; background: ${pgColor};"></div></div></div>`;
         } else { 
-            // Jika kategori tidak ada batas anggaran
             progressHtml = `<div style="font-size: 11px; font-weight: 700; color: #1a1a1a; margin-top: 4px;">Realisasi: <span style="color:#249a95;">${window.formatRupiah(realisasi)}</span></div>`; 
         }
 
-        // Teks judul panjang dipotong rapi agar ikon kotak abu-abu tidak menciut/tergencet
         html += `<div class="cat-card"><div class="cat-top" style="display:flex; justify-content:space-between; align-items:center; gap:10px;"><div class="cat-info-wrap" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;"><div class="cat-icon" style="background: ${cat.color}15; color: ${cat.color}; flex-shrink:0;"><span class="material-icons-round">${cat.icon}</span></div><div style="flex:1; min-width:0;"><div class="cat-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(cat.name)}</div><div class="cat-subtitle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${bud > 0 ? (window.activeKatTab==='out'?'Anggaran: ':'Target: ') + window.formatRupiah(bud) : 'Tanpa Batas'}</div></div></div><div class="list-actions" style="flex-shrink:0;"><button class="cat-action-btn" onclick="window.openKategoriModal('${cat.id}')"><span class="material-icons-round">edit</span></button><button class="cat-action-btn danger" onclick="window.hapusKategori('${cat.id}')"><span class="material-icons-round">delete_outline</span></button></div></div>${progressHtml}</div>`;
     });
     
-    // PERBAIKAN: Menambahkan margin kosong di bagian paling bawah agar tidak tertutup tombol mengambang "Buat Kategori"
     html += `<div style="height: 60px;"></div>`; 
     
     container.innerHTML = html;
 };
 
-// --- PERBAIKAN TYPO TOMBOL MODAL GAGAL DIKLIK --- //
 window.selectKatType = function(type) { 
     document.getElementById('kat-type').value = type; 
     const btns = document.querySelectorAll('#kat-type-segment .segmented-btn'); 
@@ -984,10 +1017,32 @@ window.simpanTarget = async function() {
     window.closeModal('modal-target'); await window.saveDataToFirestore();
 };
 
-window.hapusTarget = function(id) { 
-    const t = window.targets.find(x => String(x.id) === String(id));
-    if(Number(t.currentAmount||0) > 0) { window.customConfirm("Hapus Beserta Saldo?", "Target ini sudah memiliki saldo terkumpul. Jika dihapus, data saldonya akan hilang dari rekap aset ini (saldo dompet asli Anda tetap aman). Lanjutkan?", async () => { window.targets = window.targets.filter(x => String(x.id) !== String(id)); await window.saveDataToFirestore(); }); } 
-    else { window.customConfirm("Hapus", "Yakin ingin menghapusnya?", async () => { window.targets = window.targets.filter(x => String(x.id) !== String(id)); await window.saveDataToFirestore(); }); }
+window.hapusTarget = function(id) {
+    window.customConfirm("Hapus Target?", "Menghapus target ini akan mengembalikan semua saldo setoran ke dompet asal serta menghapus riwayat transaksinya. Lanjutkan?", async () => {
+        
+        const trxTerkait = window.transactions.filter(t => String(t.targetId) === String(id));
+        window.transactions = window.transactions.filter(t => String(t.targetId) !== String(id));
+        window.targets = window.targets.filter(x => String(x.id) !== String(id));
+        window.recalculateBalances(); 
+        
+        if (window.currentUserId) {
+            try {
+                const batch = writeBatch(db);
+                trxTerkait.forEach(trx => {
+                    batch.delete(doc(db, "users", window.currentUserId, "transactions", String(trx.id)));
+                });
+                batch.set(doc(db, "users", window.currentUserId), { 
+                    wallets: window.wallets, targets: window.targets, categories: window.categories, notifications: window.notifications, kmRecords: window.kmRecords, vehicleSettings: window.vehicleSettings 
+                }, { merge: true });
+                
+                await batch.commit();
+                window.callPageRender();
+            } catch (e) {
+                console.error(e);
+                window.customAlert("Error", "Gagal menghapus target di database.", "error");
+            }
+        }
+    });
 };
 
 window.selectActionWallet = function(id, el) { document.getElementById('action-wallet').value = id; document.querySelectorAll('#action-wallet-chips .chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); };
@@ -1085,7 +1140,7 @@ window.prosesAksiTarget = async function() {
 };
 
 // ==========================================
-// 16. REGISTRASI SERVICE WORKER (PWA & FCM)
+// 15. REGISTRASI SERVICE WORKER (PWA & FCM)
 // ==========================================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -1112,3 +1167,32 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// ==========================================
+// 16. FITUR EKSPOR DATA JSON BACKUP
+// ==========================================
+window.exportDataJSON = function() {
+    if (!window.currentUserId) {
+        return window.customAlert("Gagal", "Anda harus masuk ke akun terlebih dahulu untuk mengekspor data.", "error");
+    }
+    
+    const dataBackup = {
+        wallets: window.wallets,
+        categories: window.categories,
+        transactions: window.transactions,
+        targets: window.targets,
+        kmRecords: window.kmRecords,
+        vehicleSettings: window.vehicleSettings,
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataBackup, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "MoCatat_Backup_" + window.getLocalDateString() + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    window.customAlert("Berhasil!", "Seluruh data Anda berhasil diekspor dan diunduh dalam format JSON.");
+};
