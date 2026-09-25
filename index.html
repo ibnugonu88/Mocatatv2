@@ -78,10 +78,29 @@
                 </div>
             </div>
 
-            <div style="margin: 0 20px 25px 20px;" onclick="window.location.href='kendaraan.html'">
+            <!-- MONITOR KENDARAAN -->
+            <div style="margin: 0 20px 14px 20px;" onclick="window.location.href='kendaraan.html'">
                 <div style="background: white; border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0,0.02); cursor: pointer; border: 1px solid rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 44px; height: 44px; background: #e0f2f1; color: #249a95; border-radius: 14px; display: flex; justify-content: center; align-items: center;"><span class="material-icons-round" style="font-size: 22px;">two_wheeler</span></div><div><div style="font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px;">Monitor Kendaraan</div><div style="font-size: 11px; color: #777; font-weight: 600;">Pantau KM dan jadwal ganti oli</div></div></div>
                     <div style="background: #f8fafc; padding: 6px; border-radius: 10px; display: flex; color:#94a3b8;"><span class="material-icons-round" style="font-size: 18px;">chevron_right</span></div>
+                </div>
+            </div>
+
+            <!-- LOKASI & STRATEGI MANGKAL -->
+            <div style="margin: 0 20px 25px 20px;" onclick="window.location.href='lokasi.html'">
+                <div style="background: white; border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0,0.02); cursor: pointer; border: 1px solid rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 44px; height: 44px; background: #e8f5e9; color: #2e7d32; border-radius: 14px; display: flex; justify-content: center; align-items: center;">
+                            <span class="material-icons-round" style="font-size: 22px;">radar</span>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px;">Lokasi & Strategi Mangkal</div>
+                            <div style="font-size: 11px; color: #777; font-weight: 600;" id="info-daerah-beranda">Kelola daerah & cek titik gacor per jam</div>
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 6px; border-radius: 10px; display: flex; color:#94a3b8;">
+                        <span class="material-icons-round" style="font-size: 18px;">chevron_right</span>
+                    </div>
                 </div>
             </div>
 
@@ -115,6 +134,7 @@
                 <div class="settings-item" onclick="window.location.href='kategori.html'"><div class="settings-icon bg-orange"><span class="material-icons-round">category</span></div><div class="settings-text">Pengaturan Kategori</div><span class="material-icons-round settings-chevron">chevron_right</span></div>
                 <div class="settings-item" onclick="window.location.href='dompet.html'"><div class="settings-icon bg-green"><span class="material-icons-round">account_balance_wallet</span></div><div class="settings-text">Daftar Dompet & Saldo</div><span class="material-icons-round settings-chevron">chevron_right</span></div>
                 <div class="settings-item" onclick="window.location.href='target.html'"><div class="settings-icon bg-purple"><span class="material-icons-round">flag</span></div><div class="settings-text">Target Keuangan</div><span class="material-icons-round settings-chevron">chevron_right</span></div>
+                <div class="settings-item" onclick="window.location.href='lokasi.html'"><div class="settings-icon bg-blue"><span class="material-icons-round">place</span></div><div class="settings-text">Lokasi & Daerah Mangkal</div><span class="material-icons-round settings-chevron">chevron_right</span></div>
             </div>
 
             <div class="section-title">Umum</div>
@@ -158,11 +178,15 @@
                     <input type="hidden" id="input-grab-service">
                 </div>
 
-                <!-- PERUBAHAN: INPUT LOKASI SEKARANG MEMILIKI DATALIST -->
+                <!-- INPUT LOKASI DENGAN DATALIST & TOMBOL CEPAT -->
                 <div class="form-group" id="location-group">
-                    <label class="form-label">Area / Lokasi (Opsional)</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">Area / Lokasi (Opsional)</label>
+                        <a href="lokasi.html" style="font-size: 11px; font-weight: 700; color: #249a95;">+ Kelola Lokasi</a>
+                    </div>
                     <input type="text" id="input-location" class="form-input" placeholder="Misal: Pematangsiantar" list="location-suggestions" autocomplete="off">
                     <datalist id="location-suggestions"></datalist>
+                    <div class="chip-group" id="location-quick-chips" style="margin-top: 8px; display: none;"></div>
                 </div>
                 
                 <div class="form-group" id="target-wallet-group" style="display: none;"><label class="form-label">Dompet Tujuan</label><div class="chip-group" id="input-target-wallet-chips"></div><input type="hidden" id="input-target-wallet"></div>

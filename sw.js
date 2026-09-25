@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mocatat-cache-v4';
+const CACHE_NAME = 'mocatat-cache-v6';
 
 // Daftar aset statis yang perlu di-cache
 const urlsToCache = [
@@ -10,8 +10,13 @@ const urlsToCache = [
     './kategori.html',
     './kendaraan.html',
     './target.html',
+    './lokasi.html',
     './style.css',
     './app.js',
+    './core.js',
+    './fitur-beranda.js',
+    './fitur-analitik.js',
+    './fitur-kelola.js',
     './manifest.json',
     './1789744450301.png', 
     './1789744567730.png'  

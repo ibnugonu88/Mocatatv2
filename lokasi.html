@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lokasi & Radar Mangkal - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="1789744450301.png">
+    <link rel="icon" type="image/png" href="1789744567730.png">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+
+        <div id="loading-screen" class="loading-screen hide">Memuat Data...<div class="spinner"></div></div>
+
+        <!-- HEADER -->
+        <header class="header-simple">
+            <a href="index.html" class="btn-back">
+                <span class="material-icons-round">arrow_back_ios_new</span>
+            </a>
+            <span>Lokasi & Strategi Mangkal</span>
+        </header>
+
+        <!-- SUMMARY GRID -->
+        <div class="summary-grid">
+            <div class="summary-box in">
+                <div class="summary-label">
+                    <span class="material-icons-round" style="font-size:14px;">map</span> Total Daerah
+                </div>
+                <div class="summary-val" id="sumTotalDaerah">0 Daerah</div>
+                <span class="material-icons-round bg-icon">folder_special</span>
+            </div>
+            <div class="summary-box out">
+                <div class="summary-label">
+                    <span class="material-icons-round" style="font-size:14px;">place</span> Titik Mangkal
+                </div>
+                <div class="summary-val" id="sumTotalTitik">0 Titik</div>
+                <span class="material-icons-round bg-icon">pin_drop</span>
+            </div>
+        </div>
+
+        <!-- TABS NAVIGASI -->
+        <div class="modern-tabs">
+            <div class="modern-tab active" id="tabBtnRadar" onclick="window.gantiTab('radar')">
+                Radar Mangkal
+            </div>
+            <div class="modern-tab" id="tabBtnKelola" onclick="window.gantiTab('kelola')">
+                Kelola Daerah
+            </div>
+        </div>
+
+        <!-- TAB 1: RADAR MANGKAL -->
+        <div id="viewRadar" class="page active">
+            <div style="padding: 0 20px;">
+                <div class="filter-container">
+                    <select id="filterJamRadar" class="filter-input" onchange="window.renderRadar()">
+                        <option value="now">Jam Sekarang (±90 Menit)</option>
+                        <option value="pagi">Pagi (06:00 - 11:30)</option>
+                        <option value="siang">Siang (11:30 - 15:00)</option>
+                        <option value="sore">Sore (15:00 - 19:00)</option>
+                        <option value="malam">Malam (19:00 - 24:00)</option>
+                        <option value="all">Semua Jam</option>
+                    </select>
+                    <select id="filterLayananRadar" class="filter-input" onchange="window.renderRadar()">
+                        <option value="all">Semua Layanan</option>
+                        <option value="GrabBike Hemat">GrabBike Hemat</option>
+                        <option value="GrabBike">GrabBike Reguler</option>
+                        <option value="GrabFood">GrabFood</option>
+                        <option value="GrabExpress">GrabExpress</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">Rekomendasi Daerah Mangkal</div>
+            <div class="list-wrapper" id="radarListWrapper" style="padding-top: 4px;"></div>
+        </div>
+
+        <!-- TAB 2: KELOLA DAERAH & TITIK JALAN MANUAL -->
+        <div id="viewKelola" class="page">
+            <div id="unmappedSection" style="display: none;">
+                <div class="section-title">Lokasi Riwayat Belum Masuk Daerah</div>
+                <div class="list-wrapper" id="unmappedListWrapper" style="padding-top: 4px; padding-bottom: 8px;"></div>
+            </div>
+
+            <div class="section-title">Daftar Daerah & Titik Jalan Anda</div>
+            <div class="list-wrapper" id="daerahListWrapper" style="padding-top: 4px;"></div>
+        </div>
+
+        <!-- TOMBOL FLOATING TAMBAH MANUAL -->
+        <button type="button" class="fab-tambah" id="btnFabTambahLokasi" onclick="window.bukaModalTambah('daerah')">
+            <span class="material-icons-round">add_location_alt</span>
+            <span>Tambah Lokasi</span>
+        </button>
+
+        <!-- MODAL TAMBAH / EDIT DAERAH & TITIK JALAN -->
+        <div class="modal-overlay" id="modalLokasi">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3 id="modalTitle">Tambah Lokasi Manual</h3>
+                    <button type="button" class="btn-close" onclick="window.tutupModalLokasi()">
+                        <span class="material-icons-round">close</span>
+                    </button>
+                </div>
+
+                <div class="segmented-control" id="switcherModeModal" style="margin-bottom: 18px;">
+                    <div class="segmented-btn active" id="segBtnDaerah" onclick="window.setModeModal('daerah')">Buat Daerah</div>
+                    <div class="segmented-btn" id="segBtnTitik" onclick="window.setModeModal('titik')">Tambah Titik Jalan</div>
+                </div>
+
+                <div class="error-msg" id="formErrorMsg"></div>
+
+                <!-- FORM 1: BUAT / EDIT DAERAH -->
+                <form id="formDaerah" onsubmit="window.simpanDaerah(event)">
+                    <input type="hidden" id="editDaerahId">
+                    <div class="form-group">
+                        <label class="form-label">Nama Daerah / Kawasan</label>
+                        <input type="text" id="inputNamaDaerah" class="form-input" placeholder="Contoh: Daerah Batalion">
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnSubmitDaerah">Simpan Daerah</button>
+                </form>
+
+                <!-- FORM 2: TAMBAH TITIK JALAN KE DAERAH -->
+                <form id="formTitik" onsubmit="window.simpanTitik(event)" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Daerah</label>
+                        <select id="selectDaerahTarget" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nama Jalan / Titik Mangkal</label>
+                        <input type="text" id="inputNamaTitik" class="form-input" placeholder="Contoh: Jl. Kaveleri / Gg. Ganevo">
+                    </div>
+                    <button type="submit" class="btn-submit">Simpan Titik Jalan</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- CUSTOM DIALOG BAWAAN MOCATAT -->
+        <div id="custom-dialog" class="custom-dialog-overlay">
+            <div class="custom-dialog-box">
+                <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
+                <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
+                <p class="custom-dialog-msg" id="dialog-msg">Pesan akan tampil di sini.</p>
+                <div class="custom-dialog-actions" id="dialog-actions"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT INTI LOKASI (BERJALAN LANGSUNG TANPA TERGANTUNG CACHE MODULE) -->
+    <script>
+        const STORAGE_KEY_DAERAH = "mocatat_daerah_manual_v1";
+
+        // Fallback fungsi utilitas apabila app.js masih dalam proses muat
+        if (!window.generateUUID) {
+            window.generateUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+        }
+        if (!window.escapeHTML) {
+            window.escapeHTML = (str) => str === null || str === undefined ? '' : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+        if (!window.formatRupiah) {
+            window.formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+        }
+        if (!window.customConfirm) {
+            window.customConfirm = function(title, msg, onConfirm) {
+                const overlay = document.getElementById('custom-dialog');
+                if(!overlay) { if(confirm(msg)) onConfirm(); return; }
+                document.getElementById('dialog-title').innerText = title;
+                document.getElementById('dialog-msg').innerText = msg;
+                const iconEl = document.getElementById('dialog-icon');
+                if(iconEl) {
+                    iconEl.className = 'custom-dialog-icon warning';
+                    iconEl.innerHTML = '<span class="material-icons-round">help_outline</span>';
+                }
+                document.getElementById('dialog-actions').innerHTML = `<button class="btn-dialog secondary" onclick="document.getElementById('custom-dialog').classList.remove('show')">Batal</button> <button class="btn-dialog danger" id="btn-dialog-confirm">Ya, Lanjutkan</button>`;
+                document.getElementById('btn-dialog-confirm').onclick = function() {
+                    overlay.classList.remove('show');
+                    onConfirm();
+                };
+                overlay.classList.add('show');
+            };
+        }
+
+        function ambilDaerahLokal() {
+            if (Array.isArray(window.zones) && window.zones.length > 0) {
+                return window.zones;
+            }
+            try {
+                const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_DAERAH)) || [];
+                window.zones = parsed;
+                return parsed;
+            } catch (e) {
+                return [];
+            }
+        }
+
+        async function simpanDaerahPerubahan(listBaru) {
+            window.zones = listBaru;
+            try {
+                localStorage.setItem(STORAGE_KEY_DAERAH, JSON.stringify(listBaru));
+            } catch (e) {}
+            window.renderLocationPage();
+            if (typeof window.saveDataToFirestoreSilently === "function") {
+                await window.saveDataToFirestoreSilently();
+            }
+        }
+
+        window.cariDaerahDariLokasi = function(lokasiTransaksi, listDaerah) {
+            if (!lokasiTransaksi) return null;
+            const cleanTrx = lokasiTransaksi.trim().toLowerCase();
+            for (const d of (listDaerah || [])) {
+                for (const titik of (d.locations || [])) {
+                    const cleanTitik = titik.trim().toLowerCase();
+                    if (cleanTrx === cleanTitik || cleanTrx.includes(cleanTitik) || cleanTitik.includes(cleanTrx)) {
+                        return d;
+                    }
+                }
+            }
+            return null;
+        };
+
+        window.gantiTab = function(tab) {
+            document.getElementById("tabBtnRadar").classList.toggle("active", tab === "radar");
+            document.getElementById("tabBtnKelola").classList.toggle("active", tab === "kelola");
+            document.getElementById("viewRadar").classList.toggle("active", tab === "radar");
+            document.getElementById("viewKelola").classList.toggle("active", tab === "kelola");
+        };
+
+        window.bukaModalTambah = function(mode, daerahIdPreselect = "") {
+            const modal = document.getElementById("modalLokasi");
+            if (!modal) return;
+            document.getElementById("editDaerahId").value = "";
+            document.getElementById("inputNamaDaerah").value = "";
+            document.getElementById("inputNamaTitik").value = "";
+            document.getElementById("switcherModeModal").style.display = "flex";
+            document.getElementById("modalTitle").textContent = "Tambah Lokasi Manual";
+            document.getElementById("btnSubmitDaerah").textContent = "Simpan Daerah";
+            document.getElementById("formErrorMsg").style.display = "none";
+
+            window.renderLocationPage();
+            window.setModeModal(mode || "daerah");
+            if (daerahIdPreselect) {
+                document.getElementById("selectDaerahTarget").value = daerahIdPreselect;
+            }
+            modal.classList.add("show");
+        };
+
+        window.bukaModalEditDaerah = function(id) {
+            const list = ambilDaerahLokal();
+            const target = list.find(d => String(d.id) === String(id));
+            if (!target) return;
+
+            window.setModeModal("daerah");
+            document.getElementById("switcherModeModal").style.display = "none";
+            document.getElementById("modalTitle").textContent = "Ubah Nama Daerah";
+            document.getElementById("btnSubmitDaerah").textContent = "Perbarui Daerah";
+            document.getElementById("editDaerahId").value = target.id;
+            document.getElementById("inputNamaDaerah").value = target.name;
+            document.getElementById("formErrorMsg").style.display = "none";
+            document.getElementById("modalLokasi").classList.add("show");
+        };
+
+        window.tutupModalLokasi = function() {
+            const modal = document.getElementById("modalLokasi");
+            if (modal) modal.classList.remove("show");
+        };
+
+        window.setModeModal = function(mode) {
+            const isDaerah = mode === "daerah";
+            document.getElementById("segBtnDaerah").classList.toggle("active", isDaerah);
+            document.getElementById("segBtnTitik").classList.toggle("active", !isDaerah);
+            document.getElementById("formDaerah").style.display = isDaerah ? "block" : "none";
+            document.getElementById("formTitik").style.display = isDaerah ? "none" : "block";
+            document.getElementById("formErrorMsg").style.display = "none";
+        };
+
+        window.simpanDaerah = async function(e) {
+            if (e) e.preventDefault();
+            const nama = document.getElementById("inputNamaDaerah").value.trim();
+            const editId = document.getElementById("editDaerahId").value;
+            const errEl = document.getElementById("formErrorMsg");
+
+            if (!nama) {
+                errEl.textContent = "Nama daerah tidak boleh kosong.";
+                errEl.style.display = "block";
+                return;
+            }
+
+            const list = ambilDaerahLokal();
+
+            if (editId) {
+                const item = list.find(d => String(d.id) === String(editId));
+                if (item) item.name = nama;
+            } else {
+                if (list.some(d => d.name.toLowerCase() === nama.toLowerCase())) {
+                    errEl.textContent = "Nama daerah tersebut sudah ada.";
+                    errEl.style.display = "block";
+                    return;
+                }
+                list.push({
+                    id: window.generateUUID(),
+                    name: nama,
+                    locations: []
+                });
+            }
+
+            window.tutupModalLokasi();
+            window.gantiTab("kelola");
+            await simpanDaerahPerubahan(list);
+        };
+
+        window.simpanTitik = async function(e) {
+            if (e) e.preventDefault();
+            const daerahId = document.getElementById("selectDaerahTarget").value;
+            const namaTitik = document.getElementById("inputNamaTitik").value.trim();
+            const errEl = document.getElementById("formErrorMsg");
+
+            if (!daerahId) {
+                errEl.textContent = "Buat daerah terlebih dahulu di tab 'Buat Daerah'.";
+                errEl.style.display = "block";
+                return;
+            }
+            if (!namaTitik) {
+                errEl.textContent = "Nama titik jalan tidak boleh kosong.";
+                errEl.style.display = "block";
+                return;
+            }
+
+            const list = ambilDaerahLokal();
+            const target = list.find(d => String(d.id) === String(daerahId));
+            if (!target) return;
+
+            if (!Array.isArray(target.locations)) target.locations = [];
+            if (target.locations.some(l => l.toLowerCase() === namaTitik.toLowerCase())) {
+                errEl.textContent = "Titik jalan ini sudah ada di daerah tersebut.";
+                errEl.style.display = "block";
+                return;
+            }
+
+            target.locations.push(namaTitik);
+            window.tutupModalLokasi();
+            window.gantiTab("kelola");
+            await simpanDaerahPerubahan(list);
+        };
+
+        window.masukkanRiwayatKeDaerah = async function(namaLokasi, selectEl) {
+            const daerahId = selectEl.value;
+            if (!daerahId) return;
+
+            const list = ambilDaerahLokal();
+            const target = list.find(d => String(d.id) === String(daerahId));
+            if (target) {
+                if (!Array.isArray(target.locations)) target.locations = [];
+                if (!target.locations.some(l => l.toLowerCase() === namaLokasi.toLowerCase())) {
+                    target.locations.push(namaLokasi);
+                    await simpanDaerahPerubahan(list);
+                }
+            }
+        };
+
+        window.konfirmasiHapusDaerah = function(id, nama) {
+            window.customConfirm(
+                "Hapus Daerah?",
+                `Daerah "${nama}" beserta seluruh titik jalan di dalamnya akan dihapus.`,
+                async () => {
+                    const list = ambilDaerahLokal().filter(d => String(d.id) !== String(id));
+                    await simpanDaerahPerubahan(list);
+                }
+            );
+        };
+
+        window.konfirmasiHapusTitik = function(daerahId, namaTitik) {
+            window.customConfirm(
+                "Hapus Titik Jalan?",
+                `Hapus "${namaTitik}" dari daftar daerah ini?`,
+                async () => {
+                    const list = ambilDaerahLokal();
+                    const target = list.find(d => String(d.id) === String(daerahId));
+                    if (target && Array.isArray(target.locations)) {
+                        target.locations = target.locations.filter(l => l !== namaTitik);
+                        await simpanDaerahPerubahan(list);
+                    }
+                }
+            );
+        };
+
+        window.renderRadar = function() {
+            const container = document.getElementById("radarListWrapper");
+            if (!container) return;
+
+            const listDaerah = ambilDaerahLokal();
+            const transaksi = window.transactions || [];
+            const filterJam = document.getElementById("filterJamRadar") ? document.getElementById("filterJamRadar").value : "now";
+            const filterLayanan = document.getElementById("filterLayananRadar") ? document.getElementById("filterLayananRadar").value : "all";
+
+            if (listDaerah.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">edit_location_alt</span></div>
+                        <h4>Belum Ada Daerah Mangkal</h4>
+                        <p>Tekan tombol <b>+ Tambah Lokasi</b> di bawah untuk membuat daerah mangkal Anda.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const orderMasuk = transaksi.filter(t =>
+                t.type === "in" && String(t.categoryId) !== "999" && t.time && t.location
+            );
+
+            const rekap = {};
+
+            orderMasuk.forEach(t => {
+                if (filterLayanan !== "all" && t.grabService !== filterLayanan) return;
+
+                const parts = t.time.split(":");
+                if (parts.length < 2) return;
+                const mins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+
+                let cocokJam = true;
+                if (filterJam === "now") cocokJam = Math.abs(mins - currentMinutes) <= 90;
+                else if (filterJam === "pagi") cocokJam = mins >= 360 && mins <= 690;
+                else if (filterJam === "siang") cocokJam = mins > 690 && mins <= 900;
+                else if (filterJam === "sore") cocokJam = mins > 900 && mins <= 1140;
+                else if (filterJam === "malam") cocokJam = mins > 1140 && mins <= 1440;
+
+                if (!cocokJam) return;
+
+                const daerahMatch = window.cariDaerahDariLokasi(t.location, listDaerah);
+                const namaGroup = daerahMatch ? daerahMatch.name : `Belum Masuk Daerah (${t.location})`;
+                const isMapped = Boolean(daerahMatch);
+
+                if (!rekap[namaGroup]) {
+                    rekap[namaGroup] = { order: 0, totalUang: 0, titikCounter: {}, isMapped };
+                }
+
+                if (t.categoryName !== "Tip") {
+                    rekap[namaGroup].order += 1;
+                }
+                rekap[namaGroup].totalUang += Number(t.amount || 0);
+                rekap[namaGroup].titikCounter[t.location] = (rekap[namaGroup].titikCounter[t.location] || 0) + 1;
+            });
+
+            const hasilUrut = Object.entries(rekap)
+                .map(([nama, d]) => {
+                    const rincianTitik = Object.entries(d.titikCounter)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(x => `${window.escapeHTML(x[0])} (${x[1]}x)`)
+                        .join(" • ");
+                    return {
+                        nama,
+                        order: d.order,
+                        totalUang: d.totalUang,
+                        rataRata: d.order > 0 ? Math.round(d.totalUang / d.order) : d.totalUang,
+                        rincianTitik,
+                        isMapped: d.isMapped
+                    };
+                })
+                .sort((a, b) => b.order - a.order || b.totalUang - a.totalUang);
+
+            if (hasilUrut.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">schedule</span></div>
+                        <h4>Belum Ada Riwayat di Jam Ini</h4>
+                        <p>Tidak ditemukan catatan orderan masuk pada filter waktu/layanan yang dipilih. Coba ubah filter ke <b>Semua Jam</b>.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = hasilUrut.map((item, index) => `
+                <div class="cat-card">
+                    <div class="cat-top">
+                        <div class="cat-info-wrap">
+                            <div class="cat-icon ${index === 0 ? 'bg-green' : (item.isMapped ? 'bg-blue' : 'bg-orange')}">
+                                <span class="material-icons-round">${index === 0 ? 'local_fire_department' : 'place'}</span>
+                            </div>
+                            <div>
+                                <div class="cat-title">
+                                    #${index + 1} ${window.escapeHTML(item.nama)}
+                                    ${index === 0 ? '<span class="badge badge-tabungan" style="margin-left:6px;">Utama</span>' : ''}
+                                </div>
+                                <div class="cat-subtitle">
+                                    ${item.order} Orderan • Rata-rata ${window.formatRupiah(item.rataRata)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="trx-amount amount-in">
+                            ${window.formatRupiah(item.totalUang)}
+                        </div>
+                    </div>
+                    <div class="pill-box" style="margin-top: 6px; padding: 10px 12px;">
+                        <div class="pill-left" style="font-size: 11.5px;">
+                            <span class="material-icons-round" style="font-size: 16px; color: #249a95;">my_location</span>
+                            <span>Titik ramai: <b>${item.rincianTitik}</b></span>
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        };
+
+        window.renderLocationPage = function() {
+            const daerahWrapper = document.getElementById("daerahListWrapper");
+            if (!daerahWrapper) return;
+
+            const listDaerah = ambilDaerahLokal();
+            const transaksi = window.transactions || [];
+
+            const totalTitik = listDaerah.reduce((acc, d) => acc + (d.locations ? d.locations.length : 0), 0);
+            document.getElementById("sumTotalDaerah").textContent = `${listDaerah.length} Daerah`;
+            document.getElementById("sumTotalTitik").textContent = `${totalTitik} Titik`;
+
+            const selectTarget = document.getElementById("selectDaerahTarget");
+            if (selectTarget) {
+                if (listDaerah.length === 0) {
+                    selectTarget.innerHTML = `<option value="">-- Buat Daerah Terlebih Dahulu --</option>`;
+                } else {
+                    selectTarget.innerHTML = listDaerah.map(d => `<option value="${d.id}">${window.escapeHTML(d.name)}</option>`).join("");
+                }
+            }
+
+            if (listDaerah.length === 0) {
+                daerahWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">create_new_folder</span></div>
+                        <h4>Daftar Daerah Masih Kosong</h4>
+                        <p>Tekan tombol <b>+ Tambah Lokasi</b> di bawah untuk membuat Daerah dan menambahkan nama jalan secara manual.</p>
+                    </div>
+                `;
+            } else {
+                daerahWrapper.innerHTML = listDaerah.map(d => `
+                    <div class="cat-card">
+                        <div class="cat-top">
+                            <div class="cat-info-wrap">
+                                <div class="cat-icon bg-green">
+                                    <span class="material-icons-round">map</span>
+                                </div>
+                                <div>
+                                    <div class="cat-title">${window.escapeHTML(d.name)}</div>
+                                    <div class="cat-subtitle">${(d.locations || []).length} Titik Jalan</div>
+                                </div>
+                            </div>
+                            <div class="cat-actions">
+                                <button type="button" class="cat-action-btn" title="Tambah Titik Jalan" onclick="window.bukaModalTambah('titik', '${d.id}')">
+                                    <span class="material-icons-round" style="font-size:18px; color:#249a95;">add_location</span>
+                                </button>
+                                <button type="button" class="cat-action-btn" title="Ubah Nama Daerah" onclick="window.bukaModalEditDaerah('${d.id}')">
+                                    <span class="material-icons-round" style="font-size:18px;">edit</span>
+                                </button>
+                                <button type="button" class="cat-action-btn danger" title="Hapus Daerah" onclick="window.konfirmasiHapusDaerah('${d.id}', '${window.escapeHTML(d.name).replace(/'/g, "\\'")}')">
+                                    <span class="material-icons-round" style="font-size:18px;">delete</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        ${(d.locations || []).length > 0 ? `
+                            <div class="chip-group" style="flex-wrap: wrap; padding-top: 6px;">
+                                ${d.locations.map(loc => `
+                                    <div class="chip active" style="padding: 6px 12px; font-size: 12px;">
+                                        <span>${window.escapeHTML(loc)}</span>
+                                        <span class="material-icons-round" style="font-size: 14px; color: #c62828; cursor: pointer;" onclick="window.konfirmasiHapusTitik('${d.id}', '${window.escapeHTML(loc).replace(/'/g, "\\'")}')">close</span>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        ` : `
+                            <div style="font-size: 11.5px; color: #94a3b8; font-weight: 600; padding-top: 4px;">
+                                Belum ada titik jalan. Klik ikon pin hijau di kanan atas kartu ini untuk menambah jalan.
+                            </div>
+                        `}
+                    </div>
+                `).join("");
+            }
+
+            const unmappedSet = new Set();
+            transaksi.forEach(t => {
+                if (t.location && t.location.trim()) {
+                    const match = window.cariDaerahDariLokasi(t.location, listDaerah);
+                    if (!match) unmappedSet.add(t.location.trim());
+                }
+            });
+
+            const unmappedSection = document.getElementById("unmappedSection");
+            const unmappedWrapper = document.getElementById("unmappedListWrapper");
+
+            if (unmappedSection && unmappedWrapper) {
+                if (unmappedSet.size > 0 && listDaerah.length > 0) {
+                    unmappedSection.style.display = "block";
+                    unmappedWrapper.innerHTML = Array.from(unmappedSet).map(loc => `
+                        <div class="list-item" style="padding: 12px 14px;">
+                            <div class="list-info">
+                                <div class="list-icon bg-orange" style="width: 36px; height: 36px;">
+                                    <span class="material-icons-round" style="font-size: 18px;">help_outline</span>
+                                </div>
+                                <div>
+                                    <div class="list-title">${window.escapeHTML(loc)}</div>
+                                    <div class="list-desc">Dari riwayat transaksi</div>
+                                </div>
+                            </div>
+                            <div style="width: 150px;">
+                                <select class="filter-input" style="width: 100%;" onchange="window.masukkanRiwayatKeDaerah('${window.escapeHTML(loc).replace(/'/g, "\\'")}', this)">
+                                    <option value="">+ Pilih Daerah</option>
+                                    ${listDaerah.map(d => `<option value="${d.id}">${window.escapeHTML(d.name)}</option>`).join("")}
+                                </select>
+                            </div>
+                        </div>
+                    `).join("");
+                } else {
+                    unmappedSection.style.display = "none";
+                }
+            }
+
+            window.renderRadar();
+        };
+
+        // Render langsung saat halaman dibuka & pantau saat transaksi Firebase selesai dimuat
+        window.addEventListener("DOMContentLoaded", () => {
+            window.renderLocationPage();
+            let lastTxCount = -1;
+            const syncInterval = setInterval(() => {
+                const currentTxCount = Array.isArray(window.transactions) ? window.transactions.length : 0;
+                if (currentTxCount !== lastTxCount) {
+                    lastTxCount = currentTxCount;
+                    window.renderLocationPage();
+                }
+            }, 600);
+            setTimeout(() => clearInterval(syncInterval), 10000);
+        });
+    </script>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
