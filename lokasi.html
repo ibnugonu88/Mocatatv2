@@ -3,636 +3,739 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lokasi & Radar Mangkal - MoCatat</title>
+    <title>Lokasi & Strategi Mangkal - MoCatat</title>
     <meta name="theme-color" content="#249a95">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="1789744450301.png">
-    <link rel="icon" type="image/png" href="1789744567730.png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
     <link rel="stylesheet" href="style.css">
+    <style>
+        .unassigned-card {
+            background: white;
+            padding: 14px 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .unassigned-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+        .unassigned-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #fff3e0;
+            color: #ef6c00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .unassigned-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .assign-select {
+            padding: 8px 24px 8px 10px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #334155;
+            background-color: #f8fafc;
+            outline: none;
+            max-width: 135px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px top 50%;
+            background-size: 9px auto;
+        }
+        .btn-clear-all {
+            background: #ffebee;
+            color: #c62828;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .zone-card {
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 14px;
+            border: 1px solid #f1f5f9;
+        }
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .zone-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .zone-badge-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #e0f2f1;
+            color: #249a95;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .street-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+        }
+        .street-tag {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .street-tag .remove-street {
+            color: #94a3b8;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .street-tag .remove-street:hover {
+            color: #c62828;
+        }
+        .radar-hero {
+            background: linear-gradient(135deg, #249a95 0%, #1e8580 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 20px rgba(36, 154, 149, 0.2);
+        }
+        .rank-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .rank-1 { background: #fef08a; color: #854d0e; }
+        .rank-2 { background: #e2e8f0; color: #334155; }
+        .rank-3 { background: #ffedd5; color: #9a3412; }
+        .rank-other { background: #f1f5f9; color: #64748b; }
+    </style>
 </head>
 <body>
+
     <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
 
-        <div id="loading-screen" class="loading-screen hide">Memuat Data...<div class="spinner"></div></div>
-
-        <!-- HEADER -->
         <header class="header-simple">
-            <a href="index.html" class="btn-back">
-                <span class="material-icons-round">arrow_back_ios_new</span>
-            </a>
+            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
             <span>Lokasi & Strategi Mangkal</span>
         </header>
 
-        <!-- SUMMARY GRID -->
+        <!-- KARTU RINGKASAN ATAS -->
         <div class="summary-grid">
             <div class="summary-box in">
-                <div class="summary-label">
-                    <span class="material-icons-round" style="font-size:14px;">map</span> Total Daerah
-                </div>
-                <div class="summary-val" id="sumTotalDaerah">0 Daerah</div>
-                <span class="material-icons-round bg-icon">folder_special</span>
+                <span class="material-icons-round bg-icon" style="color: #2e7d32;">map</span>
+                <div class="summary-label"><span class="material-icons-round" style="font-size:13px;">map</span> TOTAL DAERAH</div>
+                <div class="summary-val" id="tot-daerah">0 Daerah</div>
             </div>
             <div class="summary-box out">
-                <div class="summary-label">
-                    <span class="material-icons-round" style="font-size:14px;">place</span> Titik Mangkal
-                </div>
-                <div class="summary-val" id="sumTotalTitik">0 Titik</div>
-                <span class="material-icons-round bg-icon">pin_drop</span>
+                <span class="material-icons-round bg-icon" style="color: #ef6c00;">place</span>
+                <div class="summary-label"><span class="material-icons-round" style="font-size:13px;">place</span> TITIK TERHUBUNG</div>
+                <div class="summary-val" id="tot-titik">0 Titik</div>
             </div>
         </div>
 
-        <!-- TABS NAVIGASI -->
+        <!-- TAB NAVIGASI -->
         <div class="modern-tabs">
-            <div class="modern-tab active" id="tabBtnRadar" onclick="window.gantiTab('radar')">
-                Radar Mangkal
-            </div>
-            <div class="modern-tab" id="tabBtnKelola" onclick="window.gantiTab('kelola')">
-                Kelola Daerah
-            </div>
+            <div class="modern-tab" id="tab-radar" onclick="window.switchLokasiTab('radar')">Radar Mangkal</div>
+            <div class="modern-tab active" id="tab-kelola" onclick="window.switchLokasiTab('kelola')">Kelola Daerah</div>
         </div>
 
-        <!-- TAB 1: RADAR MANGKAL -->
-        <div id="viewRadar" class="page active">
-            <div style="padding: 0 20px;">
-                <div class="filter-container">
-                    <select id="filterJamRadar" class="filter-input" onchange="window.renderRadar()">
-                        <option value="now">Jam Sekarang (±90 Menit)</option>
-                        <option value="pagi">Pagi (06:00 - 11:30)</option>
-                        <option value="siang">Siang (11:30 - 15:00)</option>
-                        <option value="sore">Sore (15:00 - 19:00)</option>
-                        <option value="malam">Malam (19:00 - 24:00)</option>
-                        <option value="all">Semua Jam</option>
-                    </select>
-                    <select id="filterLayananRadar" class="filter-input" onchange="window.renderRadar()">
-                        <option value="all">Semua Layanan</option>
-                        <option value="GrabBike Hemat">GrabBike Hemat</option>
-                        <option value="GrabBike">GrabBike Reguler</option>
-                        <option value="GrabFood">GrabFood</option>
-                        <option value="GrabExpress">GrabExpress</option>
-                    </select>
+        <!-- PANEL 1: RADAR MANGKAL -->
+        <div class="list-wrapper" id="panel-radar" style="display: none; padding-top: 5px;">
+            <div class="chip-group" id="radar-time-chips" style="margin-bottom: 6px;">
+                <div class="chip active" onclick="window.setFilterJamRadar('all', this)">Semua Jam</div>
+                <div class="chip" onclick="window.setFilterJamRadar('now', this)">⚡ Jam Sekarang</div>
+                <div class="chip" onclick="window.setFilterJamRadar('pagi', this)">🌅 Pagi (05-11)</div>
+                <div class="chip" onclick="window.setFilterJamRadar('siang', this)">☀️ Siang (12-14)</div>
+                <div class="chip" onclick="window.setFilterJamRadar('sore', this)">🌤️ Sore (15-18)</div>
+                <div class="chip" onclick="window.setFilterJamRadar('malam', this)">🌙 Malam (19-04)</div>
+            </div>
+            <div id="radar-container"></div>
+        </div>
+
+        <!-- PANEL 2: KELOLA DAERAH -->
+        <div class="list-wrapper" id="panel-kelola" style="padding-top: 5px; padding-bottom: 90px;">
+            
+            <!-- RIWAYAT BELUM MASUK DAERAH (DENGAN TOMBOL HAPUS) -->
+            <div id="unassigned-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 5px 0 10px 4px;">
+                    <div class="section-title" style="margin: 0;">LOKASI RIWAYAT BELUM MASUK DAERAH</div>
+                    <button class="btn-clear-all" onclick="window.hapusSemuaLokasiRiwayat()">
+                        <span class="material-icons-round" style="font-size:14px;">delete_sweep</span> Hapus Semua
+                    </button>
                 </div>
+                <div id="unassigned-container"></div>
             </div>
 
-            <div class="section-title">Rekomendasi Daerah Mangkal</div>
-            <div class="list-wrapper" id="radarListWrapper" style="padding-top: 4px;"></div>
+            <!-- DAFTAR DAERAH TERSIMPAN -->
+            <div class="section-title" style="margin: 10px 0 10px 4px;">DAFTAR DAERAH & TITIK JALAN</div>
+            <div id="zones-container"></div>
         </div>
 
-        <!-- TAB 2: KELOLA DAERAH & TITIK JALAN MANUAL -->
-        <div id="viewKelola" class="page">
-            <div id="unmappedSection" style="display: none;">
-                <div class="section-title">Lokasi Riwayat Belum Masuk Daerah</div>
-                <div class="list-wrapper" id="unmappedListWrapper" style="padding-top: 4px; padding-bottom: 8px;"></div>
-            </div>
-
-            <div class="section-title">Daftar Daerah & Titik Jalan Anda</div>
-            <div class="list-wrapper" id="daerahListWrapper" style="padding-top: 4px;"></div>
-        </div>
-
-        <!-- TOMBOL FLOATING TAMBAH MANUAL -->
-        <button type="button" class="fab-tambah" id="btnFabTambahLokasi" onclick="window.bukaModalTambah('daerah')">
-            <span class="material-icons-round">add_location_alt</span>
-            <span>Tambah Lokasi</span>
+        <!-- TOMBOL FAB TAMBAH MANUAL -->
+        <button class="fab-tambah" onclick="window.openLokasiModal('daerah')">
+            <span class="material-icons-round" style="font-size:20px;">add_location_alt</span> Tambah Lokasi Manual
         </button>
 
-        <!-- MODAL TAMBAH / EDIT DAERAH & TITIK JALAN -->
-        <div class="modal-overlay" id="modalLokasi">
+        <!-- MODAL TAMBAH LOKASI MANUAL -->
+        <div id="modal-lokasi" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
                 <div class="modal-header">
-                    <h3 id="modalTitle">Tambah Lokasi Manual</h3>
-                    <button type="button" class="btn-close" onclick="window.tutupModalLokasi()">
-                        <span class="material-icons-round">close</span>
-                    </button>
+                    <h3 id="lokasi-modal-title">Tambah Lokasi Manual</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-lokasi')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="lokasi-error-msg" class="error-msg"></div>
+
+                <div class="form-group">
+                    <div class="segmented-control" id="lokasi-tab-segment">
+                        <div class="segmented-btn active" onclick="window.switchModalLokasiMode('daerah')">Buat Daerah</div>
+                        <div class="segmented-btn" onclick="window.switchModalLokasiMode('titik')">Tambah Titik Jalan</div>
+                    </div>
                 </div>
 
-                <div class="segmented-control" id="switcherModeModal" style="margin-bottom: 18px;">
-                    <div class="segmented-btn active" id="segBtnDaerah" onclick="window.setModeModal('daerah')">Buat Daerah</div>
-                    <div class="segmented-btn" id="segBtnTitik" onclick="window.setModeModal('titik')">Tambah Titik Jalan</div>
-                </div>
-
-                <div class="error-msg" id="formErrorMsg"></div>
-
-                <!-- FORM 1: BUAT / EDIT DAERAH -->
-                <form id="formDaerah" onsubmit="window.simpanDaerah(event)">
-                    <input type="hidden" id="editDaerahId">
+                <!-- MODE 1: BUAT DAERAH / KAWASAN -->
+                <div id="form-mode-daerah">
                     <div class="form-group">
                         <label class="form-label">Nama Daerah / Kawasan</label>
-                        <input type="text" id="inputNamaDaerah" class="form-input" placeholder="Contoh: Daerah Batalion">
+                        <input type="text" id="input-zone-name" class="form-input" placeholder="Contoh: Area Kampus / Pusat Kota" autocomplete="off">
                     </div>
-                    <button type="submit" class="btn-submit" id="btnSubmitDaerah">Simpan Daerah</button>
-                </form>
+                    <button class="btn-submit" onclick="window.simpanDaerahBaru()">Simpan Daerah</button>
+                </div>
 
-                <!-- FORM 2: TAMBAH TITIK JALAN KE DAERAH -->
-                <form id="formTitik" onsubmit="window.simpanTitik(event)" style="display: none;">
+                <!-- MODE 2: TAMBAH TITIK JALAN KE DAERAH -->
+                <div id="form-mode-titik" style="display: none;">
                     <div class="form-group">
                         <label class="form-label">Pilih Daerah</label>
-                        <select id="selectDaerahTarget" class="form-input"></select>
+                        <select id="select-zone-parent" class="form-input"></select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nama Jalan / Titik Mangkal</label>
-                        <input type="text" id="inputNamaTitik" class="form-input" placeholder="Contoh: Jl. Kaveleri / Gg. Ganevo">
+                        <input type="text" id="input-street-name" class="form-input" placeholder="Contoh: Jl. Merdeka" autocomplete="off">
                     </div>
-                    <button type="submit" class="btn-submit">Simpan Titik Jalan</button>
-                </form>
+                    <button class="btn-submit" onclick="window.simpanTitikJalanBaru()">Simpan Titik Jalan</button>
+                </div>
             </div>
         </div>
 
-        <!-- CUSTOM DIALOG BAWAAN MOCATAT -->
+        <!-- CUSTOM DIALOG -->
         <div id="custom-dialog" class="custom-dialog-overlay">
             <div class="custom-dialog-box">
                 <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
                 <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
-                <p class="custom-dialog-msg" id="dialog-msg">Pesan akan tampil di sini.</p>
+                <p class="custom-dialog-msg" id="dialog-msg"></p>
                 <div class="custom-dialog-actions" id="dialog-actions"></div>
             </div>
         </div>
-
     </div>
 
-    <!-- SCRIPT INTI LOKASI (BERJALAN LANGSUNG TANPA TERGANTUNG CACHE MODULE) -->
+    <!-- LOGIKA HALAMAN LOKASI & RADAR MANGKAL -->
     <script>
         const STORAGE_KEY_DAERAH = "mocatat_daerah_manual_v1";
+        window.activeLokasiTab = 'kelola';
+        window.activeRadarTime = 'all';
 
-        // Fallback fungsi utilitas apabila app.js masih dalam proses muat
-        if (!window.generateUUID) {
-            window.generateUUID = () => crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
-        }
-        if (!window.escapeHTML) {
-            window.escapeHTML = (str) => str === null || str === undefined ? '' : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-        if (!window.formatRupiah) {
-            window.formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
-        }
-        if (!window.customConfirm) {
-            window.customConfirm = function(title, msg, onConfirm) {
-                const overlay = document.getElementById('custom-dialog');
-                if(!overlay) { if(confirm(msg)) onConfirm(); return; }
-                document.getElementById('dialog-title').innerText = title;
-                document.getElementById('dialog-msg').innerText = msg;
-                const iconEl = document.getElementById('dialog-icon');
-                if(iconEl) {
-                    iconEl.className = 'custom-dialog-icon warning';
-                    iconEl.innerHTML = '<span class="material-icons-round">help_outline</span>';
-                }
-                document.getElementById('dialog-actions').innerHTML = `<button class="btn-dialog secondary" onclick="document.getElementById('custom-dialog').classList.remove('show')">Batal</button> <button class="btn-dialog danger" id="btn-dialog-confirm">Ya, Lanjutkan</button>`;
-                document.getElementById('btn-dialog-confirm').onclick = function() {
-                    overlay.classList.remove('show');
-                    onConfirm();
-                };
-                overlay.classList.add('show');
-            };
-        }
-
-        function ambilDaerahLokal() {
-            if (Array.isArray(window.zones) && window.zones.length > 0) {
-                return window.zones;
-            }
+        window.syncZonesData = async function() {
             try {
-                const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_DAERAH)) || [];
-                window.zones = parsed;
-                return parsed;
-            } catch (e) {
-                return [];
-            }
-        }
-
-        async function simpanDaerahPerubahan(listBaru) {
-            window.zones = listBaru;
-            try {
-                localStorage.setItem(STORAGE_KEY_DAERAH, JSON.stringify(listBaru));
+                localStorage.setItem(STORAGE_KEY_DAERAH, JSON.stringify(window.zones || []));
             } catch (e) {}
-            window.renderLocationPage();
-            if (typeof window.saveDataToFirestoreSilently === "function") {
-                await window.saveDataToFirestoreSilently();
+            if (typeof window.saveDataToFirestore === 'function') {
+                await window.saveDataToFirestore();
+            } else {
+                window.renderLocationPage();
             }
-        }
+        };
 
-        window.cariDaerahDariLokasi = function(lokasiTransaksi, listDaerah) {
-            if (!lokasiTransaksi) return null;
-            const cleanTrx = lokasiTransaksi.trim().toLowerCase();
-            for (const d of (listDaerah || [])) {
-                for (const titik of (d.locations || [])) {
-                    const cleanTitik = titik.trim().toLowerCase();
-                    if (cleanTrx === cleanTitik || cleanTrx.includes(cleanTitik) || cleanTitik.includes(cleanTrx)) {
-                        return d;
-                    }
+        window.switchLokasiTab = function(tab) {
+            window.activeLokasiTab = tab;
+            document.getElementById('tab-radar').classList.toggle('active', tab === 'radar');
+            document.getElementById('tab-kelola').classList.toggle('active', tab === 'kelola');
+            document.getElementById('panel-radar').style.display = tab === 'radar' ? 'flex' : 'none';
+            document.getElementById('panel-kelola').style.display = tab === 'kelola' ? 'flex' : 'none';
+            window.renderLocationPage();
+        };
+
+        window.setFilterJamRadar = function(period, el) {
+            window.activeRadarTime = period;
+            document.querySelectorAll('#radar-time-chips .chip').forEach(c => c.classList.remove('active'));
+            if (el) el.classList.add('active');
+            window.renderRadarMangkal();
+        };
+
+        window.findZoneForLocation = function(rawLoc) {
+            if (!rawLoc) return null;
+            const clean = rawLoc.trim().toLowerCase();
+            const zones = window.zones || [];
+            for (const z of zones) {
+                if ((z.name || '').trim().toLowerCase() === clean) return z;
+                if (Array.isArray(z.locations)) {
+                    const found = z.locations.some(l => (l || '').trim().toLowerCase() === clean);
+                    if (found) return z;
                 }
             }
             return null;
         };
 
-        window.gantiTab = function(tab) {
-            document.getElementById("tabBtnRadar").classList.toggle("active", tab === "radar");
-            document.getElementById("tabBtnKelola").classList.toggle("active", tab === "kelola");
-            document.getElementById("viewRadar").classList.toggle("active", tab === "radar");
-            document.getElementById("viewKelola").classList.toggle("active", tab === "kelola");
-        };
+        window.renderLocationPage = function() {
+            if (!Array.isArray(window.zones)) window.zones = [];
 
-        window.bukaModalTambah = function(mode, daerahIdPreselect = "") {
-            const modal = document.getElementById("modalLokasi");
-            if (!modal) return;
-            document.getElementById("editDaerahId").value = "";
-            document.getElementById("inputNamaDaerah").value = "";
-            document.getElementById("inputNamaTitik").value = "";
-            document.getElementById("switcherModeModal").style.display = "flex";
-            document.getElementById("modalTitle").textContent = "Tambah Lokasi Manual";
-            document.getElementById("btnSubmitDaerah").textContent = "Simpan Daerah";
-            document.getElementById("formErrorMsg").style.display = "none";
+            const totalDaerah = window.zones.length;
+            const totalTitik = window.zones.reduce((acc, z) => acc + (Array.isArray(z.locations) ? z.locations.length : 0), 0);
 
-            window.renderLocationPage();
-            window.setModeModal(mode || "daerah");
-            if (daerahIdPreselect) {
-                document.getElementById("selectDaerahTarget").value = daerahIdPreselect;
+            if (document.getElementById('tot-daerah')) {
+                document.getElementById('tot-daerah').innerText = `${totalDaerah} Daerah`;
             }
-            modal.classList.add("show");
-        };
-
-        window.bukaModalEditDaerah = function(id) {
-            const list = ambilDaerahLokal();
-            const target = list.find(d => String(d.id) === String(id));
-            if (!target) return;
-
-            window.setModeModal("daerah");
-            document.getElementById("switcherModeModal").style.display = "none";
-            document.getElementById("modalTitle").textContent = "Ubah Nama Daerah";
-            document.getElementById("btnSubmitDaerah").textContent = "Perbarui Daerah";
-            document.getElementById("editDaerahId").value = target.id;
-            document.getElementById("inputNamaDaerah").value = target.name;
-            document.getElementById("formErrorMsg").style.display = "none";
-            document.getElementById("modalLokasi").classList.add("show");
-        };
-
-        window.tutupModalLokasi = function() {
-            const modal = document.getElementById("modalLokasi");
-            if (modal) modal.classList.remove("show");
-        };
-
-        window.setModeModal = function(mode) {
-            const isDaerah = mode === "daerah";
-            document.getElementById("segBtnDaerah").classList.toggle("active", isDaerah);
-            document.getElementById("segBtnTitik").classList.toggle("active", !isDaerah);
-            document.getElementById("formDaerah").style.display = isDaerah ? "block" : "none";
-            document.getElementById("formTitik").style.display = isDaerah ? "none" : "block";
-            document.getElementById("formErrorMsg").style.display = "none";
-        };
-
-        window.simpanDaerah = async function(e) {
-            if (e) e.preventDefault();
-            const nama = document.getElementById("inputNamaDaerah").value.trim();
-            const editId = document.getElementById("editDaerahId").value;
-            const errEl = document.getElementById("formErrorMsg");
-
-            if (!nama) {
-                errEl.textContent = "Nama daerah tidak boleh kosong.";
-                errEl.style.display = "block";
-                return;
+            if (document.getElementById('tot-titik')) {
+                document.getElementById('tot-titik').innerText = `${totalTitik} Titik`;
             }
 
-            const list = ambilDaerahLokal();
+            window.renderKelolaDaerah();
+            window.renderRadarMangkal();
+        };
 
-            if (editId) {
-                const item = list.find(d => String(d.id) === String(editId));
-                if (item) item.name = nama;
-            } else {
-                if (list.some(d => d.name.toLowerCase() === nama.toLowerCase())) {
-                    errEl.textContent = "Nama daerah tersebut sudah ada.";
-                    errEl.style.display = "block";
-                    return;
+        window.renderKelolaDaerah = function() {
+            const unassignedSection = document.getElementById('unassigned-section');
+            const unassignedContainer = document.getElementById('unassigned-container');
+            const zonesContainer = document.getElementById('zones-container');
+            if (!zonesContainer) return;
+
+            const trxLocMap = {};
+            (window.transactions || []).forEach(t => {
+                if (t.location && t.location.trim() !== '') {
+                    const raw = t.location.trim();
+                    const key = raw.toLowerCase();
+                    if (!window.findZoneForLocation(raw)) {
+                        if (!trxLocMap[key]) trxLocMap[key] = raw;
+                    }
                 }
-                list.push({
-                    id: window.generateUUID(),
-                    name: nama,
-                    locations: []
+            });
+
+            const unassignedList = Object.values(trxLocMap);
+            if (unassignedList.length > 0) {
+                unassignedSection.style.display = 'block';
+                let uHTML = '';
+                unassignedList.forEach(locName => {
+                    const safeLoc = window.escapeHTML(locName);
+                    const jsSafeLoc = safeLoc.replace(/'/g, "\\'");
+                    let optionsHTML = `<option value="">+ Pilih Daerah</option>`;
+                    optionsHTML += `<option value="__NEW__">➕ Jadikan Daerah Baru</option>`;
+                    window.zones.forEach(z => {
+                        optionsHTML += `<option value="${window.escapeHTML(z.id)}">📍 ${window.escapeHTML(z.name)}</option>`;
+                    });
+
+                    uHTML += `
+                    <div class="unassigned-card">
+                        <div class="unassigned-left">
+                            <div class="unassigned-icon"><span class="material-icons-round">help_outline</span></div>
+                            <div style="min-width:0;">
+                                <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeLoc}</div>
+                                <div class="list-desc">Dari riwayat transaksi</div>
+                            </div>
+                        </div>
+                        <div class="unassigned-actions">
+                            <select class="assign-select" onchange="window.assignRiwayatKeDaerah('${jsSafeLoc}', this.value)">
+                                ${optionsHTML}
+                            </select>
+                            <button class="btn-icon delete" onclick="window.hapusLokasiRiwayat('${jsSafeLoc}')" title="Hapus lokasi riwayat ini">
+                                <span class="material-icons-round" style="font-size:18px;">delete</span>
+                            </button>
+                        </div>
+                    </div>`;
                 });
+                unassignedContainer.innerHTML = uHTML;
+            } else {
+                unassignedSection.style.display = 'none';
+                unassignedContainer.innerHTML = '';
             }
 
-            window.tutupModalLokasi();
-            window.gantiTab("kelola");
-            await simpanDaerahPerubahan(list);
-        };
-
-        window.simpanTitik = async function(e) {
-            if (e) e.preventDefault();
-            const daerahId = document.getElementById("selectDaerahTarget").value;
-            const namaTitik = document.getElementById("inputNamaTitik").value.trim();
-            const errEl = document.getElementById("formErrorMsg");
-
-            if (!daerahId) {
-                errEl.textContent = "Buat daerah terlebih dahulu di tab 'Buat Daerah'.";
-                errEl.style.display = "block";
-                return;
-            }
-            if (!namaTitik) {
-                errEl.textContent = "Nama titik jalan tidak boleh kosong.";
-                errEl.style.display = "block";
+            if (window.zones.length === 0) {
+                zonesContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon-wrapper"><span class="material-icons-round">map</span></div>
+                    <h4>Belum Ada Daerah Mangkal</h4>
+                    <p>Tekan tombol <b>"Tambah Lokasi Manual"</b> di bawah untuk mulai membuat daerah dan titik jalan mangkal Anda.</p>
+                </div>`;
                 return;
             }
 
-            const list = ambilDaerahLokal();
-            const target = list.find(d => String(d.id) === String(daerahId));
-            if (!target) return;
-
-            if (!Array.isArray(target.locations)) target.locations = [];
-            if (target.locations.some(l => l.toLowerCase() === namaTitik.toLowerCase())) {
-                errEl.textContent = "Titik jalan ini sudah ada di daerah tersebut.";
-                errEl.style.display = "block";
-                return;
-            }
-
-            target.locations.push(namaTitik);
-            window.tutupModalLokasi();
-            window.gantiTab("kelola");
-            await simpanDaerahPerubahan(list);
-        };
-
-        window.masukkanRiwayatKeDaerah = async function(namaLokasi, selectEl) {
-            const daerahId = selectEl.value;
-            if (!daerahId) return;
-
-            const list = ambilDaerahLokal();
-            const target = list.find(d => String(d.id) === String(daerahId));
-            if (target) {
-                if (!Array.isArray(target.locations)) target.locations = [];
-                if (!target.locations.some(l => l.toLowerCase() === namaLokasi.toLowerCase())) {
-                    target.locations.push(namaLokasi);
-                    await simpanDaerahPerubahan(list);
+            let zHTML = '';
+            window.zones.forEach(z => {
+                const locs = Array.isArray(z.locations) ? z.locations : [];
+                let tagsHTML = '';
+                if (locs.length > 0) {
+                    tagsHTML = `<div class="street-tag-list">` + locs.map(st => {
+                        const safeSt = window.escapeHTML(st);
+                        const jsSafeSt = safeSt.replace(/'/g, "\\'");
+                        return `<span class="street-tag"><span class="material-icons-round" style="font-size:13px; color:#249a95;">place</span>${safeSt}<span class="material-icons-round remove-street" onclick="window.hapusTitikJalan('${z.id}', '${jsSafeSt}')" title="Hapus titik">close</span></span>`;
+                    }).join('') + `</div>`;
+                } else {
+                    tagsHTML = `<div style="font-size:11.5px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px dashed #f1f5f9;">Belum ada titik jalan. Klik <b>+ Titik</b> untuk menambahkan jalan ke daerah ini.</div>`;
                 }
-            }
+
+                zHTML += `
+                <div class="zone-card">
+                    <div class="zone-header">
+                        <div class="zone-title-wrap">
+                            <div class="zone-badge-icon"><span class="material-icons-round">folder_special</span></div>
+                            <div>
+                                <div class="list-title">${window.escapeHTML(z.name)}</div>
+                                <div class="list-desc">${locs.length} Titik Jalan terhubung</div>
+                            </div>
+                        </div>
+                        <div class="list-actions">
+                            <button class="btn-icon" style="color:#249a95; background:#e0f2f1; font-size:11.5px; font-weight:800; padding:6px 10px;" onclick="window.openLokasiModal('titik', '${z.id}')">+ Titik</button>
+                            <button class="btn-icon delete" onclick="window.hapusDaerah('${z.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
+                        </div>
+                    </div>
+                    ${tagsHTML}
+                </div>`;
+            });
+
+            zonesContainer.innerHTML = zHTML;
         };
 
-        window.konfirmasiHapusDaerah = function(id, nama) {
+        // Hapus 1 Lokasi Riwayat (Menghapus label lokasi pada transaksi terkait tanpa menghapus uangnya)
+        window.hapusLokasiRiwayat = function(locName) {
             window.customConfirm(
-                "Hapus Daerah?",
-                `Daerah "${nama}" beserta seluruh titik jalan di dalamnya akan dihapus.`,
+                "Hapus Lokasi Riwayat?",
+                `Hapus lokasi "${locName}" dari daftar riwayat? (Data uang transaksi Anda tetap aman dan tidak ikut terhapus).`,
                 async () => {
-                    const list = ambilDaerahLokal().filter(d => String(d.id) !== String(id));
-                    await simpanDaerahPerubahan(list);
-                }
-            );
-        };
-
-        window.konfirmasiHapusTitik = function(daerahId, namaTitik) {
-            window.customConfirm(
-                "Hapus Titik Jalan?",
-                `Hapus "${namaTitik}" dari daftar daerah ini?`,
-                async () => {
-                    const list = ambilDaerahLokal();
-                    const target = list.find(d => String(d.id) === String(daerahId));
-                    if (target && Array.isArray(target.locations)) {
-                        target.locations = target.locations.filter(l => l !== namaTitik);
-                        await simpanDaerahPerubahan(list);
+                    const targetLower = locName.trim().toLowerCase();
+                    const ubahTrx = [];
+                    (window.transactions || []).forEach(t => {
+                        if (t.location && t.location.trim().toLowerCase() === targetLower) {
+                            t.location = null;
+                            ubahTrx.push(t);
+                        }
+                    });
+                    window.renderLocationPage();
+                    if (window.currentUserId && typeof window.saveTransactionToDB === 'function') {
+                        try {
+                            await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
+                        } catch (e) {
+                            console.error("Gagal update lokasi transaksi:", e);
+                        }
                     }
                 }
             );
         };
 
-        window.renderRadar = function() {
-            const container = document.getElementById("radarListWrapper");
+        // Hapus Semua Lokasi Riwayat yang Belum Masuk Daerah
+        window.hapusSemuaLokasiRiwayat = function() {
+            window.customConfirm(
+                "Bersihkan Semua Riwayat Lokasi?",
+                "Semua nama lokasi dari riwayat transaksi yang belum masuk daerah akan dibersihkan (saldo dan catatan transaksi tetap aman). Lanjutkan?",
+                async () => {
+                    const ubahTrx = [];
+                    (window.transactions || []).forEach(t => {
+                        if (t.location && t.location.trim() !== '' && !window.findZoneForLocation(t.location)) {
+                            t.location = null;
+                            ubahTrx.push(t);
+                        }
+                    });
+                    window.renderLocationPage();
+                    if (window.currentUserId && typeof window.saveTransactionToDB === 'function') {
+                        try {
+                            await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
+                        } catch (e) {
+                            console.error("Gagal membersihkan lokasi transaksi:", e);
+                        }
+                    }
+                }
+            );
+        };
+
+        window.renderRadarMangkal = function() {
+            const container = document.getElementById('radar-container');
             if (!container) return;
 
-            const listDaerah = ambilDaerahLokal();
-            const transaksi = window.transactions || [];
-            const filterJam = document.getElementById("filterJamRadar") ? document.getElementById("filterJamRadar").value : "now";
-            const filterLayanan = document.getElementById("filterLayananRadar") ? document.getElementById("filterLayananRadar").value : "all";
+            const nowHour = new Date().getHours();
+            let currentPeriodKey = 'malam';
+            let currentPeriodLabel = 'Malam (19:00 - 04:59)';
+            if (nowHour >= 5 && nowHour <= 11) { currentPeriodKey = 'pagi'; currentPeriodLabel = 'Pagi (05:00 - 11:59)'; }
+            else if (nowHour >= 12 && nowHour <= 14) { currentPeriodKey = 'siang'; currentPeriodLabel = 'Siang (12:00 - 14:59)'; }
+            else if (nowHour >= 15 && nowHour <= 18) { currentPeriodKey = 'sore'; currentPeriodLabel = 'Sore (15:00 - 18:59)'; }
 
-            if (listDaerah.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon-wrapper"><span class="material-icons-round">edit_location_alt</span></div>
-                        <h4>Belum Ada Daerah Mangkal</h4>
-                        <p>Tekan tombol <b>+ Tambah Lokasi</b> di bawah untuk membuat daerah mangkal Anda.</p>
-                    </div>
-                `;
-                return;
-            }
+            const targetPeriod = window.activeRadarTime === 'now' ? currentPeriodKey : window.activeRadarTime;
 
-            const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            const orderMasuk = transaksi.filter(t =>
-                t.type === "in" && String(t.categoryId) !== "999" && t.time && t.location
-            );
-
-            const rekap = {};
-
-            orderMasuk.forEach(t => {
-                if (filterLayanan !== "all" && t.grabService !== filterLayanan) return;
-
-                const parts = t.time.split(":");
-                if (parts.length < 2) return;
-                const mins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-
-                let cocokJam = true;
-                if (filterJam === "now") cocokJam = Math.abs(mins - currentMinutes) <= 90;
-                else if (filterJam === "pagi") cocokJam = mins >= 360 && mins <= 690;
-                else if (filterJam === "siang") cocokJam = mins > 690 && mins <= 900;
-                else if (filterJam === "sore") cocokJam = mins > 900 && mins <= 1140;
-                else if (filterJam === "malam") cocokJam = mins > 1140 && mins <= 1440;
-
-                if (!cocokJam) return;
-
-                const daerahMatch = window.cariDaerahDariLokasi(t.location, listDaerah);
-                const namaGroup = daerahMatch ? daerahMatch.name : `Belum Masuk Daerah (${t.location})`;
-                const isMapped = Boolean(daerahMatch);
-
-                if (!rekap[namaGroup]) {
-                    rekap[namaGroup] = { order: 0, totalUang: 0, titikCounter: {}, isMapped };
-                }
-
-                if (t.categoryName !== "Tip") {
-                    rekap[namaGroup].order += 1;
-                }
-                rekap[namaGroup].totalUang += Number(t.amount || 0);
-                rekap[namaGroup].titikCounter[t.location] = (rekap[namaGroup].titikCounter[t.location] || 0) + 1;
+            const statsMap = {};
+            (window.zones || []).forEach(z => {
+                statsMap[z.id] = {
+                    id: z.id,
+                    name: z.name,
+                    orders: 0,
+                    income: 0,
+                    timeBreakdown: { pagi: 0, siang: 0, sore: 0, malam: 0 }
+                };
             });
 
-            const hasilUrut = Object.entries(rekap)
-                .map(([nama, d]) => {
-                    const rincianTitik = Object.entries(d.titikCounter)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(x => `${window.escapeHTML(x[0])} (${x[1]}x)`)
-                        .join(" • ");
-                    return {
-                        nama,
-                        order: d.order,
-                        totalUang: d.totalUang,
-                        rataRata: d.order > 0 ? Math.round(d.totalUang / d.order) : d.totalUang,
-                        rincianTitik,
-                        isMapped: d.isMapped
+            (window.transactions || []).forEach(trx => {
+                if (trx.type !== 'in' || String(trx.categoryId) === '999' || !trx.location) return;
+                const matchedZone = window.findZoneForLocation(trx.location);
+                const groupKey = matchedZone ? matchedZone.id : ('raw_' + trx.location.trim().toLowerCase());
+                const groupName = matchedZone ? matchedZone.name : trx.location.trim();
+
+                if (!statsMap[groupKey]) {
+                    statsMap[groupKey] = {
+                        id: groupKey,
+                        name: groupName,
+                        orders: 0,
+                        income: 0,
+                        timeBreakdown: { pagi: 0, siang: 0, sore: 0, malam: 0 }
                     };
-                })
-                .sort((a, b) => b.order - a.order || b.totalUang - a.totalUang);
-
-            if (hasilUrut.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon-wrapper"><span class="material-icons-round">schedule</span></div>
-                        <h4>Belum Ada Riwayat di Jam Ini</h4>
-                        <p>Tidak ditemukan catatan orderan masuk pada filter waktu/layanan yang dipilih. Coba ubah filter ke <b>Semua Jam</b>.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = hasilUrut.map((item, index) => `
-                <div class="cat-card">
-                    <div class="cat-top">
-                        <div class="cat-info-wrap">
-                            <div class="cat-icon ${index === 0 ? 'bg-green' : (item.isMapped ? 'bg-blue' : 'bg-orange')}">
-                                <span class="material-icons-round">${index === 0 ? 'local_fire_department' : 'place'}</span>
-                            </div>
-                            <div>
-                                <div class="cat-title">
-                                    #${index + 1} ${window.escapeHTML(item.nama)}
-                                    ${index === 0 ? '<span class="badge badge-tabungan" style="margin-left:6px;">Utama</span>' : ''}
-                                </div>
-                                <div class="cat-subtitle">
-                                    ${item.order} Orderan • Rata-rata ${window.formatRupiah(item.rataRata)}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="trx-amount amount-in">
-                            ${window.formatRupiah(item.totalUang)}
-                        </div>
-                    </div>
-                    <div class="pill-box" style="margin-top: 6px; padding: 10px 12px;">
-                        <div class="pill-left" style="font-size: 11.5px;">
-                            <span class="material-icons-round" style="font-size: 16px; color: #249a95;">my_location</span>
-                            <span>Titik ramai: <b>${item.rincianTitik}</b></span>
-                        </div>
-                    </div>
-                </div>
-            `).join("");
-        };
-
-        window.renderLocationPage = function() {
-            const daerahWrapper = document.getElementById("daerahListWrapper");
-            if (!daerahWrapper) return;
-
-            const listDaerah = ambilDaerahLokal();
-            const transaksi = window.transactions || [];
-
-            const totalTitik = listDaerah.reduce((acc, d) => acc + (d.locations ? d.locations.length : 0), 0);
-            document.getElementById("sumTotalDaerah").textContent = `${listDaerah.length} Daerah`;
-            document.getElementById("sumTotalTitik").textContent = `${totalTitik} Titik`;
-
-            const selectTarget = document.getElementById("selectDaerahTarget");
-            if (selectTarget) {
-                if (listDaerah.length === 0) {
-                    selectTarget.innerHTML = `<option value="">-- Buat Daerah Terlebih Dahulu --</option>`;
-                } else {
-                    selectTarget.innerHTML = listDaerah.map(d => `<option value="${d.id}">${window.escapeHTML(d.name)}</option>`).join("");
                 }
-            }
 
-            if (listDaerah.length === 0) {
-                daerahWrapper.innerHTML = `
-                    <div class="empty-state">
-                        <div class="icon-wrapper"><span class="material-icons-round">create_new_folder</span></div>
-                        <h4>Daftar Daerah Masih Kosong</h4>
-                        <p>Tekan tombol <b>+ Tambah Lokasi</b> di bawah untuk membuat Daerah dan menambahkan nama jalan secara manual.</p>
-                    </div>
-                `;
-            } else {
-                daerahWrapper.innerHTML = listDaerah.map(d => `
-                    <div class="cat-card">
-                        <div class="cat-top">
-                            <div class="cat-info-wrap">
-                                <div class="cat-icon bg-green">
-                                    <span class="material-icons-round">map</span>
-                                </div>
-                                <div>
-                                    <div class="cat-title">${window.escapeHTML(d.name)}</div>
-                                    <div class="cat-subtitle">${(d.locations || []).length} Titik Jalan</div>
-                                </div>
-                            </div>
-                            <div class="cat-actions">
-                                <button type="button" class="cat-action-btn" title="Tambah Titik Jalan" onclick="window.bukaModalTambah('titik', '${d.id}')">
-                                    <span class="material-icons-round" style="font-size:18px; color:#249a95;">add_location</span>
-                                </button>
-                                <button type="button" class="cat-action-btn" title="Ubah Nama Daerah" onclick="window.bukaModalEditDaerah('${d.id}')">
-                                    <span class="material-icons-round" style="font-size:18px;">edit</span>
-                                </button>
-                                <button type="button" class="cat-action-btn danger" title="Hapus Daerah" onclick="window.konfirmasiHapusDaerah('${d.id}', '${window.escapeHTML(d.name).replace(/'/g, "\\'")}')">
-                                    <span class="material-icons-round" style="font-size:18px;">delete</span>
-                                </button>
-                            </div>
-                        </div>
+                let hour = 12;
+                if (trx.time) hour = parseInt(trx.time.split(':')[0], 10);
+                let tSlot = 'malam';
+                if (hour >= 5 && hour <= 11) tSlot = 'pagi';
+                else if (hour >= 12 && hour <= 14) tSlot = 'siang';
+                else if (hour >= 15 && hour <= 18) tSlot = 'sore';
 
-                        ${(d.locations || []).length > 0 ? `
-                            <div class="chip-group" style="flex-wrap: wrap; padding-top: 6px;">
-                                ${d.locations.map(loc => `
-                                    <div class="chip active" style="padding: 6px 12px; font-size: 12px;">
-                                        <span>${window.escapeHTML(loc)}</span>
-                                        <span class="material-icons-round" style="font-size: 14px; color: #c62828; cursor: pointer;" onclick="window.konfirmasiHapusTitik('${d.id}', '${window.escapeHTML(loc).replace(/'/g, "\\'")}')">close</span>
-                                    </div>
-                                `).join("")}
-                            </div>
-                        ` : `
-                            <div style="font-size: 11.5px; color: #94a3b8; font-weight: 600; padding-top: 4px;">
-                                Belum ada titik jalan. Klik ikon pin hijau di kanan atas kartu ini untuk menambah jalan.
-                            </div>
-                        `}
-                    </div>
-                `).join("");
-            }
+                const amt = Number(trx.amount || 0);
+                statsMap[groupKey].timeBreakdown[tSlot] += amt;
 
-            const unmappedSet = new Set();
-            transaksi.forEach(t => {
-                if (t.location && t.location.trim()) {
-                    const match = window.cariDaerahDariLokasi(t.location, listDaerah);
-                    if (!match) unmappedSet.add(t.location.trim());
+                if (targetPeriod === 'all' || targetPeriod === tSlot) {
+                    statsMap[groupKey].orders += 1;
+                    statsMap[groupKey].income += amt;
                 }
             });
 
-            const unmappedSection = document.getElementById("unmappedSection");
-            const unmappedWrapper = document.getElementById("unmappedListWrapper");
+            const ranked = Object.values(statsMap)
+                .filter(item => item.income > 0)
+                .sort((a, b) => b.income - a.income);
 
-            if (unmappedSection && unmappedWrapper) {
-                if (unmappedSet.size > 0 && listDaerah.length > 0) {
-                    unmappedSection.style.display = "block";
-                    unmappedWrapper.innerHTML = Array.from(unmappedSet).map(loc => `
-                        <div class="list-item" style="padding: 12px 14px;">
-                            <div class="list-info">
-                                <div class="list-icon bg-orange" style="width: 36px; height: 36px;">
-                                    <span class="material-icons-round" style="font-size: 18px;">help_outline</span>
-                                </div>
-                                <div>
-                                    <div class="list-title">${window.escapeHTML(loc)}</div>
-                                    <div class="list-desc">Dari riwayat transaksi</div>
-                                </div>
-                            </div>
-                            <div style="width: 150px;">
-                                <select class="filter-input" style="width: 100%;" onchange="window.masukkanRiwayatKeDaerah('${window.escapeHTML(loc).replace(/'/g, "\\'")}', this)">
-                                    <option value="">+ Pilih Daerah</option>
-                                    ${listDaerah.map(d => `<option value="${d.id}">${window.escapeHTML(d.name)}</option>`).join("")}
-                                </select>
-                            </div>
-                        </div>
-                    `).join("");
-                } else {
-                    unmappedSection.style.display = "none";
-                }
+            if (ranked.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon-wrapper"><span class="material-icons-round">radar</span></div>
+                    <h4>Belum Ada Data Cuan di Jam Ini</h4>
+                    <p>Catat transaksi Pemasukan beserta lokasinya di Beranda untuk melihat daerah paling gacor.</p>
+                </div>`;
+                return;
             }
 
-            window.renderRadar();
+            const topSpot = ranked[0];
+            let html = `
+            <div class="radar-hero">
+                <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.9; margin-bottom:4px;">
+                    🔥 REKOMENDASI TERGACOR (${window.activeRadarTime === 'now' ? 'JAM SEKARANG: ' + currentPeriodLabel : (window.activeRadarTime === 'all' ? 'SEMUA WAKTU' : window.activeRadarTime.toUpperCase())})
+                </div>
+                <div style="font-size:22px; font-weight:800; margin-bottom:6px;">${window.escapeHTML(topSpot.name)}</div>
+                <div style="font-size:13px; opacity:0.95; font-weight:600;">
+                    Total Cuan: <strong>${window.formatRupiah(topSpot.income)}</strong> dari <strong>${topSpot.orders} Order</strong>
+                </div>
+            </div>`;
+
+            const slotNames = { pagi: 'Pagi', siang: 'Siang', sore: 'Sore', malam: 'Malam' };
+
+            ranked.forEach((spot, idx) => {
+                const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : 'rank-other'));
+                const avgOrder = spot.orders > 0 ? Math.floor(spot.income / spot.orders) : 0;
+
+                let bestSlot = 'pagi';
+                let bestVal = -1;
+                for (const [sl, val] of Object.entries(spot.timeBreakdown)) {
+                    if (val > bestVal) { bestVal = val; bestSlot = sl; }
+                }
+
+                html += `
+                <div class="zone-card" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
+                        <div class="rank-badge ${rankClass}">#${idx + 1}</div>
+                        <div style="min-width:0;">
+                            <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(spot.name)}</div>
+                            <div class="list-desc">${spot.orders} Order • Rata-rata ${window.formatRupiah(avgOrder)}/order</div>
+                            <div style="font-size:11px; color:#249a95; font-weight:700; margin-top:3px;">⏰ Jam Terbaik: ${slotNames[bestSlot]}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <div style="font-size:14px; font-weight:800; color:#2e7d32;">${window.formatRupiah(spot.income)}</div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
         };
 
-        // Render langsung saat halaman dibuka & pantau saat transaksi Firebase selesai dimuat
-        window.addEventListener("DOMContentLoaded", () => {
-            window.renderLocationPage();
-            let lastTxCount = -1;
-            const syncInterval = setInterval(() => {
-                const currentTxCount = Array.isArray(window.transactions) ? window.transactions.length : 0;
-                if (currentTxCount !== lastTxCount) {
-                    lastTxCount = currentTxCount;
-                    window.renderLocationPage();
+        window.assignRiwayatKeDaerah = async function(locName, targetZoneId) {
+            if (!targetZoneId) return;
+
+            if (targetZoneId === '__NEW__') {
+                const newZone = {
+                    id: window.generateUUID(),
+                    name: locName,
+                    locations: [locName]
+                };
+                window.zones.push(newZone);
+                await window.syncZonesData();
+                return;
+            }
+
+            const zone = window.zones.find(z => String(z.id) === String(targetZoneId));
+            if (zone) {
+                if (!Array.isArray(zone.locations)) zone.locations = [];
+                const exists = zone.locations.some(l => l.trim().toLowerCase() === locName.trim().toLowerCase());
+                if (!exists) {
+                    zone.locations.push(locName);
+                    await window.syncZonesData();
                 }
-            }, 600);
-            setTimeout(() => clearInterval(syncInterval), 10000);
-        });
+            }
+        };
+
+        window.openLokasiModal = function(mode = 'daerah', preselectedZoneId = null) {
+            const err = document.getElementById('lokasi-error-msg');
+            if (err) err.style.display = 'none';
+            document.getElementById('input-zone-name').value = '';
+            document.getElementById('input-street-name').value = '';
+
+            window.switchModalLokasiMode(mode, preselectedZoneId);
+            document.getElementById('modal-lokasi').classList.add('show');
+        };
+
+        window.switchModalLokasiMode = function(mode, preselectedZoneId = null) {
+            const btns = document.querySelectorAll('#lokasi-tab-segment .segmented-btn');
+            if (btns.length >= 2) {
+                btns[0].classList.toggle('active', mode === 'daerah');
+                btns[1].classList.toggle('active', mode === 'titik');
+            }
+
+            const formDaerah = document.getElementById('form-mode-daerah');
+            const formTitik = document.getElementById('form-mode-titik');
+
+            if (mode === 'titik') {
+                if (!window.zones || window.zones.length === 0) {
+                    window.customAlert("Buat Daerah Dulu", "Silakan buat minimal 1 Daerah terlebih dahulu sebelum menambah titik jalan.", "warning");
+                    return window.switchModalLokasiMode('daerah');
+                }
+                formDaerah.style.display = 'none';
+                formTitik.style.display = 'block';
+
+                const selectEl = document.getElementById('select-zone-parent');
+                selectEl.innerHTML = window.zones.map(z => 
+                    `<option value="${window.escapeHTML(z.id)}" ${String(z.id) === String(preselectedZoneId) ? 'selected' : ''}>${window.escapeHTML(z.name)}</option>`
+                ).join('');
+            } else {
+                formDaerah.style.display = 'block';
+                formTitik.style.display = 'none';
+            }
+        };
+
+        window.simpanDaerahBaru = async function() {
+            const nameInput = document.getElementById('input-zone-name');
+            const errBox = document.getElementById('lokasi-error-msg');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                errBox.innerText = "Nama daerah wajib diisi!";
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const sudahAda = (window.zones || []).some(z => z.name.trim().toLowerCase() === name.toLowerCase());
+            if (sudahAda) {
+                errBox.innerText = "Daerah dengan nama tersebut sudah ada!";
+                errBox.style.display = 'block';
+                return;
+            }
+
+            window.zones.push({
+                id: window.generateUUID(),
+                name: name,
+                locations: []
+            });
+
+            window.closeModal('modal-lokasi');
+            await window.syncZonesData();
+        };
+
+        window.simpanTitikJalanBaru = async function() {
+            const parentId = document.getElementById('select-zone-parent').value;
+            const streetInput = document.getElementById('input-street-name');
+            const errBox = document.getElementById('lokasi-error-msg');
+            const streetName = streetInput.value.trim();
+
+            if (!parentId || !streetName) {
+                errBox.innerText = "Pilih daerah dan isi nama titik jalan!";
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const zone = window.zones.find(z => String(z.id) === String(parentId));
+            if (zone) {
+                if (!Array.isArray(zone.locations)) zone.locations = [];
+                const exists = zone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
+                if (exists) {
+                    errBox.innerText = "Titik jalan ini sudah ada di daerah tersebut!";
+                    errBox.style.display = 'block';
+                    return;
+                }
+                zone.locations.push(streetName);
+                window.closeModal('modal-lokasi');
+                await window.syncZonesData();
+            }
+        };
+
+        window.hapusTitikJalan = function(zoneId, streetName) {
+            const zone = window.zones.find(z => String(z.id) === String(zoneId));
+            if (!zone || !Array.isArray(zone.locations)) return;
+            zone.locations = zone.locations.filter(l => l !== streetName);
+            window.syncZonesData();
+        };
+
+        window.hapusDaerah = function(zoneId) {
+            window.customConfirm("Hapus Daerah?", "Yakin ingin menghapus daerah ini beserta daftar titik jalannya? (Riwayat transaksi tidak akan terhapus).", async () => {
+                window.zones = (window.zones || []).filter(z => String(z.id) !== String(zoneId));
+                await window.syncZonesData();
+            });
+        };
     </script>
 
     <!-- PANGGIL FILE JS SENTRAL -->

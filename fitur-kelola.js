@@ -23,7 +23,7 @@ window.renderWalletPage = function() {
     if (dompetArsip.length > 0) {
         html += `<div class="section-title" style="margin-top:20px;">Dompet Diarsipkan</div>`;
         dompetArsip.forEach(wallet => {
-            html += `<div class="list-item" style="opacity: 0.6;"><div class="list-info"><div class="list-icon bg-grey"><span class="material-icons-round">${wallet.icon}</span></div><div><div class="list-title">${window.escapeHTML(wallet.name)}</div><div class="list-desc">Status: Diarsipkan (Saldo: ${window.formatRupiah(wallet.balance)})</div></div></div><div class="list-actions"><button class="btn-icon" onclick="window.pulihkanDompet('${wallet.id}')" title="Pulihkan Dompet"><span class="material-icons-round" style="font-size:18px;">restore</span></button></div></div>`;
+            html += `<div class="list-item" style="opacity: 0.65;"><div class="list-info"><div class="list-icon bg-grey" style="background:#e2e8f0; color:#64748b;"><span class="material-icons-round">${wallet.icon}</span></div><div><div class="list-title">${window.escapeHTML(wallet.name)}</div><div class="list-desc">Status: Diarsipkan (Saldo: ${window.formatRupiah(wallet.balance)})</div></div></div><div class="list-actions"><button class="btn-icon" onclick="window.pulihkanDompet('${wallet.id}')" title="Pulihkan Dompet"><span class="material-icons-round" style="font-size:18px;">restore</span></button></div></div>`;
         });
     }
 
@@ -61,6 +61,9 @@ window.openDompetModal = function(id = null) {
 };
 
 window.simpanDompet = async function() {
+    const submitBtn = document.querySelector('#modal-dompet .btn-submit');
+    if (submitBtn && submitBtn.disabled) return;
+
     const id = document.getElementById('dompet-id').value, 
           name = window.escapeHTML(document.getElementById('dompet-name').value.trim()), 
           type = document.getElementById('dompet-type').value, 
@@ -77,15 +80,39 @@ window.simpanDompet = async function() {
     
     let timeStr = String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0');
     
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Menyimpan..."; }
+
     try {
         if (id) {
             const idx = window.wallets.findIndex(w => String(w.id) == String(id)); 
+            if (idx === -1) return;
+            const oldName = window.wallets[idx].name;
             const oldBalance = Number(window.wallets[idx].balance||0); 
             const selisih = newBalance - oldBalance;
             window.wallets[idx].name = name; 
             window.wallets[idx].type = type; 
             window.wallets[idx].icon = icon; 
             window.wallets[idx].colorClass = colorClass;
+
+            if (oldName !== name) {
+                const trxDiubah = [];
+                window.transactions.forEach(t => {
+                    let changed = false;
+                    if (String(t.walletId) === String(id)) {
+                        t.walletName = name;
+                        changed = true;
+                    }
+                    if (String(t.targetWalletId) === String(id)) {
+                        t.targetWalletName = name;
+                        changed = true;
+                    }
+                    if (changed) trxDiubah.push(t);
+                });
+                if (window.currentUserId && trxDiubah.length > 0) {
+                    await Promise.all(trxDiubah.map(t => window.saveTransactionToDB(t)));
+                }
+            }
+
             if (selisih !== 0) { 
                 const newTrx = { 
                     id: window.generateUUID(), 
@@ -128,6 +155,8 @@ window.simpanDompet = async function() {
     } catch (error) {
         console.error("Gagal menyimpan data:", error);
         window.customAlert("Error", "Terjadi kesalahan saat menyimpan dompet. Silakan coba kembali.", "error");
+    } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Simpan Dompet"; }
     }
 };
 
@@ -251,6 +280,9 @@ window.openKategoriModal = function(id = null) {
 };
 
 window.simpanKategori = async function() {
+    const submitBtn = document.querySelector('#modal-kategori .btn-submit');
+    if (submitBtn && submitBtn.disabled) return;
+
     const id = document.getElementById('kat-id').value, 
           type = document.getElementById('kat-type').value, 
           name = window.escapeHTML(document.getElementById('kat-name').value.trim()), 
@@ -261,14 +293,41 @@ window.simpanKategori = async function() {
         errBox.style.display = 'block'; 
         return; 
     }
-    if (id) { 
-        const idx = window.categories.findIndex(c => String(c.id) == String(id)); 
-        window.categories[idx] = { ...window.categories[idx], type, name, budget }; 
-    } else { 
-        window.categories.push({ id: window.generateUUID(), type, name, budget, icon: type === 'in' ? "payments" : "category", color: type === 'in' ? "#2e7d32" : "#78909c" }); 
+
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Menyimpan..."; }
+
+    try {
+        if (id) { 
+            const idx = window.categories.findIndex(c => String(c.id) == String(id)); 
+            if (idx !== -1) {
+                const oldName = window.categories[idx].name;
+                window.categories[idx] = { ...window.categories[idx], type, name, budget }; 
+
+                // Sinkronkan perubahan nama kategori ke riwayat transaksi lama
+                if (oldName !== name) {
+                    const trxDiubah = [];
+                    window.transactions.forEach(t => {
+                        if (String(t.categoryId) === String(id)) {
+                            t.categoryName = name;
+                            trxDiubah.push(t);
+                        }
+                    });
+                    if (window.currentUserId && trxDiubah.length > 0) {
+                        await Promise.all(trxDiubah.map(t => window.saveTransactionToDB(t)));
+                    }
+                }
+            }
+        } else { 
+            window.categories.push({ id: window.generateUUID(), type, name, budget, icon: type === 'in' ? "payments" : "category", color: type === 'in' ? "#2e7d32" : "#78909c" }); 
+        }
+        window.closeModal('modal-kategori'); 
+        await window.saveDataToFirestore();
+    } catch (e) {
+        console.error("Gagal menyimpan kategori:", e);
+        window.customAlert("Error", "Gagal menyimpan kategori.", "error");
+    } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Simpan Kategori"; }
     }
-    window.closeModal('modal-kategori'); 
-    await window.saveDataToFirestore();
 };
 
 window.hapusKategori = function(id) { 
@@ -445,7 +504,7 @@ window.renderTargetPage = function() {
             let returnText = retur > 0 ? '+ ' + window.formatRupiah(retur) : (retur < 0 ? '- ' + window.formatRupiah(Math.abs(retur)) : window.formatRupiah(0));
             cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #4338ca; font-size: 14px;">${window.formatRupiah(valTerkini)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%;"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:14px; margin-top:18px; border:1px solid #e2e8f0;"><div style="font-size:12.5px; color:#64748b; font-weight:700;">Modal: <span style="color:#1a1a1a; font-weight:800; font-size: 13.5px;">${window.formatRupiah(currAmt)}</span></div><div style="font-size:12.5px; color:#64748b; font-weight:700;">Return: <span style="color:${returnColor}; font-weight:800; font-size: 13.5px;">${returnText}</span></div></div><div class="btn-grid two"><button class="btn-action btn-setor-invest" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">add</span> Top Up</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Jual/Tarik</button></div><button class="btn-action btn-update" style="margin-top:12px; width:100%;" onclick="window.openActionModal('${t.id}', 'update')"><span class="material-icons-round" style="font-size:18px;">sync</span> Update Nilai Terkini</button>`;
         } else {
-            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%;"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor Tabungan</button></div>`;
+            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%;"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid two"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Tarik</button></div>`;
         }
 
         html += `<div class="target-card"><div class="target-top"><div class="target-info-wrap"><div class="target-title">${window.escapeHTML(t.name)}</div></div><div style="display: flex; align-items: center; gap: 10px;">${badgeHtml}<div class="list-actions"><button class="cat-action-btn" onclick="window.openTargetModal('${t.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button><button class="cat-action-btn danger" onclick="window.hapusTarget('${t.id}')"><span class="material-icons-round">delete_outline</span></button></div></div></div>${cardContent}</div>`;
@@ -595,7 +654,7 @@ window.openActionModal = function(id, type) {
             btnSubmit.innerText = "Simpan Setoran"; 
             btnSubmit.style.background = "linear-gradient(135deg, #249a95 0%, #1e8580 100%)"; 
         } else if(type === 'tarik') { 
-            title.innerText = `Jual / Tarik Dana`; 
+            title.innerText = t.tipe === 'investasi' ? `Jual / Tarik Dana` : `Tarik Tabungan`; 
             walletLabel.innerText = "Tujuan Dana (Masuk ke dompet mana?)"; 
             btnSubmit.innerText = "Simpan Penarikan"; 
             btnSubmit.style.background = "#e11d48"; 
@@ -650,6 +709,7 @@ window.prosesAksiTarget = async function() {
     
     if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Memproses..."; }
     const originalTransactions = JSON.parse(JSON.stringify(window.transactions));
+    const timeStr = String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0');
 
     try {
         if (type === 'setor') {
@@ -663,11 +723,15 @@ window.prosesAksiTarget = async function() {
                 id: window.generateUUID(), type: 'out', amount: amount, 
                 note: `Setor/Top Up: ${t.name}`, walletId: wallet.id, walletName: wallet.name, 
                 categoryId: 999, categoryName: 'Alokasi Target', 
-                date: window.getLocalDateString(), targetId: t.id 
+                date: window.getLocalDateString(), time: timeStr, targetId: t.id 
             };
             window.transactions.push(newTrx);
             window.targets[targetIndex].currentAmount = Number(t.currentAmount||0) + amount; 
-            if(t.tipe === 'investasi') window.targets[targetIndex].nilaiTerkini = Number(t.nilaiTerkini||t.currentAmount||0) + amount; 
+            if(t.tipe === 'investasi') {
+                window.targets[targetIndex].nilaiTerkini = Number(t.nilaiTerkini||t.currentAmount||0) + amount;
+            } else {
+                window.targets[targetIndex].nilaiTerkini = window.targets[targetIndex].currentAmount;
+            }
             
             await window.saveTransactionToDB(newTrx);
         } else if (type === 'tarik') {
@@ -691,7 +755,7 @@ window.prosesAksiTarget = async function() {
                     id: window.generateUUID(), type: 'in', amount: amount, 
                     note: `Jual/Tarik: ${t.name}`, walletId: wallet.id, walletName: wallet.name, 
                     categoryId: 999, categoryName: 'Pencairan Investasi', 
-                    date: window.getLocalDateString(), targetId: t.id, modalDeducted: potonganModal 
+                    date: window.getLocalDateString(), time: timeStr, targetId: t.id, modalDeducted: potonganModal 
                 };
                 window.transactions.push(newTrx);
                 window.targets[targetIndex].nilaiTerkini = Math.max(0, valTerkini - amount);
@@ -700,12 +764,13 @@ window.prosesAksiTarget = async function() {
             } else {
                 const newTrx = { 
                     id: window.generateUUID(), type: 'in', amount: amount, 
-                    note: `Jual/Tarik: ${t.name}`, walletId: wallet.id, walletName: wallet.name, 
-                    categoryId: 999, categoryName: 'Pencairan Investasi', 
-                    date: window.getLocalDateString(), targetId: t.id 
+                    note: `Tarik Tabungan: ${t.name}`, walletId: wallet.id, walletName: wallet.name, 
+                    categoryId: 999, categoryName: 'Pencairan Tabungan', 
+                    date: window.getLocalDateString(), time: timeStr, targetId: t.id 
                 };
                 window.transactions.push(newTrx);
                 window.targets[targetIndex].currentAmount = Math.max(0, Number(t.currentAmount||0) - amount);
+                window.targets[targetIndex].nilaiTerkini = window.targets[targetIndex].currentAmount;
                 await window.saveTransactionToDB(newTrx);
             }
         }

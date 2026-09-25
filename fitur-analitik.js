@@ -1,9 +1,7 @@
 // ============================================================
 // MOCATAT - FITUR ANALITIK & LOKASI MANGKAL (fitur-analitik.js)
-// Mencakup: analitik.html (Statistik) & Sinkronisasi Cloud lokasi.html
+// Mencakup: analitik.html (Statistik) & Pengelompokan Daerah
 // ============================================================
-
-const STORAGE_KEY_DAERAH = "mocatat_daerah_manual_v1";
 
 // ==========================================
 // 10. ANALITIK LOGIC (analitik.html)
@@ -25,6 +23,7 @@ window.renderStatistik = function() {
     let totalOrders = 0; 
     let grabStats = {}; 
     let locationStats = {}; 
+    let locationOrders = {};
     let timeStats = { pagi: 0, siang: 0, sore: 0, malam: 0 }; 
     let expenseByCategoryObj = {}; 
     let serviceExpenses = 0; 
@@ -97,8 +96,13 @@ window.renderStatistik = function() {
                     totalOrders++; 
                     grabStats[trx.grabService] = (grabStats[trx.grabService] || 0) + Number(trx.amount||0); 
                 }
-                if (trx.location) { 
-                    locationStats[trx.location] = (locationStats[trx.location] || 0) + Number(trx.amount||0); 
+                if (trx.location && trx.location.trim() !== '') {
+                    const mappedZone = typeof window.getZoneNameByLocation === 'function' 
+                        ? window.getZoneNameByLocation(trx.location) 
+                        : null;
+                    const groupLabel = mappedZone || trx.location.trim();
+                    locationStats[groupLabel] = (locationStats[groupLabel] || 0) + Number(trx.amount||0);
+                    locationOrders[groupLabel] = (locationOrders[groupLabel] || 0) + 1;
                 }
             }
         } 
@@ -161,10 +165,11 @@ window.renderStatistik = function() {
     htmlContent += `</div>`;
 
     if (Object.keys(locationStats).length > 0) { 
-        htmlContent += `<div class="stat-card" style="padding: 16px; margin-bottom: 25px;"><div style="font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 15px; display: flex; justify-content: space-between;"><span>Per area/lokasi</span><a href="lokasi.html" style="font-size:11px; color:#249a95; font-weight:700;">Buka Radar Mangkal ➔</a></div>`; 
+        htmlContent += `<div class="stat-card" style="padding: 16px; margin-bottom: 25px;"><div style="font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 15px; display: flex; justify-content: space-between;"><span>Per daerah / lokasi</span><a href="lokasi.html" style="font-size:11px; color:#249a95; font-weight:700;">Buka Radar Mangkal ➔</a></div>`; 
         const sortedLocs = Object.entries(locationStats).sort((a, b) => b[1] - a[1]); 
         for (const [loc, amount] of sortedLocs) { 
-            htmlContent += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><div style="font-size: 13px; font-weight: 700; color: #333; display: flex; align-items: center; gap:6px;"><span class="material-icons-round" style="font-size:14px; color:#1976d2;">place</span> ${window.escapeHTML(loc)}</div><div style="font-size: 13px; font-weight: 800; color: #1976d2;">${window.formatRupiah(amount)}</div></div>`; 
+            const countOrd = locationOrders[loc] || 1;
+            htmlContent += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><div style="font-size: 13px; font-weight: 700; color: #333; display: flex; align-items: center; gap:6px;"><span class="material-icons-round" style="font-size:14px; color:#1976d2;">place</span> ${window.escapeHTML(loc)} <span style="font-size:11px; color:#94a3b8; font-weight:600;">(${countOrd}x)</span></div><div style="font-size: 13px; font-weight: 800; color: #1976d2;">${window.formatRupiah(amount)}</div></div>`; 
         } 
         htmlContent += `</div>`; 
     }

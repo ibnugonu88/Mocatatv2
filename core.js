@@ -40,7 +40,7 @@ try {
             onMessage(messaging, (payload) => {
                 const title = window.escapeHTML(payload?.notification?.title || "MoCatat");
                 const body = window.escapeHTML(payload?.notification?.body || "Pesan baru");
-                window.notifications.push({ id: crypto.randomUUID(), title, body, date: window.getLocalDateString(), read: false });
+                window.notifications.push({ id: window.generateUUID(), title, body, date: window.getLocalDateString(), read: false });
                 window.saveDataToFirestoreSilently().then(() => { if(window.renderNotifications) window.renderNotifications(); });
                 window.customAlert("Pesan Baru: " + title, body);
             });
@@ -193,7 +193,6 @@ window.recalculateBalances = function() {
 };
 
 window.saveDataToFirestore = async function() { 
-    // Langsung render tampilan di layar HP tanpa menunggu internet selesai
     window.callPageRender(); 
     if(!window.currentUserId) return; 
     try { 
@@ -221,6 +220,8 @@ window.deleteTransactionFromDB = async function(trxId) {
 };
 
 export function initAuthListener() {
+    window.injectImportButtonUI();
+    window.updateNotifStatusUI();
     if (!auth) return;
     onAuthStateChanged(auth, async (user) => {
         const navBottom = document.getElementById('bottom-navigation');
@@ -322,21 +323,95 @@ export function initAuthListener() {
 }
 
 // ==========================================
-// 6. REGISTRASI SERVICE WORKER (PWA & FCM)
+// 6. REGISTRASI SERVICE WORKER & NOTIFIKASI FIREBASE
 // ==========================================
+window.swRegistration = null;
+
+window.updateNotifStatusUI = function() {
+    const statusText = document.getElementById('notif-status-text');
+    const chevron = document.getElementById('notif-chevron');
+    if (!statusText || !chevron) return;
+
+    if (!('Notification' in window)) {
+        statusText.innerText = "Notifikasi Tidak Didukung";
+        chevron.innerText = "block";
+        chevron.style.color = "#94a3b8";
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        statusText.innerText = "Notifikasi Firebase Aktif";
+        chevron.innerText = "toggle_on";
+        chevron.style.color = "#249a95";
+        chevron.style.fontSize = "28px";
+    } else if (Notification.permission === 'denied') {
+        statusText.innerText = "Notifikasi Diblokir Browser";
+        chevron.innerText = "toggle_off";
+        chevron.style.color = "#c62828";
+        chevron.style.fontSize = "26px";
+    } else {
+        statusText.innerText = "Izinkan Notifikasi Firebase";
+        chevron.innerText = "toggle_off";
+        chevron.style.color = "#b0bec5";
+        chevron.style.fontSize = "26px";
+    }
+};
+
+window.toggleFirebaseNotification = async function() {
+    if (!('Notification' in window)) {
+        return window.customAlert("Tidak Didukung", "Browser di perangkat Anda tidak mendukung fitur notifikasi.", "warning");
+    }
+
+    if (Notification.permission === 'granted') {
+        window.updateNotifStatusUI();
+        return window.customAlert("Sudah Aktif 🔔", "Notifikasi Firebase sudah aktif di perangkat ini.");
+    }
+
+    if (Notification.permission === 'denied') {
+        return window.customAlert("Izin Diblokir", "Izin notifikasi sebelumnya ditolak. Silakan aktifkan kembali melalui Pengaturan Situs (ikon gembok di pojok kiri atas browser).", "warning");
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        window.updateNotifStatusUI();
+        if (permission === 'granted') {
+            if (messaging && window.swRegistration) {
+                try {
+                    const currentToken = await getToken(messaging, {
+                        vapidKey: "MASUKKAN_VAPID_KEY_FIREBASE_KAMU_DI_SINI",
+                        serviceWorkerRegistration: window.swRegistration
+                    });
+                    if (currentToken && window.currentUserId) {
+                        await setDoc(doc(db, "users", window.currentUserId), { fcmToken: currentToken }, { merge: true });
+                    }
+                } catch (tokenErr) {
+                    console.warn("Info token FCM:", tokenErr);
+                }
+            }
+            window.customAlert("Berhasil Diaktifkan! 🎉", "Notifikasi Firebase sekarang sudah aktif untuk akun Anda.");
+        } else {
+            window.customAlert("Tidak Diizinkan", "Anda belum mengizinkan akses notifikasi.", "warning");
+        }
+    } catch (e) {
+        console.error("Gagal meminta izin notifikasi:", e);
+        window.customAlert("Error", "Terjadi kesalahan saat mengaktifkan notifikasi.", "error");
+    }
+};
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .then(registration => {
+                window.swRegistration = registration;
+                window.updateNotifStatusUI();
                 console.log('[PWA] Service Worker terdaftar dengan scope:', registration.scope);
                 
-                if (messaging) {
+                if (messaging && Notification.permission === 'granted') {
                     getToken(messaging, { 
                         vapidKey: "MASUKKAN_VAPID_KEY_FIREBASE_KAMU_DI_SINI",
                         serviceWorkerRegistration: registration 
                     }).then(async (currentToken) => {
                         if (currentToken && window.currentUserId) {
-                            console.log("Token FCM Siap, menyimpannya ke database...");
                             await setDoc(doc(db, "users", window.currentUserId), { fcmToken: currentToken }, { merge: true });
                         }
                     }).catch((err) => {
@@ -351,31 +426,168 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// 7. FITUR EKSPOR DATA JSON BACKUP
+// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP
 // ==========================================
+window.injectImportButtonUI = function() {
+    const exportItem = document.querySelector('.settings-item[onclick*="exportDataJSON"]');
+    if (!exportItem || document.getElementById('item-import-json')) return;
+
+    const importItem = document.createElement('div');
+    importItem.className = 'settings-item';
+    importItem.id = 'item-import-json';
+    importItem.onclick = () => window.triggerImportJSON();
+    importItem.innerHTML = `
+        <div class="settings-icon" style="background:#e3f2fd; color:#1976d2;">
+            <span class="material-icons-round">upload_file</span>
+        </div>
+        <div class="settings-text">Impor Data (Restore JSON)</div>
+        <span class="material-icons-round settings-chevron">chevron_right</span>
+    `;
+    exportItem.insertAdjacentElement('afterend', importItem);
+
+    if (!document.getElementById('input-file-import-json')) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'input-file-import-json';
+        fileInput.accept = '.json,application/json';
+        fileInput.style.display = 'none';
+        fileInput.onchange = (e) => window.handleImportFileChange(e);
+        document.body.appendChild(fileInput);
+    }
+};
+
 window.exportDataJSON = function() {
     if (!window.currentUserId) {
         return window.customAlert("Gagal", "Anda harus masuk ke akun terlebih dahulu untuk mengekspor data.", "error");
     }
     
     const dataBackup = {
-        wallets: window.wallets,
-        categories: window.categories,
-        transactions: window.transactions,
-        targets: window.targets,
-        kmRecords: window.kmRecords,
-        vehicleSettings: window.vehicleSettings,
-        zones: window.zones,
+        wallets: window.wallets || [],
+        categories: window.categories || [],
+        transactions: window.transactions || [],
+        targets: window.targets || [],
+        notifications: window.notifications || [],
+        kmRecords: window.kmRecords || [],
+        vehicleSettings: window.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null },
+        zones: window.zones || [],
         exportDate: new Date().toISOString()
     };
     
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataBackup, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "MoCatat_Backup_" + window.getLocalDateString() + ".json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    
-    window.customAlert("Berhasil!", "Seluruh data Anda berhasil diekspor dan diunduh dalam format JSON.");
+    try {
+        const jsonString = JSON.stringify(dataBackup, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", url);
+        downloadAnchorNode.setAttribute("download", "MoCatat_Backup_" + window.getLocalDateString() + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        window.customAlert("Berhasil!", "Seluruh data Anda berhasil diekspor dan diunduh dalam format JSON.");
+    } catch (err) {
+        console.error("Export error:", err);
+        window.customAlert("Gagal", "Terjadi kesalahan saat mengekspor file backup.", "error");
+    }
+};
+
+window.triggerImportJSON = function() {
+    if (!window.currentUserId) {
+        return window.customAlert("Gagal", "Anda harus masuk ke akun terlebih dahulu untuk mengimpor data.", "error");
+    }
+    let fileInput = document.getElementById('input-file-import-json');
+    if (!fileInput) {
+        window.injectImportButtonUI();
+        fileInput = document.getElementById('input-file-import-json');
+    }
+    if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+    }
+};
+
+window.handleImportFileChange = function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || typeof parsed !== 'object' || (!Array.isArray(parsed.wallets) && !Array.isArray(parsed.transactions))) {
+                return window.customAlert("File Tidak Valid", "Format file JSON tidak sesuai dengan struktur backup MoCatat.", "error");
+            }
+
+            const jmlTrx = Array.isArray(parsed.transactions) ? parsed.transactions.length : 0;
+            const jmlDompet = Array.isArray(parsed.wallets) ? parsed.wallets.length : 0;
+
+            window.customConfirm(
+                "Pulihkan Data Backup?",
+                `Ditemukan ${jmlDompet} Dompet dan ${jmlTrx} Transaksi. Data saat ini akan digantikan oleh data dari file backup. Lanjutkan?`,
+                async () => {
+                    await window.prosesRestoreDataJSON(parsed);
+                }
+            );
+        } catch (err) {
+            console.error("Gagal membaca JSON:", err);
+            window.customAlert("Error", "File JSON rusak atau tidak dapat dibaca.", "error");
+        }
+    };
+    reader.readAsText(file);
+};
+
+window.prosesRestoreDataJSON = async function(parsed) {
+    if (!window.currentUserId) return;
+    const loading = document.getElementById('loading-screen');
+    if (loading) loading.classList.remove('hide');
+
+    try {
+        const existingSnap = await getDocs(collection(db, "users", window.currentUserId, "transactions"));
+        const oldDocs = [];
+        existingSnap.forEach(d => oldDocs.push(d.ref));
+
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < oldDocs.length; i += CHUNK_SIZE) {
+            const chunk = oldDocs.slice(i, i + CHUNK_SIZE);
+            const batch = writeBatch(db);
+            chunk.forEach(ref => batch.delete(ref));
+            await batch.commit();
+        }
+
+        window.wallets = Array.isArray(parsed.wallets) ? parsed.wallets : [];
+        window.categories = Array.isArray(parsed.categories) ? parsed.categories : [];
+        window.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
+        window.targets = Array.isArray(parsed.targets) ? parsed.targets : [];
+        window.notifications = Array.isArray(parsed.notifications) ? parsed.notifications : [];
+        window.kmRecords = Array.isArray(parsed.kmRecords) ? parsed.kmRecords : [];
+        window.vehicleSettings = parsed.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
+        window.zones = Array.isArray(parsed.zones) ? parsed.zones : [];
+
+        try {
+            localStorage.setItem("mocatat_daerah_manual_v1", JSON.stringify(window.zones));
+        } catch (e) {}
+
+        window.recalculateBalances();
+
+        await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload());
+
+        for (let i = 0; i < window.transactions.length; i += CHUNK_SIZE) {
+            const chunk = window.transactions.slice(i, i + CHUNK_SIZE);
+            const batch = writeBatch(db);
+            chunk.forEach(trx => {
+                if (!trx.id) trx.id = window.generateUUID();
+                const trxRef = doc(db, "users", window.currentUserId, "transactions", String(trx.id));
+                batch.set(trxRef, trx);
+            });
+            await batch.commit();
+        }
+
+        window.callPageRender();
+        window.customAlert("Berhasil Dipulihkan! 🎉", "Seluruh data backup JSON berhasil diimpor dan disinkronkan ke akun Anda.");
+    } catch (err) {
+        console.error("Restore failed:", err);
+        window.sembunyikanLoading();
+        window.customAlert("Gagal Impor", "Terjadi kesalahan saat menyimpan data backup ke database.", "error");
+    }
 };

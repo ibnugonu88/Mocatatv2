@@ -5,6 +5,21 @@
 
 import { db, doc, writeBatch } from "./core.js";
 
+// Helper untuk mencocokkan nama jalan dengan Daerah (Zone)
+window.getZoneNameByLocation = function(rawLoc) {
+    if (!rawLoc) return null;
+    const clean = rawLoc.trim().toLowerCase();
+    const zones = window.zones || [];
+    for (const z of zones) {
+        if ((z.name || '').trim().toLowerCase() === clean) return z.name;
+        if (Array.isArray(z.locations)) {
+            const found = z.locations.some(l => (l || '').trim().toLowerCase() === clean);
+            if (found) return z.name;
+        }
+    }
+    return null;
+};
+
 // ==========================================
 // 7. TRANSAKSI LOGIC
 // ==========================================
@@ -46,9 +61,14 @@ window.selectGrabService = function(service, el) {
 window.pilihLokasiCepat = function(namaLokasi, el) {
     const locInput = document.getElementById('input-location');
     if (!locInput) return;
-    locInput.value = namaLokasi;
-    document.querySelectorAll('#location-quick-chips .chip').forEach(c => c.classList.remove('active'));
-    if (el) el.classList.add('active');
+    if (locInput.value === namaLokasi && el && el.classList.contains('active')) {
+        locInput.value = '';
+        el.classList.remove('active');
+    } else {
+        locInput.value = namaLokasi;
+        document.querySelectorAll('#location-quick-chips .chip').forEach(c => c.classList.remove('active'));
+        if (el) el.classList.add('active');
+    }
 };
 
 window.openModalTrans = function(type, trxId = null) {
@@ -70,36 +90,36 @@ window.openModalTrans = function(type, trxId = null) {
     }
     
     const grabGroup = document.getElementById('grab-service-group');
-    if (type === 'in' && grabGroup) grabGroup.style.display = 'block'; 
-    else if(grabGroup) grabGroup.style.display = 'none';
+    if (grabGroup) grabGroup.style.display = (type === 'in') ? 'block' : 'none';
+    
+    const locationGroup = document.getElementById('location-group');
+    if (locationGroup) locationGroup.style.display = (type === 'in') ? 'block' : 'none';
     
     if(document.getElementById('input-grab-service')) document.getElementById('input-grab-service').value = '';
     document.querySelectorAll('.grab-chip').forEach(c => c.classList.remove('grab-active'));
 
-    // --- SUGGESTION LOKASI OTOMATIS (DARI ZONA MANUAL + RIWAYAT TRANSAKSI) ---
-    const manualLocs = (window.zones || []).flatMap(z => z.locations || []);
-    const historyLocs = window.transactions.map(t => t.location).filter(l => l && l.trim() !== '');
-    const uniqueLocs = [...new Set([...manualLocs, ...historyLocs])];
-
+    // --- MATIKAN SARAN CHROME & HANYA GUNAKAN LOKASI MANUAL DARI ZONES ---
+    const locInputEl = document.getElementById('input-location');
+    if (locInputEl) {
+        locInputEl.removeAttribute('list');
+        locInputEl.setAttribute('autocomplete', 'off');
+    }
     const dataList = document.getElementById('location-suggestions');
-    if(dataList) {
-        let opts = '';
-        uniqueLocs.forEach(loc => { opts += `<option value="${window.escapeHTML(loc)}"></option>`; });
-        dataList.innerHTML = opts;
-    }
+    if (dataList) dataList.innerHTML = '';
 
-    const quickChips = document.getElementById('location-quick-chips');
-    if (quickChips) {
-        if (manualLocs.length > 0) {
-            quickChips.style.display = 'flex';
-            quickChips.innerHTML = manualLocs.map(loc => 
-                `<div class="chip" style="padding: 6px 12px; font-size: 12px;" onclick="window.pilihLokasiCepat('${window.escapeHTML(loc).replace(/'/g, "\\'")}', this)"><span class="material-icons-round" style="font-size:14px;">place</span> ${window.escapeHTML(loc)}</div>`
-            ).join('');
-        } else {
-            quickChips.style.display = 'none';
+    const zoneNames = (window.zones || []).map(z => z.name).filter(n => n && n.trim() !== '');
+    const manualLocs = (window.zones || []).flatMap(z => z.locations || []).filter(l => l && l.trim() !== '');
+
+    const seenLower = new Set();
+    const uniqueLocs = [];
+    [...zoneNames, ...manualLocs].forEach(item => {
+        const clean = item.trim();
+        const lower = clean.toLowerCase();
+        if (clean && !seenLower.has(lower)) {
+            seenLower.add(lower);
+            uniqueLocs.push(clean);
         }
-    }
-    // -------------------------------------------------------------------------
+    });
 
     let now = new Date(); 
     let defaultTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
@@ -126,6 +146,30 @@ window.openModalTrans = function(type, trxId = null) {
             if(trx.location) locationVal = trx.location;
         } 
     }
+
+    let quickChips = document.getElementById('location-quick-chips');
+    if (!quickChips && locationGroup) {
+        quickChips = document.createElement('div');
+        quickChips.id = 'location-quick-chips';
+        quickChips.className = 'chip-group';
+        quickChips.style.marginTop = '8px';
+        locationGroup.appendChild(quickChips);
+    }
+
+    if (quickChips) {
+        if (type === 'in' && uniqueLocs.length > 0) {
+            quickChips.style.display = 'flex';
+            quickChips.innerHTML = uniqueLocs.map(loc => {
+                const isSelected = locationVal && locationVal.trim().toLowerCase() === loc.toLowerCase();
+                const isZone = zoneNames.some(zn => zn.trim().toLowerCase() === loc.toLowerCase());
+                const iconName = isZone ? 'map' : 'place';
+                return `<div class="chip ${isSelected ? 'active' : ''}" style="padding: 6px 12px; font-size: 12px;" onclick="window.pilihLokasiCepat('${window.escapeHTML(loc).replace(/'/g, "\\'")}', this)"><span class="material-icons-round" style="font-size:14px;">${iconName}</span> ${window.escapeHTML(loc)}</div>`;
+            }).join('');
+        } else {
+            quickChips.style.display = 'none';
+        }
+    }
+    // -------------------------------------------------------------------------
     
     document.getElementById('input-amount').value = amount; 
     document.getElementById('input-note').value = note; 
@@ -190,7 +234,8 @@ window.simpanTransaksi = async function() {
           trxDate = window.escapeHTML(document.getElementById('input-date').value) || window.getLocalDateString();
     const trxTime = document.getElementById('input-time') ? (document.getElementById('input-time').value || "12:00") : "12:00"; 
     const grabService = document.getElementById('input-grab-service') ? document.getElementById('input-grab-service').value : null;
-    const locationVal = document.getElementById('input-location') ? window.escapeHTML(document.getElementById('input-location').value.trim()) : null; 
+    const rawLocationInput = document.getElementById('input-location') ? document.getElementById('input-location').value.trim() : '';
+    const locationVal = (type === 'in' && rawLocationInput) ? window.escapeHTML(rawLocationInput) : null; 
 
     if (!amount || amount <= 0 || !note || !walletId || (isTransfer && !targetWalletId) || (!isTransfer && !catId)) { 
         errTrans.innerText = "Data tidak valid."; 
@@ -240,7 +285,7 @@ window.simpanTransaksi = async function() {
         targetWalletId: targetWalletId, targetWalletName: targetWallet ? targetWallet.name : null, 
         date: trxDate, time: trxTime, 
         grabService: type === 'in' && grabService ? grabService : null, 
-        location: locationVal ? locationVal : null 
+        location: locationVal 
     };
     
     window.transactions.push(newTrxData);
@@ -319,6 +364,9 @@ window.switchTab = function(pageId, navIndex) {
     }
     const tgt = document.getElementById(pageId); 
     if(tgt) tgt.classList.add('active'); 
+    if(pageId === 'page-akun' && typeof window.updateNotifStatusUI === 'function') {
+        window.updateNotifStatusUI();
+    }
     window.scrollTo(0, 0);
 };
 
@@ -357,10 +405,17 @@ window.renderDashboard = function() {
     const walletContainer = document.getElementById('wallet-container'); 
     if(!walletContainer) return;
     window.renderNotifications(); 
+    if (typeof window.updateNotifStatusUI === 'function') window.updateNotifStatusUI();
+
     let totalSaldo = 0; 
     let wHTML = '';
     
-    window.wallets.forEach(wallet => { totalSaldo += Number(wallet.balance||0); });
+    const dompetAktif = window.wallets.filter(w => !w.isArchived);
+    dompetAktif.forEach(wallet => { 
+        totalSaldo += Number(wallet.balance||0);
+        wHTML += `<div class="wallet-card"><div class="wallet-name"><span class="material-icons-round ${wallet.colorClass}">${wallet.icon}</span> ${window.escapeHTML(wallet.name)}</div><div class="wallet-saldo">${window.formatRupiah(wallet.balance)}</div></div>`; 
+    });
+    walletContainer.innerHTML = wHTML; 
     
     let totalAset = 0;
     window.targets.forEach(t => {
@@ -370,21 +425,18 @@ window.renderDashboard = function() {
 
     let kekayaanBersih = totalSaldo + totalAset;
     
-    const dompetAktif = window.wallets.filter(w => !w.isArchived);
-    dompetAktif.forEach(wallet => { 
-        wHTML += `<div class="wallet-card"><div class="wallet-name"><span class="material-icons-round ${wallet.colorClass}">${wallet.icon}</span> ${window.escapeHTML(wallet.name)}</div><div class="wallet-saldo">${window.formatRupiah(wallet.balance)}</div></div>`; 
-    });
-    walletContainer.innerHTML = wHTML; 
-    
     if(document.getElementById('net-worth')) document.getElementById('net-worth').innerText = window.formatRupiah(kekayaanBersih);
     if(document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
     if(document.getElementById('total-asset')) document.getElementById('total-asset').innerText = window.formatRupiah(totalAset);
 
-    // Update ringkasan kartu Lokasi & Strategi Mangkal di Beranda
     const infoDaerahEl = document.getElementById('info-daerah-beranda');
-    if (infoDaerahEl && Array.isArray(window.zones) && window.zones.length > 0) {
-        const totalTitik = window.zones.reduce((acc, z) => acc + (z.locations ? z.locations.length : 0), 0);
-        infoDaerahEl.innerText = `${window.zones.length} Daerah • ${totalTitik} Titik Mangkal aktif`;
+    if (infoDaerahEl) {
+        if (Array.isArray(window.zones) && window.zones.length > 0) {
+            const totalTitik = window.zones.reduce((acc, z) => acc + (z.locations ? z.locations.length : 0), 0);
+            infoDaerahEl.innerText = `${window.zones.length} Daerah • ${totalTitik} Titik Mangkal aktif`;
+        } else {
+            infoDaerahEl.innerText = `Kelola daerah & cek titik gacor per jam`;
+        }
     }
 
     const allocationCard = document.getElementById('smart-allocation-card');
@@ -482,7 +534,16 @@ window.generateTrxHTML = function(trx, showActions = false) {
     const timeDisplay = trx.time ? ` • ${trx.time}` : '';
     const desc = isTransfer ? `${window.escapeHTML(trx.walletName)} ➔ ${window.escapeHTML(trx.targetWalletName)}${timeDisplay}` : `${window.escapeHTML(trx.walletName)} • ${window.escapeHTML(trx.categoryName || 'Transfer')}${timeDisplay}`;
     let grabBadge = trx.grabService ? `<span style="font-size: 10px; background: #00B14F; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display:inline-block; white-space:nowrap;">${window.escapeHTML(trx.grabService)}</span>` : '';
-    let locBadge = trx.location ? `<span style="font-size: 10px; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display:inline-block; white-space:nowrap;"><span class="material-icons-round" style="font-size: 10px; vertical-align: middle;">place</span> ${window.escapeHTML(trx.location)}</span>` : '';
+    
+    let locBadge = '';
+    if (trx.location) {
+        const mappedZone = window.getZoneNameByLocation(trx.location);
+        const labelLoc = (mappedZone && mappedZone.toLowerCase() !== trx.location.trim().toLowerCase())
+            ? `${window.escapeHTML(mappedZone)} (${window.escapeHTML(trx.location)})`
+            : window.escapeHTML(trx.location);
+        locBadge = `<span style="font-size: 10px; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display:inline-block; white-space:nowrap;"><span class="material-icons-round" style="font-size: 10px; vertical-align: middle;">place</span> ${labelLoc}</span>`;
+    }
+
     let actionHTML = (showActions && String(trx.categoryId) !== '999' && !isTransfer) 
         ? `<div class="list-actions" style="margin-left: 15px;"><button class="btn-icon" style="padding:4px;" onclick="window.openModalTrans('${trx.type}', '${trx.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button><button class="btn-icon delete" style="padding:4px;" onclick="window.hapusTransaksi('${trx.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button></div>` 
         : (showActions && isTransfer 
@@ -501,6 +562,7 @@ window.renderHistoryPage = function() {
     if(!container) return;
     const filterPeriod = document.getElementById('filter-period').value; 
     const filterType = document.getElementById('filter-type').value;
+    const searchKeyword = document.getElementById('filter-search') ? document.getElementById('filter-search').value.trim().toLowerCase() : '';
     
     let filtered = [...window.transactions].sort((a,b) => {
         const dtA = new Date((a.date||'1970-01-01') + 'T' + (a.time||'00:00')).getTime();
@@ -529,6 +591,26 @@ window.renderHistoryPage = function() {
             filtered = filtered.filter(t => t.date && t.date.startsWith(currentMonthStr)); 
         }
     }
+
+    if (searchKeyword !== '') {
+        filtered = filtered.filter(t => {
+            const noteStr = (t.note || '').toLowerCase();
+            const catStr = (t.categoryName || '').toLowerCase();
+            const walStr = (t.walletName || '').toLowerCase();
+            const tgtWalStr = (t.targetWalletName || '').toLowerCase();
+            const grabStr = (t.grabService || '').toLowerCase();
+            const locStr = (t.location || '').toLowerCase();
+            const zoneStr = (t.location && window.getZoneNameByLocation(t.location) ? window.getZoneNameByLocation(t.location) : '').toLowerCase();
+            return noteStr.includes(searchKeyword) ||
+                   catStr.includes(searchKeyword) ||
+                   walStr.includes(searchKeyword) ||
+                   tgtWalStr.includes(searchKeyword) ||
+                   grabStr.includes(searchKeyword) ||
+                   locStr.includes(searchKeyword) ||
+                   zoneStr.includes(searchKeyword);
+        });
+    }
+
     let totIn = 0, totOut = 0;
     filtered.forEach(trx => { 
         if(String(trx.categoryId) !== '999') { 
