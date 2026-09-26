@@ -89,11 +89,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            gap: 8px;
         }
         .zone-title-wrap {
             display: flex;
             align-items: center;
             gap: 10px;
+            min-width: 0;
+            flex: 1;
         }
         .zone-badge-icon {
             width: 38px;
@@ -104,6 +107,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-shrink: 0;
         }
         .street-tag-list {
             display: flex;
@@ -123,6 +127,15 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+        }
+        .street-tag .edit-street {
+            color: #64748b;
+            font-size: 13.5px;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .street-tag .edit-street:hover {
+            color: #249a95;
         }
         .street-tag .remove-street {
             color: #94a3b8;
@@ -224,7 +237,7 @@
             <span class="material-icons-round" style="font-size:20px;">add_location_alt</span> Tambah Lokasi Manual
         </button>
 
-        <!-- MODAL TAMBAH LOKASI MANUAL -->
+        <!-- MODAL TAMBAH / EDIT LOKASI MANUAL -->
         <div id="modal-lokasi" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
@@ -234,24 +247,32 @@
                 </div>
                 <div id="lokasi-error-msg" class="error-msg"></div>
 
-                <div class="form-group">
+                <div class="form-group" id="lokasi-tab-segment-wrap">
                     <div class="segmented-control" id="lokasi-tab-segment">
                         <div class="segmented-btn active" onclick="window.switchModalLokasiMode('daerah')">Buat Daerah</div>
-                        <div class="segmented-btn" onclick="window.switchModalLokasiMode('titik')">Tambah Titik Jalan</div>
+                        <div class="segmented-btn" onclick="window.switchModalLokasiMode('titik')">Titik Jalan</div>
                     </div>
                 </div>
 
-                <!-- MODE 1: BUAT DAERAH / KAWASAN -->
+                <!-- MODE 1: BUAT / EDIT DAERAH & TITIK LOKASINYA -->
                 <div id="form-mode-daerah">
+                    <input type="hidden" id="edit-zone-id">
                     <div class="form-group">
                         <label class="form-label">Nama Daerah / Kawasan</label>
-                        <input type="text" id="input-zone-name" class="form-input" placeholder="Contoh: Area Kampus / Pusat Kota" autocomplete="off">
+                        <input type="text" id="input-zone-name" class="form-input" placeholder="Contoh: Area USI / Tanjung Pinggir" autocomplete="off">
                     </div>
-                    <button class="btn-submit" onclick="window.simpanDaerahBaru()">Simpan Daerah</button>
+                    <div class="form-group">
+                        <label class="form-label">Titik Lokasi / Jalan (Opsional, pisahkan dengan koma)</label>
+                        <input type="text" id="input-zone-streets" class="form-input" placeholder="Cth: Jl. Sisingamangaraja, Gg. Air Bersih" autocomplete="off">
+                        <div style="font-size: 11px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Bisa langsung diisi beberapa titik jalan sekaligus dengan tanda koma (,).</div>
+                    </div>
+                    <button class="btn-submit" id="btn-submit-daerah" onclick="window.simpanDaerahBaru()">Simpan Daerah</button>
                 </div>
 
-                <!-- MODE 2: TAMBAH TITIK JALAN KE DAERAH -->
+                <!-- MODE 2: TAMBAH / EDIT TITIK JALAN SATUAN -->
                 <div id="form-mode-titik" style="display: none;">
+                    <input type="hidden" id="edit-street-old-zone-id">
+                    <input type="hidden" id="edit-street-old-name">
                     <div class="form-group">
                         <label class="form-label">Pilih Daerah</label>
                         <select id="select-zone-parent" class="form-input"></select>
@@ -260,7 +281,7 @@
                         <label class="form-label">Nama Jalan / Titik Mangkal</label>
                         <input type="text" id="input-street-name" class="form-input" placeholder="Contoh: Jl. Merdeka" autocomplete="off">
                     </div>
-                    <button class="btn-submit" onclick="window.simpanTitikJalanBaru()">Simpan Titik Jalan</button>
+                    <button class="btn-submit" id="btn-submit-titik" onclick="window.simpanTitikJalanBaru()">Simpan Titik Jalan</button>
                 </div>
             </div>
         </div>
@@ -413,10 +434,15 @@
                     tagsHTML = `<div class="street-tag-list">` + locs.map(st => {
                         const safeSt = window.escapeHTML(st);
                         const jsSafeSt = safeSt.replace(/'/g, "\\'");
-                        return `<span class="street-tag"><span class="material-icons-round" style="font-size:13px; color:#249a95;">place</span>${safeSt}<span class="material-icons-round remove-street" onclick="window.hapusTitikJalan('${z.id}', '${jsSafeSt}')" title="Hapus titik">close</span></span>`;
+                        return `<span class="street-tag">
+                            <span class="material-icons-round" style="font-size:13px; color:#249a95;">place</span>
+                            <span style="cursor:pointer;" onclick="window.openEditTitikJalan('${z.id}', '${jsSafeSt}')" title="Klik untuk edit titik jalan">${safeSt}</span>
+                            <span class="material-icons-round edit-street" onclick="window.openEditTitikJalan('${z.id}', '${jsSafeSt}')" title="Edit titik jalan">edit</span>
+                            <span class="material-icons-round remove-street" onclick="window.hapusTitikJalan('${z.id}', '${jsSafeSt}')" title="Hapus titik">close</span>
+                        </span>`;
                     }).join('') + `</div>`;
                 } else {
-                    tagsHTML = `<div style="font-size:11.5px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px dashed #f1f5f9;">Belum ada titik jalan. Klik <b>+ Titik</b> untuk menambahkan jalan ke daerah ini.</div>`;
+                    tagsHTML = `<div style="font-size:11.5px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px dashed #f1f5f9;">Belum ada titik jalan. Klik <b>+ Titik</b> atau ikon <b>Edit</b> untuk menambahkan jalan ke daerah ini.</div>`;
                 }
 
                 zHTML += `
@@ -424,14 +450,15 @@
                     <div class="zone-header">
                         <div class="zone-title-wrap">
                             <div class="zone-badge-icon"><span class="material-icons-round">folder_special</span></div>
-                            <div>
-                                <div class="list-title">${window.escapeHTML(z.name)}</div>
+                            <div style="min-width:0;">
+                                <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(z.name)}</div>
                                 <div class="list-desc">${locs.length} Titik Jalan terhubung</div>
                             </div>
                         </div>
-                        <div class="list-actions">
+                        <div class="list-actions" style="flex-shrink:0;">
                             <button class="btn-icon" style="color:#249a95; background:#e0f2f1; font-size:11.5px; font-weight:800; padding:6px 10px;" onclick="window.openLokasiModal('titik', '${z.id}')">+ Titik</button>
-                            <button class="btn-icon delete" onclick="window.hapusDaerah('${z.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
+                            <button class="btn-icon" onclick="window.openEditDaerah('${z.id}')" title="Edit Daerah & Titik Lokasi"><span class="material-icons-round" style="font-size:18px;">edit</span></button>
+                            <button class="btn-icon delete" onclick="window.hapusDaerah('${z.id}')" title="Hapus Daerah"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
                         </div>
                     </div>
                     ${tagsHTML}
@@ -441,7 +468,27 @@
             zonesContainer.innerHTML = zHTML;
         };
 
-        // Hapus 1 Lokasi Riwayat (Menghapus label lokasi pada transaksi terkait tanpa menghapus uangnya)
+        // Sinkronkan perubahan nama lokasi ke riwayat transaksi
+        window.updateTransactionLocations = async function(oldLocName, newLocName) {
+            if (!oldLocName || !newLocName || oldLocName.trim() === newLocName.trim()) return;
+            const targetLower = oldLocName.trim().toLowerCase();
+            const ubahTrx = [];
+            (window.transactions || []).forEach(t => {
+                if (t.location && t.location.trim().toLowerCase() === targetLower) {
+                    t.location = newLocName.trim();
+                    ubahTrx.push(t);
+                }
+            });
+            if (window.currentUserId && typeof window.saveTransactionToDB === 'function' && ubahTrx.length > 0) {
+                try {
+                    await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
+                } catch (e) {
+                    console.error("Gagal sinkronisasi nama lokasi di transaksi:", e);
+                }
+            }
+        };
+
+        // Hapus 1 Lokasi Riwayat
         window.hapusLokasiRiwayat = function(locName) {
             window.customConfirm(
                 "Hapus Lokasi Riwayat?",
@@ -630,13 +677,68 @@
             }
         };
 
+        // Buka Modal Tambah Baru
         window.openLokasiModal = function(mode = 'daerah', preselectedZoneId = null) {
             const err = document.getElementById('lokasi-error-msg');
             if (err) err.style.display = 'none';
+
+            document.getElementById('lokasi-tab-segment-wrap').style.display = 'block';
+            document.getElementById('lokasi-modal-title').innerText = 'Tambah Lokasi Manual';
+            document.getElementById('edit-zone-id').value = '';
             document.getElementById('input-zone-name').value = '';
+            document.getElementById('input-zone-streets').value = '';
+            document.getElementById('btn-submit-daerah').innerText = 'Simpan Daerah';
+
+            document.getElementById('edit-street-old-zone-id').value = '';
+            document.getElementById('edit-street-old-name').value = '';
             document.getElementById('input-street-name').value = '';
+            document.getElementById('btn-submit-titik').innerText = 'Simpan Titik Jalan';
 
             window.switchModalLokasiMode(mode, preselectedZoneId);
+            document.getElementById('modal-lokasi').classList.add('show');
+        };
+
+        // Buka Modal Edit Daerah (beserta daftar titik lokasinya)
+        window.openEditDaerah = function(zoneId) {
+            const zone = (window.zones || []).find(z => String(z.id) === String(zoneId));
+            if (!zone) return;
+
+            const err = document.getElementById('lokasi-error-msg');
+            if (err) err.style.display = 'none';
+
+            document.getElementById('lokasi-tab-segment-wrap').style.display = 'none';
+            document.getElementById('lokasi-modal-title').innerText = 'Edit Daerah & Titik Lokasi';
+            document.getElementById('form-mode-daerah').style.display = 'block';
+            document.getElementById('form-mode-titik').style.display = 'none';
+
+            document.getElementById('edit-zone-id').value = zone.id;
+            document.getElementById('input-zone-name').value = zone.name || '';
+            document.getElementById('input-zone-streets').value = Array.isArray(zone.locations) ? zone.locations.join(', ') : '';
+            document.getElementById('btn-submit-daerah').innerText = 'Simpan Perubahan Daerah';
+
+            document.getElementById('modal-lokasi').classList.add('show');
+        };
+
+        // Buka Modal Edit Titik Jalan Satuan
+        window.openEditTitikJalan = function(zoneId, streetName) {
+            const err = document.getElementById('lokasi-error-msg');
+            if (err) err.style.display = 'none';
+
+            document.getElementById('lokasi-tab-segment-wrap').style.display = 'none';
+            document.getElementById('lokasi-modal-title').innerText = 'Edit Titik Lokasi';
+            document.getElementById('form-mode-daerah').style.display = 'none';
+            document.getElementById('form-mode-titik').style.display = 'block';
+
+            document.getElementById('edit-street-old-zone-id').value = zoneId;
+            document.getElementById('edit-street-old-name').value = streetName;
+            document.getElementById('input-street-name').value = streetName;
+            document.getElementById('btn-submit-titik').innerText = 'Simpan Perubahan Titik';
+
+            const selectEl = document.getElementById('select-zone-parent');
+            selectEl.innerHTML = (window.zones || []).map(z => 
+                `<option value="${window.escapeHTML(z.id)}" ${String(z.id) === String(zoneId) ? 'selected' : ''}>${window.escapeHTML(z.name)}</option>`
+            ).join('');
+
             document.getElementById('modal-lokasi').classList.add('show');
         };
 
@@ -669,7 +771,9 @@
         };
 
         window.simpanDaerahBaru = async function() {
+            const editId = document.getElementById('edit-zone-id').value;
             const nameInput = document.getElementById('input-zone-name');
+            const streetsInput = document.getElementById('input-zone-streets');
             const errBox = document.getElementById('lokasi-error-msg');
             const name = nameInput.value.trim();
 
@@ -679,24 +783,50 @@
                 return;
             }
 
-            const sudahAda = (window.zones || []).some(z => z.name.trim().toLowerCase() === name.toLowerCase());
+            const sudahAda = (window.zones || []).some(z => String(z.id) !== String(editId) && z.name.trim().toLowerCase() === name.toLowerCase());
             if (sudahAda) {
                 errBox.innerText = "Daerah dengan nama tersebut sudah ada!";
                 errBox.style.display = 'block';
                 return;
             }
 
-            window.zones.push({
-                id: window.generateUUID(),
-                name: name,
-                locations: []
+            // Olah daftar titik lokasi dari input koma
+            const rawStreets = streetsInput ? streetsInput.value.split(',') : [];
+            const cleanStreets = [];
+            const seenLower = new Set();
+            rawStreets.forEach(s => {
+                const cl = s.trim();
+                if (cl && !seenLower.has(cl.toLowerCase())) {
+                    seenLower.add(cl.toLowerCase());
+                    cleanStreets.push(cl);
+                }
             });
+
+            if (editId) {
+                const idx = (window.zones || []).findIndex(z => String(z.id) === String(editId));
+                if (idx !== -1) {
+                    const oldZoneName = window.zones[idx].name;
+                    window.zones[idx].name = name;
+                    window.zones[idx].locations = cleanStreets;
+                    if (oldZoneName !== name) {
+                        await window.updateTransactionLocations(oldZoneName, name);
+                    }
+                }
+            } else {
+                window.zones.push({
+                    id: window.generateUUID(),
+                    name: name,
+                    locations: cleanStreets
+                });
+            }
 
             window.closeModal('modal-lokasi');
             await window.syncZonesData();
         };
 
         window.simpanTitikJalanBaru = async function() {
+            const oldZoneId = document.getElementById('edit-street-old-zone-id').value;
+            const oldStreetName = document.getElementById('edit-street-old-name').value;
             const parentId = document.getElementById('select-zone-parent').value;
             const streetInput = document.getElementById('input-street-name');
             const errBox = document.getElementById('lokasi-error-msg');
@@ -708,19 +838,54 @@
                 return;
             }
 
-            const zone = window.zones.find(z => String(z.id) === String(parentId));
-            if (zone) {
-                if (!Array.isArray(zone.locations)) zone.locations = [];
-                const exists = zone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
-                if (exists) {
-                    errBox.innerText = "Titik jalan ini sudah ada di daerah tersebut!";
-                    errBox.style.display = 'block';
-                    return;
+            const targetZone = window.zones.find(z => String(z.id) === String(parentId));
+            if (!targetZone) return;
+            if (!Array.isArray(targetZone.locations)) targetZone.locations = [];
+
+            // Mode Edit Titik Jalan
+            if (oldZoneId && oldStreetName) {
+                const isSameZone = String(oldZoneId) === String(parentId);
+                const isSameName = oldStreetName.trim().toLowerCase() === streetName.toLowerCase();
+
+                if (!isSameName || !isSameZone) {
+                    const duplicate = targetZone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
+                    if (duplicate && !(isSameZone && isSameName)) {
+                        errBox.innerText = "Titik jalan dengan nama tersebut sudah ada di daerah ini!";
+                        errBox.style.display = 'block';
+                        return;
+                    }
                 }
-                zone.locations.push(streetName);
+
+                if (isSameZone) {
+                    const stIdx = targetZone.locations.findIndex(l => l === oldStreetName);
+                    if (stIdx !== -1) targetZone.locations[stIdx] = streetName;
+                } else {
+                    const sourceZone = window.zones.find(z => String(z.id) === String(oldZoneId));
+                    if (sourceZone && Array.isArray(sourceZone.locations)) {
+                        sourceZone.locations = sourceZone.locations.filter(l => l !== oldStreetName);
+                    }
+                    targetZone.locations.push(streetName);
+                }
+
+                if (oldStreetName !== streetName) {
+                    await window.updateTransactionLocations(oldStreetName, streetName);
+                }
+
                 window.closeModal('modal-lokasi');
                 await window.syncZonesData();
+                return;
             }
+
+            // Mode Tambah Titik Jalan Baru
+            const exists = targetZone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
+            if (exists) {
+                errBox.innerText = "Titik jalan ini sudah ada di daerah tersebut!";
+                errBox.style.display = 'block';
+                return;
+            }
+            targetZone.locations.push(streetName);
+            window.closeModal('modal-lokasi');
+            await window.syncZonesData();
         };
 
         window.hapusTitikJalan = function(zoneId, streetName) {

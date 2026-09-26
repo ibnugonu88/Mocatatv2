@@ -11,12 +11,16 @@ window.renderStatistik = function() {
     if(!statContainer) return;
     const filterPeriod = document.getElementById('filter-stat-period') ? document.getElementById('filter-stat-period').value : 'month';
     const now = new Date(), todayStr = window.getLocalDateString(), currentMonthStr = window.getLocalMonthString();
+    
+    // Hitung awal dan akhir minggu (Senin - Minggu)
+    const hariKeMingguIni = now.getDay() === 0 ? 7 : now.getDay(); // Senin = 1 ... Minggu = 7
     let startOfWeek = new Date(now); 
-    startOfWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)); 
+    startOfWeek.setDate(now.getDate() - (hariKeMingguIni - 1)); 
     startOfWeek.setHours(0,0,0,0);
     let endOfWeek = new Date(startOfWeek); 
     endOfWeek.setDate(startOfWeek.getDate() + 6); 
     endOfWeek.setHours(23,59,59,999);
+    
     let periodText = filterPeriod === 'today' ? 'Hari Ini' : (filterPeriod === 'week' ? 'Minggu Ini' : (filterPeriod === 'all' ? 'Semua Waktu' : 'Bulan Ini'));
 
     let totalIn = 0, totalOut = 0; 
@@ -28,42 +32,77 @@ window.renderStatistik = function() {
     let expenseByCategoryObj = {}; 
     let serviceExpenses = 0; 
     let serviceCount = 0;
-    
-    let minDateMs = null;
-    let daysInPeriod = 1;
-    if (filterPeriod === 'week') daysInPeriod = 7; 
-    else if (filterPeriod === 'month') daysInPeriod = now.getDate(); 
 
-    let totalKeluarBulanIni = 0; 
-    let totalMasukBulanIni = 0;
-    
-    if (filterPeriod === 'all' && window.transactions.length > 0) {
-        window.transactions.forEach(t => { 
-            if(t.date) { 
-                const d = new Date(t.date).getTime(); 
-                if(!minDateMs || d < minDateMs) minDateMs = d; 
-            } 
-        });
-        if(minDateMs) { 
-            const diff = now.getTime() - minDateMs; 
-            daysInPeriod = Math.max(1, Math.ceil(diff / (1000 * 3600 * 24))); 
+    // Deteksi tanggal pertama kali pengguna mulai mencatat transaksi (agar akurat jika mulai di tengah bulan, misal tgl 21)
+    let earliestTrxDateStr = null;
+    window.transactions.forEach(t => {
+        if (String(t.categoryId) === '999' || !t.date) return;
+        if (!earliestTrxDateStr || t.date < earliestTrxDateStr) {
+            earliestTrxDateStr = t.date;
         }
+    });
+
+    // Jika baru mulai mencatat di bulan ini (misal tgl 21), maka hari mulai bulan ini = 21. Jika sudah ada catatan dari bulan lalu, mulai dari tgl 1.
+    let startDayThisMonth = 1;
+    if (earliestTrxDateStr && earliestTrxDateStr.startsWith(currentMonthStr)) {
+        const parsedStartDay = parseInt(earliestTrxDateStr.split('-')[2], 10);
+        if (!isNaN(parsedStartDay) && parsedStartDay > 1 && parsedStartDay <= now.getDate()) {
+            startDayThisMonth = parsedStartDay;
+        }
+    }
+    
+    // Pembagi hari yang akurat sesuai periode berjalan & tanggal mulai mencatat
+    let daysInPeriod = 1;
+    if (filterPeriod === 'week') {
+        if (earliestTrxDateStr) {
+            const firstDateObj = new Date(earliestTrxDateStr + 'T00:00:00');
+            if (firstDateObj > startOfWeek && firstDateObj <= now) {
+                const diffW = Math.floor((now.getTime() - firstDateObj.getTime()) / (1000 * 3600 * 24)) + 1;
+                daysInPeriod = Math.max(1, diffW);
+            } else {
+                daysInPeriod = Math.max(1, hariKeMingguIni);
+            }
+        } else {
+            daysInPeriod = Math.max(1, hariKeMingguIni);
+        }
+    } else if (filterPeriod === 'month') {
+        daysInPeriod = Math.max(1, now.getDate() - startDayThisMonth + 1); 
     } else if (filterPeriod === 'today') { 
         daysInPeriod = 1; 
+    } else if (filterPeriod === 'all' && earliestTrxDateStr) {
+        const firstMs = new Date(earliestTrxDateStr + 'T00:00:00').getTime();
+        const diff = now.getTime() - firstMs; 
+        daysInPeriod = Math.max(1, Math.ceil(diff / (1000 * 3600 * 24))); 
     }
 
-    window.transactions.filter(trx => {
-        if (String(trx.categoryId) === '999') return false; 
+    // Variabel khusus pelacak anggaran & target harian
+    let keluarBulanIniSebelumHariIni = 0;
+    let keluarHariIni = 0;
+    let masukBulanIniSebelumHariIni = 0;
+    let masukHariIni = 0;
+
+    window.transactions.forEach(trx => {
+        if (String(trx.categoryId) === '999') return; 
+
+        const amt = Number(trx.amount || 0);
+
+        // Rekap bulan berjalan & hari ini untuk kalkulasi Target Harian
         if (trx.date && trx.date.startsWith(currentMonthStr)) { 
-            if (trx.type === 'out') totalKeluarBulanIni += Number(trx.amount||0); 
-            if (trx.type === 'in') totalMasukBulanIni += Number(trx.amount||0); 
+            if (trx.type === 'out') {
+                if (trx.date === todayStr) keluarHariIni += amt;
+                else if (trx.date < todayStr) keluarBulanIniSebelumHariIni += amt;
+            }
+            if (trx.type === 'in') {
+                if (trx.date === todayStr) masukHariIni += amt;
+                else if (trx.date < todayStr) masukBulanIniSebelumHariIni += amt;
+            }
         }
 
         let isMatch = false;
         if (filterPeriod === 'all') isMatch = true; 
         else if (filterPeriod === 'today') isMatch = trx.date === todayStr; 
         else if (filterPeriod === 'week') { 
-            if (!trx.date) return false; 
+            if (!trx.date) return; 
             const tDate = new Date(trx.date + 'T12:00:00'); 
             isMatch = tDate >= startOfWeek && tDate <= endOfWeek; 
         } else if (filterPeriod === 'month') {
@@ -72,48 +111,60 @@ window.renderStatistik = function() {
 
         if (isMatch) { 
             if (trx.type === 'out') {
-                totalOut += Number(trx.amount||0); 
+                totalOut += amt; 
                 let catKey = trx.categoryId ? String(trx.categoryId) : (trx.categoryName || 'Lainnya');
-                expenseByCategoryObj[catKey] = (expenseByCategoryObj[catKey] || 0) + Number(trx.amount||0);
+                expenseByCategoryObj[catKey] = (expenseByCategoryObj[catKey] || 0) + amt;
                 
                 let noteLower = trx.note ? trx.note.toLowerCase() : ''; 
                 let catLower = (trx.categoryName||'').toLowerCase();
                 if (catLower.includes('servis') || catLower.includes('motor') || catLower.includes('kendaraan') || noteLower.includes('oli')) { 
-                    serviceExpenses += Number(trx.amount||0); 
+                    serviceExpenses += amt; 
                     serviceCount++; 
                 }
             } 
             if (trx.type === 'in') {
-                totalIn += Number(trx.amount||0); 
+                totalIn += amt; 
                 let timeStr = trx.time || "12:00"; 
                 let hour = parseInt(timeStr.split(':')[0]);
-                if (hour >= 5 && hour <= 11) timeStats.pagi += Number(trx.amount||0); 
-                else if (hour >= 12 && hour <= 14) timeStats.siang += Number(trx.amount||0); 
-                else if (hour >= 15 && hour <= 18) timeStats.sore += Number(trx.amount||0); 
-                else timeStats.malam += Number(trx.amount||0);
+                if (hour >= 5 && hour <= 11) timeStats.pagi += amt; 
+                else if (hour >= 12 && hour <= 14) timeStats.siang += amt; 
+                else if (hour >= 15 && hour <= 18) timeStats.sore += amt; 
+                else timeStats.malam += amt;
                 
                 if (trx.grabService) { 
                     totalOrders++; 
-                    grabStats[trx.grabService] = (grabStats[trx.grabService] || 0) + Number(trx.amount||0); 
+                    grabStats[trx.grabService] = (grabStats[trx.grabService] || 0) + amt; 
                 }
                 if (trx.location && trx.location.trim() !== '') {
                     const mappedZone = typeof window.getZoneNameByLocation === 'function' 
                         ? window.getZoneNameByLocation(trx.location) 
                         : null;
                     const groupLabel = mappedZone || trx.location.trim();
-                    locationStats[groupLabel] = (locationStats[groupLabel] || 0) + Number(trx.amount||0);
+                    locationStats[groupLabel] = (locationStats[groupLabel] || 0) + amt;
                     locationOrders[groupLabel] = (locationOrders[groupLabel] || 0) + 1;
                 }
             }
         } 
-        return isMatch;
     });
 
-    const sisaHariBulanIni = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1;
+    // =========================================================
+    // LOGIKA TARGET HARIAN PINTAR (PRO-RATA & PLAFON HARIAN)
+    // =========================================================
+    const totalHariBulanIni = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const sisaHariBulanIni = Math.max(1, totalHariBulanIni - now.getDate() + 1);
+    const totalHariAktifBulanIni = Math.max(1, totalHariBulanIni - startDayThisMonth + 1);
+
     let totalAnggaranKeluar = 0; 
-    window.categories.forEach(c => { if(c.type === 'out') totalAnggaranKeluar += Number(c.budget||0); });
+    let totalTargetMasukBulanan = 0;
+    window.categories.forEach(c => { 
+        if (c.type === 'out') totalAnggaranKeluar += Number(c.budget || 0); 
+        if (c.type === 'in') totalTargetMasukBulanan += Number(c.budget || 0);
+    });
+
+    // Hanya hitung cicilan harian dari Target yang berstatus AKTIF
     let totalSaranNabungHarian = 0;
     window.targets.forEach(t => {
+        if (t.isActive === false) return; 
         let uangDihitung = t.tipe === 'investasi' ? Number(t.nilaiTerkini||0) : Number(t.currentAmount||0); 
         let sisaUang = Number(t.targetAmount||0) - uangDihitung;
         if(Number(t.targetAmount||0) > 0 && sisaUang > 0 && t.deadline) { 
@@ -123,10 +174,44 @@ window.renderStatistik = function() {
             if(diffDays > 0) { totalSaranNabungHarian += Math.ceil(sisaUang / diffDays); } 
         }
     });
-    let sisaAnggaran = totalAnggaranKeluar - totalKeluarBulanIni; 
-    if (sisaAnggaran < 0) sisaAnggaran = 0;
-    const saranPengeluaranHarian = sisaHariBulanIni > 0 ? Math.floor(sisaAnggaran / sisaHariBulanIni) : 0;
-    const saranPendapatanHarian = saranPengeluaranHarian + totalSaranNabungHarian;
+
+    // 1. Batas Pengeluaran Hari Ini (Pro-rata sejak tanggal mulai catat & dikunci maksimal di plafon harian normal)
+    const plafonKeluarHarianNormal = Math.floor(totalAnggaranKeluar / totalHariBulanIni);
+    const anggaranEfektifBulanIni = Math.floor((totalAnggaranKeluar / totalHariBulanIni) * totalHariAktifBulanIni);
+    const sisaAnggaranAwalHari = Math.max(0, anggaranEfektifBulanIni - keluarBulanIniSebelumHariIni);
+    const jatahSisaBagiHari = Math.floor(sisaAnggaranAwalHari / sisaHariBulanIni);
+    const saranPengeluaranHarian = totalAnggaranKeluar > 0 ? Math.min(plafonKeluarHarianNormal, jatahSisaBagiHari) : 0;
+    const sisaJatahKeluarHariIni = saranPengeluaranHarian - keluarHariIni;
+
+    // 2. Target Kejar Pemasukan Hari Ini
+    const targetMasukHarianNormal = Math.ceil(totalTargetMasukBulanan / totalHariBulanIni);
+    const targetMasukEfektifBulanIni = Math.ceil((totalTargetMasukBulanan / totalHariBulanIni) * totalHariAktifBulanIni);
+    const sisaTargetMasukAwalHari = Math.max(0, targetMasukEfektifBulanIni - masukBulanIniSebelumHariIni);
+    const saranDariTargetKategori = totalTargetMasukBulanan > 0 
+        ? Math.max(targetMasukHarianNormal, Math.ceil(sisaTargetMasukAwalHari / sisaHariBulanIni)) 
+        : 0;
+    const saranPendapatanHarian = Math.max(saranPengeluaranHarian + totalSaranNabungHarian, saranDariTargetKategori);
+    const kurangKejarHariIni = Math.max(0, saranPendapatanHarian - masukHariIni);
+
+    // Status visual kartu Kejar Pemasukan
+    let infoKejarHTML = '';
+    if (saranPendapatanHarian === 0) {
+        infoKejarHTML = `<div style="font-size: 10px; color: #16a34a; font-weight: 600;">Terkumpul: ${window.formatRupiah(masukHariIni)}</div>`;
+    } else if (kurangKejarHariIni === 0) {
+        infoKejarHTML = `<div style="font-size: 10px; color: #15803d; font-weight: 800;">✅ Target tercapai! (${window.formatRupiah(masukHariIni)})</div>`;
+    } else {
+        infoKejarHTML = `<div style="font-size: 10px; color: #16a34a; font-weight: 700;">Kurang: <strong>${window.formatRupiah(kurangKejarHariIni)}</strong> lagi</div><div style="font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px;">Masuk hari ini: ${window.formatRupiah(masukHariIni)}</div>`;
+    }
+
+    // Status visual kartu Batas Pengeluaran
+    let infoBatasHTML = '';
+    if (totalAnggaranKeluar === 0) {
+        infoBatasHTML = `<div style="font-size: 10px; color: #ea580c; font-weight: 600;">Belum atur anggaran kategori</div>`;
+    } else if (sisaJatahKeluarHariIni >= 0) {
+        infoBatasHTML = `<div style="font-size: 10px; color: #ea580c; font-weight: 700;">Sisa hari ini: <strong>${window.formatRupiah(sisaJatahKeluarHariIni)}</strong></div><div style="font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px;">Terpakai: ${window.formatRupiah(keluarHariIni)}</div>`;
+    } else {
+        infoBatasHTML = `<div style="font-size: 10px; color: #c62828; font-weight: 800;">⚠️ Lewat batas ${window.formatRupiah(Math.abs(sisaJatahKeluarHariIni))}</div><div style="font-size: 9.5px; color: #c62828; font-weight: 600; margin-top: 2px;">Terpakai: ${window.formatRupiah(keluarHariIni)}</div>`;
+    }
 
     let saldoBersih = totalIn - totalOut; 
     let avgPerDay = daysInPeriod > 0 ? Math.floor(totalIn / daysInPeriod) : totalIn; 
@@ -136,8 +221,11 @@ window.renderStatistik = function() {
     let pctOut = (totalOut / maxBar) * 100;
 
     let htmlContent = `<div class="stat-card" style="background: linear-gradient(135deg, #249a95 0%, #1e8580 100%); color: white; padding: 24px; position: relative; overflow: hidden; margin-bottom: 25px;"><div style="font-size: 11px; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Saldo Bersih · ${periodText}</div><div style="font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; text-shadow: 0 4px 10px rgba(0,0,0,0.1);">${window.formatRupiah(saldoBersih)}</div><div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 20px;"><span class="material-icons-round" style="font-size: 14px;">receipt_long</span> ${totalOrders} Order Grab</div><div style="margin-bottom: 12px;"><div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.2);"><div style="width: ${pctIn}%; background: #6ee7b7;"></div><div style="width: ${pctOut}%; background: #fca5a5;"></div></div></div><div style="display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;"><span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; background: #6ee7b7; border-radius: 50%;"></span> Uang masuk (kotor)</span><span style="font-weight: 800;">${window.formatRupiah(totalIn)}</span></div><div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600;"><span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; background: #fca5a5; border-radius: 50%;"></span> Keluar (pengeluaran)</span><span style="font-weight: 800;">${window.formatRupiah(totalOut)}</span></div></div></div>`;
-    htmlContent += `<div class="section-title" style="display: flex; align-items: center; gap: 8px; color: #f59e0b; margin-left: 0;"><span class="material-icons-round" style="font-size: 18px;">track_changes</span> TARGET HARIANMU</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;"><div class="stat-card" style="padding: 15px; margin: 0; border: 1.5px solid #bbf7d0; background: #f0fdf4;"><div style="font-size: 11px; color: #16a34a; font-weight: 800; margin-bottom: 4px;">🎯 Kejar Pemasukan</div><div style="font-size: 16px; font-weight: 800; color: #15803d; margin-bottom: 2px;">${window.formatRupiah(saranPendapatanHarian)}</div><div style="font-size: 10px; color: #16a34a; font-weight: 600;">/hari ini</div></div><div class="stat-card" style="padding: 15px; margin: 0; border: 1.5px solid #fed7aa; background: #fff7ed;"><div style="font-size: 11px; color: #ea580c; font-weight: 800; margin-bottom: 4px;">🛑 Batas Pengeluaran</div><div style="font-size: 16px; font-weight: 800; color: #c2410c; margin-bottom: 2px;">${window.formatRupiah(saranPengeluaranHarian)}</div><div style="font-size: 10px; color: #ea580c; font-weight: 600;">/hari ini</div></div></div>`;
-    htmlContent += `<div class="section-title" style="display: flex; align-items: center; gap: 8px; color: #249a95; margin-left: 0;"><span class="material-icons-round" style="font-size: 18px;">trending_up</span> PEMASUKAN</div><div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;"><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">Order</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${totalOrders}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Selesai</div></div><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">/hari</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${window.formatRupiah(avgPerDay)}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Rata-rata</div></div><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">/order</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${window.formatRupiah(avgPerOrder)}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Rata-rata</div></div></div>`;
+    
+    htmlContent += `<div class="section-title" style="display: flex; align-items: center; gap: 8px; color: #f59e0b; margin-left: 0;"><span class="material-icons-round" style="font-size: 18px;">track_changes</span> TARGET HARIANMU</div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;"><div class="stat-card" style="padding: 15px; margin: 0; border: 1.5px solid #bbf7d0; background: #f0fdf4;"><div style="font-size: 11px; color: #16a34a; font-weight: 800; margin-bottom: 4px;">🎯 Kejar Pemasukan</div><div style="font-size: 16px; font-weight: 800; color: #15803d; margin-bottom: 4px;">${window.formatRupiah(saranPendapatanHarian)}</div>${infoKejarHTML}</div><div class="stat-card" style="padding: 15px; margin: 0; border: 1.5px solid ${sisaJatahKeluarHariIni < 0 ? '#fecaca' : '#fed7aa'}; background: ${sisaJatahKeluarHariIni < 0 ? '#fef2f2' : '#fff7ed'};"><div style="font-size: 11px; color: ${sisaJatahKeluarHariIni < 0 ? '#c62828' : '#ea580c'}; font-weight: 800; margin-bottom: 4px;">🛑 Batas Pengeluaran</div><div style="font-size: 16px; font-weight: 800; color: ${sisaJatahKeluarHariIni < 0 ? '#b91c1c' : '#c2410c'}; margin-bottom: 4px;">${window.formatRupiah(saranPengeluaranHarian)}</div>${infoBatasHTML}</div></div>`;
+    
+    htmlContent += `<div class="section-title" style="display: flex; align-items: center; gap: 8px; color: #249a95; margin-left: 0;"><span class="material-icons-round" style="font-size: 18px;">trending_up</span> PEMASUKAN</div><div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;"><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">Order</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${totalOrders}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Selesai</div></div><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">/hari</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${window.formatRupiah(avgPerDay)}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Rata-rata (${daysInPeriod} hr)</div></div><div class="stat-card" style="padding: 15px; margin: 0; display: flex; flex-direction: column; justify-content: center;"><div style="font-size: 11px; color: #777; font-weight: 700; margin-bottom: 4px;">/order</div><div style="font-size: 16px; font-weight: 800; color: #1a1a1a;">${window.formatRupiah(avgPerOrder)}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Rata-rata</div></div></div>`;
+    
     htmlContent += `<div class="stat-card" style="padding: 16px; margin-bottom: 25px;"><div style="font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 15px; display: flex; justify-content: space-between;"><span>Jam tercuan</span><span style="font-size:11px; color:#94a3b8;">Makin penuh, makin cuan</span></div>`;
     
     const timeOrdered = ['pagi', 'siang', 'sore', 'malam']; 

@@ -1,409 +1,433 @@
 // ============================================================
-// MOCATAT - FITUR BERANDA, TRANSAKSI & RIWAYAT (fitur-beranda.js)
-// Mencakup: Modal Input Transaksi, Dashboard, Notifikasi & riwayat.html
+// MOCATAT - FITUR BERANDA & DASHBOARD (fitur-beranda.js)
+// Mencakup: Dashboard, Slide 3 Fitur (Oli, Radar, Edukasi) & Notifikasi (Bisa Dihapus)
 // ============================================================
 
-import { db, doc, writeBatch } from "./core.js";
-
-// Helper untuk mencocokkan nama jalan dengan Daerah (Zone)
-window.getZoneNameByLocation = function(rawLoc) {
-    if (!rawLoc) return null;
-    const clean = rawLoc.trim().toLowerCase();
-    const zones = window.zones || [];
-    for (const z of zones) {
-        if ((z.name || '').trim().toLowerCase() === clean) return z.name;
-        if (Array.isArray(z.locations)) {
-            const found = z.locations.some(l => (l || '').trim().toLowerCase() === clean);
-            if (found) return z.name;
-        }
-    }
-    return null;
-};
+import { db, doc, setDoc } from "./core.js";
+import "./fitur-transaksi.js";
+import "./fitur-admin.js";
 
 // ==========================================
-// 7. TRANSAKSI LOGIC
-// ==========================================
-window.selectTrxWallet = function(id, el) { 
-    document.getElementById('input-wallet').value = id; 
-    document.querySelectorAll('#input-wallet-chips .chip').forEach(c => c.classList.remove('active')); 
-    el.classList.add('active'); 
-};
-
-window.selectTrxCategory = function(id, el) { 
-    document.getElementById('input-category').value = id; 
-    document.querySelectorAll('#input-category-chips .chip').forEach(c => c.classList.remove('active')); 
-    el.classList.add('active'); 
-};
-
-window.selectTrxTargetWallet = function(id, el) { 
-    document.getElementById('input-target-wallet').value = id; 
-    document.querySelectorAll('#input-target-wallet-chips .chip').forEach(c => c.classList.remove('active')); 
-    el.classList.add('active'); 
-};
-
-window.selectGrabService = function(service, el) {
-    const hiddenInput = document.getElementById('input-grab-service'); 
-    const noteInput = document.getElementById('input-note');
-    if (hiddenInput.value === service) { 
-        hiddenInput.value = ''; 
-        el.classList.remove('grab-active'); 
-        if (noteInput.value === service) noteInput.value = ''; 
-    } else { 
-        document.querySelectorAll('.grab-chip').forEach(c => c.classList.remove('grab-active')); 
-        el.classList.add('grab-active'); 
-        hiddenInput.value = service; 
-        if (noteInput.value === '' || ['GrabBike', 'GrabBike Hemat', 'GrabCar', 'GrabFood', 'GrabExpress', 'GrabMart'].includes(noteInput.value)) { 
-            noteInput.value = service; 
-        } 
-    }
-};
-
-window.pilihLokasiCepat = function(namaLokasi, el) {
-    const locInput = document.getElementById('input-location');
-    if (!locInput) return;
-    if (locInput.value === namaLokasi && el && el.classList.contains('active')) {
-        locInput.value = '';
-        el.classList.remove('active');
-    } else {
-        locInput.value = namaLokasi;
-        document.querySelectorAll('#location-quick-chips .chip').forEach(c => c.classList.remove('active'));
-        if (el) el.classList.add('active');
-    }
-};
-
-window.openModalTrans = function(type, trxId = null) {
-    if(!document.getElementById('modal-input')) return;
-    const isTransfer = type === 'transfer'; 
-    document.getElementById('input-type').value = type; 
-    document.getElementById('modal-title').innerText = isTransfer ? 'Transfer Antar Dompet' : (type === 'in' ? (trxId ? 'Edit Pemasukan' : 'Pemasukan Baru') : (trxId ? 'Edit Pengeluaran' : 'Pengeluaran Baru'));
-    document.getElementById('error-msg').style.display = 'none'; 
-    document.getElementById('input-trx-id').value = trxId || '';
-    
-    const catGroup = document.getElementById('category-group-container');
-    const targetGroup = document.getElementById('target-wallet-group');
-    if (isTransfer) { 
-        catGroup.style.display = 'none'; 
-        targetGroup.style.display = 'block'; 
-    } else { 
-        catGroup.style.display = 'block'; 
-        targetGroup.style.display = 'none'; 
-    }
-    
-    const grabGroup = document.getElementById('grab-service-group');
-    if (grabGroup) grabGroup.style.display = (type === 'in') ? 'block' : 'none';
-    
-    const locationGroup = document.getElementById('location-group');
-    if (locationGroup) locationGroup.style.display = (type === 'in') ? 'block' : 'none';
-    
-    if(document.getElementById('input-grab-service')) document.getElementById('input-grab-service').value = '';
-    document.querySelectorAll('.grab-chip').forEach(c => c.classList.remove('grab-active'));
-
-    // --- MATIKAN SARAN CHROME & HANYA GUNAKAN LOKASI MANUAL DARI ZONES ---
-    const locInputEl = document.getElementById('input-location');
-    if (locInputEl) {
-        locInputEl.removeAttribute('list');
-        locInputEl.setAttribute('autocomplete', 'off');
-    }
-    const dataList = document.getElementById('location-suggestions');
-    if (dataList) dataList.innerHTML = '';
-
-    const zoneNames = (window.zones || []).map(z => z.name).filter(n => n && n.trim() !== '');
-    const manualLocs = (window.zones || []).flatMap(z => z.locations || []).filter(l => l && l.trim() !== '');
-
-    const seenLower = new Set();
-    const uniqueLocs = [];
-    [...zoneNames, ...manualLocs].forEach(item => {
-        const clean = item.trim();
-        const lower = clean.toLowerCase();
-        if (clean && !seenLower.has(lower)) {
-            seenLower.add(lower);
-            uniqueLocs.push(clean);
-        }
-    });
-
-    let now = new Date(); 
-    let defaultTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    
-    const dompetAktif = window.wallets.filter(w => !w.isArchived);
-
-    let defaultWalletId = dompetAktif.length > 0 ? dompetAktif[0].id : '', 
-        targetWalletId = dompetAktif.length > 1 ? dompetAktif[1].id : defaultWalletId, 
-        validCats = window.categories.filter(c => c.type === type && c.type !== 'sys'), 
-        defaultCatId = validCats.length > 0 ? validCats[0].id : '', 
-        amount = '', note = '', trxDate = window.getLocalDateString(), trxTime = defaultTime, grabServiceVal = '', locationVal = '';
-        
-    if (trxId) { 
-        const trx = window.transactions.find(t => t.id === trxId); 
-        if (trx) { 
-            amount = window.formatNumberWithDot(trx.amount.toString()); 
-            note = trx.note; 
-            defaultWalletId = trx.walletId; 
-            if(trx.type === 'transfer') targetWalletId = trx.targetWalletId; 
-            else defaultCatId = trx.categoryId; 
-            trxDate = trx.date || trxDate; 
-            if (trx.time) trxTime = trx.time;
-            if(trx.grabService) grabServiceVal = trx.grabService; 
-            if(trx.location) locationVal = trx.location;
-        } 
-    }
-
-    let quickChips = document.getElementById('location-quick-chips');
-    if (!quickChips && locationGroup) {
-        quickChips = document.createElement('div');
-        quickChips.id = 'location-quick-chips';
-        quickChips.className = 'chip-group';
-        quickChips.style.marginTop = '8px';
-        locationGroup.appendChild(quickChips);
-    }
-
-    if (quickChips) {
-        if (type === 'in' && uniqueLocs.length > 0) {
-            quickChips.style.display = 'flex';
-            quickChips.innerHTML = uniqueLocs.map(loc => {
-                const isSelected = locationVal && locationVal.trim().toLowerCase() === loc.toLowerCase();
-                const isZone = zoneNames.some(zn => zn.trim().toLowerCase() === loc.toLowerCase());
-                const iconName = isZone ? 'map' : 'place';
-                return `<div class="chip ${isSelected ? 'active' : ''}" style="padding: 6px 12px; font-size: 12px;" onclick="window.pilihLokasiCepat('${window.escapeHTML(loc).replace(/'/g, "\\'")}', this)"><span class="material-icons-round" style="font-size:14px;">${iconName}</span> ${window.escapeHTML(loc)}</div>`;
-            }).join('');
-        } else {
-            quickChips.style.display = 'none';
-        }
-    }
-    // -------------------------------------------------------------------------
-    
-    document.getElementById('input-amount').value = amount; 
-    document.getElementById('input-note').value = note; 
-    document.getElementById('input-date').value = trxDate; 
-    if(document.getElementById('input-time')) document.getElementById('input-time').value = trxTime; 
-    document.getElementById('input-wallet').value = defaultWalletId; 
-    if(document.getElementById('input-location')) document.getElementById('input-location').value = locationVal;
-    if(!isTransfer) document.getElementById('input-category').value = defaultCatId; 
-    if(isTransfer) document.getElementById('input-target-wallet').value = targetWalletId;
-    
-    if (grabServiceVal && document.getElementById('input-grab-service')) {
-        document.getElementById('input-grab-service').value = grabServiceVal;
-        document.querySelectorAll('.grab-chip').forEach(c => { 
-            if (c.innerText.includes(grabServiceVal)) c.classList.add('grab-active'); 
-        });
-    }
-
-    const selectWallet = document.getElementById('input-wallet-chips'); 
-    let wHTML = ''; 
-    dompetAktif.forEach(w => { 
-        wHTML += `<div class="chip ${w.id == defaultWalletId ? 'active' : ''}" onclick="window.selectTrxWallet('${w.id}', this)"><span class="material-icons-round" style="font-size:16px">${w.icon}</span> ${window.escapeHTML(w.name)}</div>`; 
-    }); 
-    selectWallet.innerHTML = wHTML;
-
-    if (isTransfer) { 
-        const selectTargetWallet = document.getElementById('input-target-wallet-chips'); 
-        let tHTML = ''; 
-        dompetAktif.forEach(w => { 
-            tHTML += `<div class="chip ${w.id == targetWalletId ? 'active' : ''}" onclick="window.selectTrxTargetWallet('${w.id}', this)"><span class="material-icons-round" style="font-size:16px">${w.icon}</span> ${window.escapeHTML(w.name)}</div>`; 
-        }); 
-        selectTargetWallet.innerHTML = tHTML; 
-    } else { 
-        const selectCat = document.getElementById('input-category-chips'); 
-        let cHTML = ''; 
-        validCats.forEach(c => { 
-            cHTML += `<div class="chip ${c.id == defaultCatId ? 'active' : ''}" onclick="window.selectTrxCategory('${c.id}', this)"><span class="material-icons-round" style="font-size:16px">${c.icon}</span> ${window.escapeHTML(c.name)}</div>`; 
-        }); 
-        selectCat.innerHTML = cHTML;
-    }
-    document.getElementById('modal-input').classList.add('show');
-};
-
-window.openModalTransfer = function() { 
-    const dompetAktif = window.wallets.filter(w => !w.isArchived);
-    if (dompetAktif.length < 2) return window.customAlert("Perhatian", "Butuh minimal 2 dompet aktif untuk melakukan transfer.", "warning"); 
-    window.openModalTrans('transfer'); 
-};
-
-window.simpanTransaksi = async function() {
-    const submitBtn = document.querySelector('#modal-input .btn-submit');
-    if(submitBtn && submitBtn.disabled) return; 
-    
-    const errTrans = document.getElementById('error-msg'), 
-          trxId = document.getElementById('input-trx-id').value, 
-          type = document.getElementById('input-type').value, 
-          isTransfer = type === 'transfer', 
-          walletId = document.getElementById('input-wallet').value, 
-          catId = isTransfer ? null : document.getElementById('input-category').value, 
-          targetWalletId = isTransfer ? document.getElementById('input-target-wallet').value : null, 
-          amount = window.parseRupiah(document.getElementById('input-amount').value), 
-          note = window.escapeHTML(document.getElementById('input-note').value.trim()), 
-          trxDate = window.escapeHTML(document.getElementById('input-date').value) || window.getLocalDateString();
-    const trxTime = document.getElementById('input-time') ? (document.getElementById('input-time').value || "12:00") : "12:00"; 
-    const grabService = document.getElementById('input-grab-service') ? document.getElementById('input-grab-service').value : null;
-    const rawLocationInput = document.getElementById('input-location') ? document.getElementById('input-location').value.trim() : '';
-    const locationVal = (type === 'in' && rawLocationInput) ? window.escapeHTML(rawLocationInput) : null; 
-
-    if (!amount || amount <= 0 || !note || !walletId || (isTransfer && !targetWalletId) || (!isTransfer && !catId)) { 
-        errTrans.innerText = "Data tidak valid."; 
-        errTrans.style.display = 'block'; 
-        return; 
-    }
-    if (isTransfer && walletId === targetWalletId) { 
-        errTrans.innerText = "Dompet tidak boleh sama!"; 
-        errTrans.style.display = 'block'; 
-        return; 
-    }
-    
-    const sourceWallet = window.wallets.find(w => String(w.id) === String(walletId)), 
-          targetWallet = isTransfer ? window.wallets.find(w => String(w.id) === String(targetWalletId)) : null, 
-          targetCat = isTransfer ? null : window.categories.find(c => String(c.id) === String(catId));
-    
-    let saldoTersedia = Number(sourceWallet.balance || 0);
-    if (trxId) {
-        const trxLama = window.transactions.find(t => String(t.id) === String(trxId));
-        if (trxLama && String(trxLama.walletId) === String(walletId)) {
-            if (trxLama.type === 'out' || trxLama.type === 'transfer') {
-                saldoTersedia += Number(trxLama.amount || 0);
-            }
-        }
-    }
-
-    if ((type === 'out' || isTransfer) && amount > saldoTersedia) { 
-        errTrans.innerHTML = `Saldo tidak cukup! (Sisa aktual: ${window.formatRupiah(saldoTersedia)})`; 
-        errTrans.style.display = 'block'; 
-        return; 
-    }
-    
-    if(submitBtn) { submitBtn.disabled = true; submitBtn.innerText = "Menyimpan..."; }
-
-    const originalTransactions = JSON.parse(JSON.stringify(window.transactions));
-    let parsedTrxId = trxId ? String(trxId) : window.generateUUID();
-
-    if (trxId) { 
-        const idx = window.transactions.findIndex(t => String(t.id) === String(trxId)); 
-        if (idx !== -1) window.transactions.splice(idx, 1); 
-    }
-    
-    const newTrxData = { 
-        id: parsedTrxId, type, amount, note, walletId, 
-        walletName: sourceWallet.name, categoryId: catId, 
-        categoryName: targetCat ? targetCat.name : (isTransfer ? 'Transfer' : '-'), 
-        targetWalletId: targetWalletId, targetWalletName: targetWallet ? targetWallet.name : null, 
-        date: trxDate, time: trxTime, 
-        grabService: type === 'in' && grabService ? grabService : null, 
-        location: locationVal 
-    };
-    
-    window.transactions.push(newTrxData);
-    window.recalculateBalances(); 
-
-    try {
-        if(window.currentUserId) {
-            const batch = writeBatch(db);
-            const trxRef = doc(db, "users", window.currentUserId, "transactions", parsedTrxId);
-            batch.set(trxRef, newTrxData);
-            if(trxId && String(trxId) !== parsedTrxId) {
-                batch.delete(doc(db, "users", window.currentUserId, "transactions", String(trxId)));
-            }
-            const userRef = doc(db, "users", window.currentUserId);
-            batch.set(userRef, window.getUserDocPayload(), { merge: true });
-            
-            await batch.commit();
-        }
-        window.closeModal('modal-input');
-        window.callPageRender();
-    } catch(e) {
-        window.transactions = originalTransactions; 
-        window.recalculateBalances();
-        window.customAlert("Error", "Gagal menyimpan transaksi.", "error");
-    } finally {
-        if(submitBtn) { submitBtn.disabled = false; submitBtn.innerText = "Simpan Transaksi"; }
-    }
-};
-
-window.hapusTransaksi = function(id) { 
-    window.customConfirm("Hapus Transaksi", "Yakin hapus transaksi ini?", async () => { 
-        const trxIndex = window.transactions.findIndex(t => String(t.id) === String(id)); 
-        if(trxIndex === -1) return; 
-        const trx = window.transactions[trxIndex]; 
-        
-        if(trx.targetId) { 
-            const relatedTarget = window.targets.find(t => String(t.id) === String(trx.targetId)); 
-            if(relatedTarget) { 
-                if(trx.type === 'out') { 
-                    relatedTarget.currentAmount -= Number(trx.amount||0); 
-                    if(relatedTarget.tipe === 'investasi') relatedTarget.nilaiTerkini -= Number(trx.amount||0); 
-                    if(relatedTarget.currentAmount < 0) relatedTarget.currentAmount = 0; 
-                    if(relatedTarget.nilaiTerkini < 0) relatedTarget.nilaiTerkini = 0; 
-                } else if (trx.type === 'in') { 
-                    let modalKembali = trx.modalDeducted !== undefined ? Number(trx.modalDeducted||0) : Number(trx.amount||0); 
-                    relatedTarget.currentAmount += modalKembali; 
-                    if(relatedTarget.tipe === 'investasi') { relatedTarget.nilaiTerkini += Number(trx.amount||0); } 
-                }
-            } 
-        } 
-        
-        window.transactions.splice(trxIndex, 1); 
-        window.recalculateBalances(); 
-        
-        if(window.currentUserId) {
-            try {
-                const batch = writeBatch(db);
-                batch.delete(doc(db, "users", window.currentUserId, "transactions", String(id)));
-                batch.set(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
-                await batch.commit();
-                window.callPageRender();
-            } catch(e) { window.customAlert("Error", "Gagal hapus data dari cloud.", "error"); }
-        }
-    }); 
-};
-
-// ==========================================
-// 8. DASHBOARD LOGIC
+// 1. NAVIGASI TAB & NOTIFIKASI BERANDA (DENGAN FITUR HAPUS)
 // ==========================================
 window.switchTab = function(pageId, navIndex) {
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    if(navIndex !== null && navIndex !== undefined) { 
+    if (navIndex !== null && navIndex !== undefined) { 
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active')); 
         const items = document.querySelectorAll('.nav-item'); 
-        if(items[navIndex]) items[navIndex].classList.add('active'); 
+        if (items[navIndex]) items[navIndex].classList.add('active'); 
     }
     const tgt = document.getElementById(pageId); 
-    if(tgt) tgt.classList.add('active'); 
-    if(pageId === 'page-akun' && typeof window.updateNotifStatusUI === 'function') {
+    if (tgt) tgt.classList.add('active'); 
+    if (pageId === 'page-akun' && typeof window.updateNotifStatusUI === 'function') {
         window.updateNotifStatusUI();
     }
     window.scrollTo(0, 0);
 };
 
+// Catat ID broadcast yang sudah pernah masuk agar tidak muncul lagi setelah dihapus user
+window.markBroadcastIdsAsSeen = function(notifArray) {
+    if (!window.currentUserId || !Array.isArray(notifArray)) return;
+    const seenKey = "mocatat_seen_broadcasts_" + window.currentUserId;
+    let seenIds = [];
+    try {
+        seenIds = JSON.parse(localStorage.getItem(seenKey) || "[]");
+    } catch (e) {}
+
+    let changed = false;
+    notifArray.forEach(n => {
+        if (n && n.id && !seenIds.includes(n.id)) {
+            seenIds.push(n.id);
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        try { localStorage.setItem(seenKey, JSON.stringify(seenIds)); } catch (e) {}
+    }
+};
+
 window.bukaNotifikasi = function() { 
     window.switchTab('page-notifikasi', null); 
+    window.markBroadcastIdsAsSeen(window.notifications);
+
     let adaYangDiubah = false; 
-    window.notifications.forEach(n => { if (!n.read) { n.read = true; adaYangDiubah = true; } }); 
+    window.notifications.forEach(n => { 
+        if (!n.read) { n.read = true; adaYangDiubah = true; } 
+    }); 
     if (adaYangDiubah) { 
         window.renderNotifications(); 
-        window.saveDataToFirestoreSilently(); 
+        if (typeof window.saveDataToFirestoreSilently === 'function') {
+            window.saveDataToFirestoreSilently(); 
+        }
     } 
+};
+
+window.hapusNotifikasiUser = async function(notifId, fallbackIndex) {
+    if (!Array.isArray(window.notifications)) return;
+
+    // Pastikan ID tercatat sudah dilihat supaya tidak masuk ulang saat refresh
+    window.markBroadcastIdsAsSeen(window.notifications);
+
+    if (notifId && notifId !== 'undefined' && notifId !== '') {
+        const idx = window.notifications.findIndex(n => String(n.id) === String(notifId));
+        if (idx !== -1) {
+            window.notifications.splice(idx, 1);
+        } else if (fallbackIndex !== undefined && window.notifications[fallbackIndex]) {
+            window.notifications.splice(fallbackIndex, 1);
+        }
+    } else if (fallbackIndex !== undefined && window.notifications[fallbackIndex]) {
+        window.notifications.splice(fallbackIndex, 1);
+    }
+
+    window.renderNotifications();
+
+    if (typeof window.saveDataToFirestoreSilently === 'function') {
+        window.saveDataToFirestoreSilently();
+    }
+    if (window.currentUserId) {
+        try {
+            await setDoc(doc(db, "users", window.currentUserId), {
+                notifications: window.notifications
+            }, { merge: true });
+        } catch (e) {}
+    }
+};
+
+window.hapusSemuaNotifikasiUser = function() {
+    if (!Array.isArray(window.notifications) || window.notifications.length === 0) return;
+
+    window.customConfirm(
+        "Bersihkan Notifikasi?",
+        "Yakin ingin menghapus seluruh pesan notifikasi di daftar ini?",
+        async () => {
+            window.markBroadcastIdsAsSeen(window.notifications);
+            window.notifications = [];
+            window.renderNotifications();
+
+            if (typeof window.saveDataToFirestoreSilently === 'function') {
+                window.saveDataToFirestoreSilently();
+            }
+            if (window.currentUserId) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), {
+                        notifications: []
+                    }, { merge: true });
+                } catch (e) {}
+            }
+        }
+    );
 };
 
 window.renderNotifications = function() {
     const container = document.getElementById('notif-page-container'); 
     const badge = document.getElementById('notif-badge');
-    if(!container) return; 
+    if (!container) return; 
+
     let unreadCount = 0; 
-    let html = '';
-    if (window.notifications.length === 0) { 
+    if (!Array.isArray(window.notifications) || window.notifications.length === 0) { 
         container.innerHTML = `<div class="empty-state"><div class="icon-wrapper"><span class="material-icons-round">notifications_off</span></div><h4>Belum ada notifikasi</h4></div>`; 
-        if(badge) badge.style.display = 'none'; 
+        if (badge) badge.style.display = 'none'; 
         return; 
     }
-    const sorted = [...window.notifications].sort((a,b) => new Date(b.date||'1970-01-01') - new Date(a.date||'1970-01-01'));
-    sorted.forEach(notif => {
-        if (!notif.read) unreadCount++; 
-        const bg = notif.read ? 'white' : '#e0f2f1';
-        html += `<div style="background: ${bg}; padding: 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);"><div style="font-size: 14px; font-weight: 800; margin-bottom: 4px;">${window.escapeHTML(notif.title)}</div><div style="font-size: 12.5px; color: #555; margin-bottom: 8px;">${window.escapeHTML(notif.body)}</div><div style="font-size: 10.5px; color: #94a3b8; font-weight: 700;">${window.escapeHTML(notif.date)}</div></div>`;
+
+    // Beri ID otomatis jika ada notifikasi lama yang belum punya ID
+    window.notifications.forEach((n, idx) => {
+        if (!n.id) n.id = 'notif-old-' + idx + '-' + Date.now();
+        if (!n.read) unreadCount++;
     });
+
+    const sorted = [...window.notifications].sort((a,b) => new Date(b.date||'1970-01-01') - new Date(a.date||'1970-01-01'));
+
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 2px;">
+            <span style="font-size: 12px; font-weight: 700; color: #64748b;">${sorted.length} Pesan Notifikasi</span>
+            <button onclick="window.hapusSemuaNotifikasiUser()" style="background: #fee2e2; color: #dc2626; border: none; padding: 6px 11px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit;">
+                <span class="material-icons-round" style="font-size: 14px;">delete_sweep</span> Bersihkan Semua
+            </button>
+        </div>
+    `;
+
+    sorted.forEach((notif, idx) => {
+        const bg = notif.read ? 'white' : '#e0f2f1';
+        const safeId = window.escapeHTML(String(notif.id || '')).replace(/'/g, "\\'");
+        html += `
+        <div style="background: ${bg}; padding: 15px 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.025); border: 1px solid #f1f5f9;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;">
+                <div style="font-size: 14px; font-weight: 800; color: #1a1a1a; line-height: 1.35;">${window.escapeHTML(notif.title)}</div>
+                <button onclick="window.hapusNotifikasiUser('${safeId}', ${idx})" title="Hapus Pesan" style="background: #fff1f2; color: #e11d48; border: none; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+                    <span class="material-icons-round" style="font-size: 16px;">delete_outline</span>
+                </button>
+            </div>
+            <div style="font-size: 12.5px; color: #475569; margin-bottom: 8px; line-height: 1.5;">${window.escapeHTML(notif.body)}</div>
+            <div style="font-size: 10.5px; color: #94a3b8; font-weight: 700;">🗓️ ${window.escapeHTML(notif.date)}</div>
+        </div>`;
+    });
+
     container.innerHTML = html; 
-    if(badge) badge.style.display = unreadCount > 0 ? 'block' : 'none';
+    if (badge) badge.style.display = unreadCount > 0 ? 'block' : 'none';
 };
 
+// ==========================================
+// 2. SLIDE 3 FITUR (MONITOR OLI, RADAR, EDUKASI)
+// ==========================================
+window.ensureRedesignStyles = function() {
+    if (!document.getElementById('beranda-redesign-styles')) {
+        const st = document.createElement('style');
+        st.id = 'beranda-redesign-styles';
+        st.innerHTML = `
+            .trio-slider-track {
+                display: flex;
+                gap: 12px;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding: 2px 2px 6px 2px;
+            }
+            .trio-slider-track::-webkit-scrollbar { display: none; }
+            .trio-slide-card {
+                flex: 0 0 88%;
+                box-sizing: border-box;
+                scroll-snap-align: center;
+                background: white;
+                border-radius: 18px;
+                padding: 15px 16px;
+                border: 1.5px solid #e2e8f0;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.035);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                transition: transform 0.15s ease;
+            }
+            .trio-slide-card:active {
+                transform: scale(0.985);
+            }
+            .trio-left {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                min-width: 0;
+                flex: 1;
+            }
+            .trio-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 13px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .trio-badge {
+                font-size: 9.5px;
+                font-weight: 800;
+                padding: 2px 7px;
+                border-radius: 6px;
+                display: inline-block;
+                margin-bottom: 3px;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+            .trio-title {
+                font-size: 13.5px;
+                font-weight: 800;
+                color: #1a1a1a;
+                margin-bottom: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .trio-desc {
+                font-size: 11.5px;
+                font-weight: 600;
+                color: #64748b;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .trio-dots {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 6px;
+                margin-top: 6px;
+            }
+            .trio-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #cbd5e1;
+                transition: all 0.25s ease;
+                cursor: pointer;
+            }
+            .trio-dot.active {
+                width: 18px;
+                border-radius: 4px;
+                background: #249a95;
+            }
+        `;
+        document.head.appendChild(st);
+    }
+};
+
+window.onTrioSlideScroll = function(el) {
+    const cardWidth = el.querySelector('.trio-slide-card')?.offsetWidth || el.clientWidth;
+    const idx = Math.min(2, Math.max(0, Math.round(el.scrollLeft / (cardWidth || 1))));
+    const dots = document.querySelectorAll('#trio-slider-dots .trio-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+};
+
+window.scrollToTrioSlide = function(index) {
+    const track = document.getElementById('trio-slider-track');
+    if (!track) return;
+    const cards = track.querySelectorAll('.trio-slide-card');
+    if (cards[index]) {
+        cards[index].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+};
+
+window.setupRedesignedBerandaLayout = function() {
+    window.ensureRedesignStyles();
+
+    const pageDash = document.getElementById('page-dashboard');
+    if (!pageDash) return;
+
+    const oldLokasiInfo = document.getElementById('info-daerah-beranda');
+    const oldLokasiCard = oldLokasiInfo ? oldLokasiInfo.closest('a[href*="lokasi"], [onclick*="lokasi"]') : null;
+
+    let oldOliCard = null;
+    const oliCandidates = pageDash.querySelectorAll('a[href*="kendaraan"], [onclick*="kendaraan"]');
+    oliCandidates.forEach(el => {
+        if (!el.classList.contains('menu-item') && !el.classList.contains('nav-item') && !el.closest('.menu-grid') && !el.closest('#mocatat-home-hub')) {
+            oldOliCard = el;
+        }
+    });
+
+    const anchorCard = oldOliCard || oldLokasiCard;
+
+    let hubContainer = document.getElementById('mocatat-home-hub');
+    if (!hubContainer) {
+        hubContainer = document.createElement('div');
+        hubContainer.id = 'mocatat-home-hub';
+
+        if (anchorCard && anchorCard.parentNode) {
+            const cs = window.getComputedStyle(anchorCard);
+            hubContainer.style.marginLeft = cs.marginLeft || '0px';
+            hubContainer.style.marginRight = cs.marginRight || '0px';
+            hubContainer.style.marginTop = cs.marginTop || '0px';
+            hubContainer.style.marginBottom = cs.marginBottom && cs.marginBottom !== '0px' ? cs.marginBottom : '18px';
+            anchorCard.parentNode.insertBefore(hubContainer, anchorCard);
+        } else {
+            const trxContainer = document.getElementById('transaction-container');
+            if (trxContainer && trxContainer.parentNode) {
+                hubContainer.style.margin = '0 20px 18px 20px';
+                trxContainer.parentNode.insertBefore(hubContainer, trxContainer);
+            }
+        }
+    }
+
+    if (oldLokasiCard) oldLokasiCard.style.display = 'none';
+    if (oldOliCard) oldOliCard.style.display = 'none';
+
+    if (!hubContainer) return;
+
+    // Slide 1: Monitor Oli & KM
+    const accKm = Number((window.vehicleSettings && window.vehicleSettings.accumulatedKmForOil) || 0);
+    const activeTrip = window.vehicleSettings ? window.vehicleSettings.activeTrip : null;
+    const kmFormatted = accKm.toFixed(1).replace('.', ',');
+    let oliBadgeText = '🏍️ MOTOR AMAN';
+    let oliBadgeBg = '#fff3e0';
+    let oliBadgeColor = '#ef6c00';
+    let oliDescText = `Jarak Oli: ${kmFormatted} / 2.000 KM`;
+
+    if (activeTrip) {
+        oliBadgeText = '🟢 TRIP AKTIF';
+        oliBadgeBg = '#dcfce7';
+        oliBadgeColor = '#15803d';
+        oliDescText = `KM Awal: ${activeTrip.kmAwal} • Tap untuk selesai`;
+    } else if (accKm >= 2000) {
+        oliBadgeText = '⚠️ GANTI OLI!';
+        oliBadgeBg = '#fee2e2';
+        oliBadgeColor = '#b91c1c';
+        oliDescText = `Sudah ${kmFormatted} KM (Waktunya ganti oli)`;
+    } else {
+        oliBadgeText = `⛽ ${Math.min(100, Math.round((accKm / 2000) * 100))}% UMUR OLI`;
+    }
+
+    // Slide 2: Radar & Lokasi Mangkal
+    const totalDaerah = Array.isArray(window.zones) ? window.zones.length : 0;
+    const totalTitik = Array.isArray(window.zones) ? window.zones.reduce((acc, z) => acc + (z.locations ? z.locations.length : 0), 0) : 0;
+    const labelLokasi = totalDaerah > 0 ? `${totalDaerah} Daerah • ${totalTitik} Titik Mangkal aktif` : `Kelola daerah & cek titik gacor per jam`;
+
+    // Slide 3: Edukasi & Simulasi Investasi
+    const eduCount = typeof window.getEduCount === 'function' ? window.getEduCount() : 5;
+
+    hubContainer.innerHTML = `
+        <div class="trio-slider-track" id="trio-slider-track" onscroll="window.onTrioSlideScroll(this)">
+            
+            <!-- SLIDE 1: MONITOR OLI & KM MOTOR -->
+            <div class="trio-slide-card" onclick="window.location.href='kendaraan.html'">
+                <div class="trio-left">
+                    <div class="trio-icon" style="background:${oliBadgeBg}; color:${oliBadgeColor};">
+                        <span class="material-icons-round" style="font-size:22px;">two_wheeler</span>
+                    </div>
+                    <div style="min-width:0;">
+                        <span class="trio-badge" style="background:${oliBadgeBg}; color:${oliBadgeColor};">${oliBadgeText}</span>
+                        <div class="trio-title">Monitor Oli & KM Motor</div>
+                        <div class="trio-desc">${window.escapeHTML(oliDescText)}</div>
+                    </div>
+                </div>
+                <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
+            </div>
+
+            <!-- SLIDE 2: RADAR & LOKASI MANGKAL -->
+            <div class="trio-slide-card" onclick="window.location.href='lokasi.html'">
+                <div class="trio-left">
+                    <div class="trio-icon" style="background:#e0f2f1; color:#249a95;">
+                        <span class="material-icons-round" style="font-size:22px;">radar</span>
+                    </div>
+                    <div style="min-width:0;">
+                        <span class="trio-badge" style="background:#e0f2f1; color:#0f766e;">📍 STRATEGI GACOR</span>
+                        <div class="trio-title">Lokasi & Radar Mangkal</div>
+                        <div class="trio-desc">${window.escapeHTML(labelLokasi)}</div>
+                    </div>
+                </div>
+                <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
+            </div>
+
+            <!-- SLIDE 3: EDUKASI REKSADANA & SAHAM -->
+            <div class="trio-slide-card" onclick="window.location.href='edukasi.html'">
+                <div class="trio-left">
+                    <div class="trio-icon" style="background:#ede9fe; color:#4338ca;">
+                        <span class="material-icons-round" style="font-size:22px;">school</span>
+                    </div>
+                    <div style="min-width:0;">
+                        <span class="trio-badge" style="background:#ede9fe; color:#4338ca;">📈 LITERASI CUAN</span>
+                        <div class="trio-title">Edukasi & Simulasi Investasi</div>
+                        <div class="trio-desc">${eduCount} Materi Reksadana, Saham & Kalkulator</div>
+                    </div>
+                </div>
+                <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
+            </div>
+
+        </div>
+        <div class="trio-dots" id="trio-slider-dots">
+            <div class="trio-dot active" onclick="window.scrollToTrioSlide(0)"></div>
+            <div class="trio-dot" onclick="window.scrollToTrioSlide(1)"></div>
+            <div class="trio-dot" onclick="window.scrollToTrioSlide(2)"></div>
+        </div>
+    `;
+};
+
+// ==========================================
+// 3. RENDER UTAMA BERANDA (DASHBOARD)
+// ==========================================
 window.renderDashboard = function() {
     const walletContainer = document.getElementById('wallet-container'); 
-    if(!walletContainer) return;
+    if (!walletContainer) return;
     window.renderNotifications(); 
     if (typeof window.updateNotifStatusUI === 'function') window.updateNotifStatusUI();
 
@@ -425,19 +449,9 @@ window.renderDashboard = function() {
 
     let kekayaanBersih = totalSaldo + totalAset;
     
-    if(document.getElementById('net-worth')) document.getElementById('net-worth').innerText = window.formatRupiah(kekayaanBersih);
-    if(document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
-    if(document.getElementById('total-asset')) document.getElementById('total-asset').innerText = window.formatRupiah(totalAset);
-
-    const infoDaerahEl = document.getElementById('info-daerah-beranda');
-    if (infoDaerahEl) {
-        if (Array.isArray(window.zones) && window.zones.length > 0) {
-            const totalTitik = window.zones.reduce((acc, z) => acc + (z.locations ? z.locations.length : 0), 0);
-            infoDaerahEl.innerText = `${window.zones.length} Daerah • ${totalTitik} Titik Mangkal aktif`;
-        } else {
-            infoDaerahEl.innerText = `Kelola daerah & cek titik gacor per jam`;
-        }
-    }
+    if (document.getElementById('net-worth')) document.getElementById('net-worth').innerText = window.formatRupiah(kekayaanBersih);
+    if (document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
+    if (document.getElementById('total-asset')) document.getElementById('total-asset').innerText = window.formatRupiah(totalAset);
 
     const allocationCard = document.getElementById('smart-allocation-card');
     if (allocationCard) {
@@ -458,8 +472,8 @@ window.renderDashboard = function() {
                 allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#16a34a"; 
                 allocationCard.querySelector('.material-icons-round').innerText = "task_alt";
                 teksSaran.innerHTML = `Kewajiban nabung hari ini sudah beres. Sisa uang cair <strong style="color: #16a34a;">${window.formatRupiah(totalSaldo)}</strong> bebas kamu pakai buat jajan!`;
-                if(btnTarget) btnTarget.style.display = 'none'; 
-                if(btnReward) { 
+                if (btnTarget) btnTarget.style.display = 'none'; 
+                if (btnReward) { 
                     btnReward.style.background = '#16a34a'; 
                     btnReward.style.color = 'white'; 
                     btnReward.innerText = "Nikmati Self-Reward ☕"; 
@@ -474,18 +488,24 @@ window.renderDashboard = function() {
                 allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#f57f17"; 
                 allocationCard.querySelector('.material-icons-round').innerText = "lightbulb";
                 const saranNominal = Math.floor(totalSaldo * 0.2); 
-                let activeTargets = window.targets.filter(t => Number(t.currentAmount||0) < Number(t.targetAmount||0)); 
-                activeTargets.sort((a, b) => new Date(a.deadline||'2099-01-01') - new Date(b.deadline||'2099-01-01'));
+                
+                let activeTargets = window.targets.filter(t => {
+                    if (t.isActive === false) return false;
+                    const terkumpul = t.tipe === 'investasi' ? Number(t.nilaiTerkini || t.currentAmount || 0) : Number(t.currentAmount || 0);
+                    return Number(t.targetAmount || 0) === 0 || terkumpul < Number(t.targetAmount || 0);
+                }); 
+                activeTargets.sort((a, b) => new Date(a.deadline||'2099-01-01') - new Date(a.deadline||'2099-01-01'));
+                
                 let saranTargetText = "";
                 if (activeTargets.length > 0) { 
                     saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) ke target <strong>${window.escapeHTML(activeTargets[0].name)}</strong>!`; 
-                    if(btnTarget) btnTarget.innerText = "Setor Tabungan"; 
+                    if (btnTarget) btnTarget.innerText = "Setor Tabungan"; 
                 } else { 
                     saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) buat target impianmu!`; 
-                    if(btnTarget) btnTarget.innerText = "Buat Target Baru"; 
+                    if (btnTarget) btnTarget.innerText = "Buat Target Baru"; 
                 }
                 teksSaran.innerHTML = `Kamu punya saldo cair <strong style="color: #1a1a1a;">${window.formatRupiah(totalSaldo)}</strong>. ${saranTargetText}`;
-                if(btnTarget) { 
+                if (btnTarget) { 
                     btnTarget.style.display = 'block'; 
                     btnTarget.style.background = 'white'; 
                     btnTarget.style.border = '1.5px solid #fbc02d'; 
@@ -495,7 +515,7 @@ window.renderDashboard = function() {
                         else { window.location.href = `target.html?action=baru`; } 
                     }; 
                 }
-                if(btnReward) { 
+                if (btnReward) { 
                     btnReward.style.background = '#ffe0b2'; 
                     btnReward.style.color = '#ef6c00'; 
                     btnReward.innerText = "Self Reward"; 
@@ -516,7 +536,7 @@ window.renderDashboard = function() {
         });
         let dashHTML = '', lastDateDash = '';
         sortedTrx.slice(0, 5).forEach(trx => {
-            if(trx.date !== lastDateDash) { 
+            if (trx.date !== lastDateDash) { 
                 dashHTML += `<div class="date-divider">${window.escapeHTML(trx.date)}</div>`; 
                 lastDateDash = trx.date; 
             }
@@ -524,114 +544,10 @@ window.renderDashboard = function() {
         }); 
         historyContainer.innerHTML = dashHTML;
     }
-};
 
-window.generateTrxHTML = function(trx, showActions = false) {
-    const isIncome = trx.type === 'in', isTransfer = trx.type === 'transfer';
-    const amountClass = isIncome ? 'amount-in' : (isTransfer ? 'amount-transfer' : 'amount-out'); 
-    const sign = isIncome ? '+' : (isTransfer ? '' : '-');
-    const safeNote = window.escapeHTML(trx.note); 
-    const timeDisplay = trx.time ? ` • ${trx.time}` : '';
-    const desc = isTransfer ? `${window.escapeHTML(trx.walletName)} ➔ ${window.escapeHTML(trx.targetWalletName)}${timeDisplay}` : `${window.escapeHTML(trx.walletName)} • ${window.escapeHTML(trx.categoryName || 'Transfer')}${timeDisplay}`;
-    let grabBadge = trx.grabService ? `<span style="font-size: 10px; background: #00B14F; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display:inline-block; white-space:nowrap;">${window.escapeHTML(trx.grabService)}</span>` : '';
-    
-    let locBadge = '';
-    if (trx.location) {
-        const mappedZone = window.getZoneNameByLocation(trx.location);
-        const labelLoc = (mappedZone && mappedZone.toLowerCase() !== trx.location.trim().toLowerCase())
-            ? `${window.escapeHTML(mappedZone)} (${window.escapeHTML(trx.location)})`
-            : window.escapeHTML(trx.location);
-        locBadge = `<span style="font-size: 10px; background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display:inline-block; white-space:nowrap;"><span class="material-icons-round" style="font-size: 10px; vertical-align: middle;">place</span> ${labelLoc}</span>`;
-    }
-
-    let actionHTML = (showActions && String(trx.categoryId) !== '999' && !isTransfer) 
-        ? `<div class="list-actions" style="margin-left: 15px;"><button class="btn-icon" style="padding:4px;" onclick="window.openModalTrans('${trx.type}', '${trx.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button><button class="btn-icon delete" style="padding:4px;" onclick="window.hapusTransaksi('${trx.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button></div>` 
-        : (showActions && isTransfer 
-            ? `<div class="list-actions" style="margin-left: 15px;"><button class="btn-icon delete" style="padding:4px;" onclick="window.hapusTransaksi('${trx.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button></div>` 
-            : (showActions && String(trx.categoryId) === '999' 
-                ? `<div class="list-actions" style="margin-left: 15px;"><button class="btn-icon delete" style="padding:4px;" onclick="window.hapusTransaksi('${trx.id}')" title="Batalkan Setoran"><span class="material-icons-round" style="font-size:18px;">delete</span></button></div>` 
-                : ''));
-    return `<div class="trx-item"><div class="trx-content"><div class="trx-info"><span class="trx-title" style="display:flex; align-items:center; flex-wrap:wrap;">${safeNote} ${grabBadge} ${locBadge}</span><span class="trx-date">${desc}</span></div><div class="trx-amount ${amountClass}">${sign}${window.formatRupiah(trx.amount)}</div></div>${actionHTML}</div>`;
-};
-
-// ==========================================
-// 9. RIWAYAT LOGIC (riwayat.html)
-// ==========================================
-window.renderHistoryPage = function() {
-    const container = document.getElementById('all-transaction-container'); 
-    if(!container) return;
-    const filterPeriod = document.getElementById('filter-period').value; 
-    const filterType = document.getElementById('filter-type').value;
-    const searchKeyword = document.getElementById('filter-search') ? document.getElementById('filter-search').value.trim().toLowerCase() : '';
-    
-    let filtered = [...window.transactions].sort((a,b) => {
-        const dtA = new Date((a.date||'1970-01-01') + 'T' + (a.time||'00:00')).getTime();
-        const dtB = new Date((b.date||'1970-01-01') + 'T' + (b.time||'00:00')).getTime();
-        return dtB - dtA;
-    });
-
-    if (filterType) filtered = filtered.filter(t => t.type === filterType);
-    if (filterPeriod && filterPeriod !== 'all') {
-        const now = new Date(), todayStr = window.getLocalDateString(), currentMonthStr = window.getLocalMonthString();
-        if (filterPeriod === 'today') { 
-            filtered = filtered.filter(t => t.date === todayStr); 
-        } else if (filterPeriod === 'week') { 
-            const startOfWeek = new Date(now); 
-            startOfWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1)); 
-            startOfWeek.setHours(0,0,0,0); 
-            const endOfWeek = new Date(startOfWeek); 
-            endOfWeek.setDate(startOfWeek.getDate() + 6); 
-            endOfWeek.setHours(23,59,59,999); 
-            filtered = filtered.filter(t => { 
-                if (!t.date) return false; 
-                const tDate = new Date(t.date + 'T12:00:00'); 
-                return tDate >= startOfWeek && tDate <= endOfWeek; 
-            }); 
-        } else if (filterPeriod === 'month') { 
-            filtered = filtered.filter(t => t.date && t.date.startsWith(currentMonthStr)); 
-        }
-    }
-
-    if (searchKeyword !== '') {
-        filtered = filtered.filter(t => {
-            const noteStr = (t.note || '').toLowerCase();
-            const catStr = (t.categoryName || '').toLowerCase();
-            const walStr = (t.walletName || '').toLowerCase();
-            const tgtWalStr = (t.targetWalletName || '').toLowerCase();
-            const grabStr = (t.grabService || '').toLowerCase();
-            const locStr = (t.location || '').toLowerCase();
-            const zoneStr = (t.location && window.getZoneNameByLocation(t.location) ? window.getZoneNameByLocation(t.location) : '').toLowerCase();
-            return noteStr.includes(searchKeyword) ||
-                   catStr.includes(searchKeyword) ||
-                   walStr.includes(searchKeyword) ||
-                   tgtWalStr.includes(searchKeyword) ||
-                   grabStr.includes(searchKeyword) ||
-                   locStr.includes(searchKeyword) ||
-                   zoneStr.includes(searchKeyword);
-        });
-    }
-
-    let totIn = 0, totOut = 0;
-    filtered.forEach(trx => { 
-        if(String(trx.categoryId) !== '999') { 
-            if(trx.type === 'in') totIn += Number(trx.amount||0); 
-            if(trx.type === 'out') totOut += Number(trx.amount||0); 
-        } 
-    });
-    if(document.getElementById('summary-in')) document.getElementById('summary-in').innerText = window.formatRupiah(totIn);
-    if(document.getElementById('summary-out')) document.getElementById('summary-out').innerText = window.formatRupiah(totOut);
-
-    if (filtered.length === 0) { 
-        container.innerHTML = `<div class="empty-state"><div class="icon-wrapper"><span class="material-icons-round">receipt_long</span></div><h4>Tidak ada transaksi</h4></div>`; 
-    } else {
-        let fullHTML = '', lastDateFull = '';
-        filtered.forEach(trx => { 
-            if(trx.date !== lastDateFull) { 
-                fullHTML += `<div class="date-divider">${window.escapeHTML(trx.date)}</div>`; 
-                lastDateFull = trx.date; 
-            } 
-            fullHTML += window.generateTrxHTML(trx, true); 
-        }); 
-        container.innerHTML = fullHTML;
+    // Pasang Slide 3 Sekawan & Sinkronisasi Konten Edukasi
+    window.setupRedesignedBerandaLayout();
+    if (typeof window.syncCMSFromFirestoreOnce === 'function') {
+        window.syncCMSFromFirestoreOnce();
     }
 };

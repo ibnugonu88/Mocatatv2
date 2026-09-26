@@ -219,7 +219,63 @@ window.renderCategoryPage = function() {
         return; 
     }
 
+    let totalAnggaranTab = 0;
+    catsToRender.forEach(c => { totalAnggaranTab += Number(c.budget || 0); });
+    const totalRealisasiTab = window.activeKatTab === 'out' ? totOut : totIn;
+
     let html = '';
+
+    if (window.activeKatTab === 'out') {
+        const sisaTotal = totalAnggaranTab - totalRealisasiTab;
+        const pctTotal = totalAnggaranTab > 0 ? Math.min((totalRealisasiTab / totalAnggaranTab) * 100, 100) : 0;
+        const barColorTotal = pctTotal >= 100 ? '#c62828' : (pctTotal > 75 ? '#ef6c00' : '#249a95');
+        const infoSisaTotal = totalAnggaranTab > 0
+            ? (sisaTotal < 0
+                ? `<span style="color:#c62828; font-weight:800;">Overbudget: ${window.formatRupiah(Math.abs(sisaTotal))}</span>`
+                : `<span style="color:#2e7d32; font-weight:800;">Sisa: ${window.formatRupiah(sisaTotal)}</span>`)
+            : `<span style="color:#94a3b8; font-weight:700;">Belum ada batas anggaran</span>`;
+
+        html += `
+        <div class="cat-card" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1.5px solid #e2e8f0; margin-bottom: 6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-size:11.5px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                    <span class="material-icons-round" style="font-size:16px; color:#249a95;">account_balance_wallet</span> Total Anggaran Pengeluaran
+                </div>
+                <div style="font-size:15px; font-weight:800; color:#1a1a1a;">${window.formatRupiah(totalAnggaranTab)}</div>
+            </div>
+            <div class="progress-bg" style="height:8px; background:#e2e8f0; margin-bottom:8px;">
+                <div class="progress-fill" style="width:${pctTotal}%; background:${barColorTotal};"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:700; color:#64748b;">
+                <span>Terpakai: <strong style="color:#c62828;">${window.formatRupiah(totalRealisasiTab)}</strong> (${pctTotal.toFixed(0)}%)</span>
+                ${infoSisaTotal}
+            </div>
+        </div>`;
+    } else if (window.activeKatTab === 'in' && totalAnggaranTab > 0) {
+        const kurangTotal = Math.max(0, totalAnggaranTab - totalRealisasiTab);
+        const pctTotalIn = Math.min((totalRealisasiTab / totalAnggaranTab) * 100, 100);
+        const infoTargetIn = kurangTotal === 0
+            ? `<span style="color:#2e7d32; font-weight:800;">Target Bulanan Tercapai! 🎉</span>`
+            : `<span style="color:#64748b; font-weight:800;">Kurang: ${window.formatRupiah(kurangTotal)}</span>`;
+
+        html += `
+        <div class="cat-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #bbf7d0; margin-bottom: 6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-size:11.5px; font-weight:800; color:#15803d; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                    <span class="material-icons-round" style="font-size:16px; color:#16a34a;">flag</span> Total Target Pemasukan
+                </div>
+                <div style="font-size:15px; font-weight:800; color:#15803d;">${window.formatRupiah(totalAnggaranTab)}</div>
+            </div>
+            <div class="progress-bg" style="height:8px; background:#bbf7d0; margin-bottom:8px;">
+                <div class="progress-fill" style="width:${pctTotalIn}%; background:#16a34a;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:700; color:#166534;">
+                <span>Terkumpul: <strong>${window.formatRupiah(totalRealisasiTab)}</strong> (${pctTotalIn.toFixed(0)}%)</span>
+                ${infoTargetIn}
+            </div>
+        </div>`;
+    }
+
     catsToRender.forEach(cat => {
         let realisasi = 0; 
         txBulanIni.forEach(t => { 
@@ -303,7 +359,6 @@ window.simpanKategori = async function() {
                 const oldName = window.categories[idx].name;
                 window.categories[idx] = { ...window.categories[idx], type, name, budget }; 
 
-                // Sinkronkan perubahan nama kategori ke riwayat transaksi lama
                 if (oldName !== name) {
                     const trxDiubah = [];
                     window.transactions.forEach(t => {
@@ -451,6 +506,14 @@ window.resetOli = function() {
 // ==========================================
 // 14. TARGET & INVESTASI LOGIC (target.html)
 // ==========================================
+window.toggleStatusTarget = async function(id) {
+    const idx = window.targets.findIndex(t => String(t.id) === String(id));
+    if (idx === -1) return;
+    const currentStatus = window.targets[idx].isActive !== false;
+    window.targets[idx].isActive = !currentStatus;
+    await window.saveDataToFirestore();
+};
+
 window.renderTargetPage = function() {
     const container = document.getElementById('target-container'); 
     if(!container) return;
@@ -462,8 +525,14 @@ window.renderTargetPage = function() {
     let html = '';
     [...window.targets].reverse().forEach(t => {
         const isInvest = t.tipe === 'investasi'; 
-        let badgeHtml = isInvest ? `<span class="badge badge-invest">Aktif</span>` : `<span class="badge badge-tabungan">Aktif</span>`; 
-        let fillClass = isInvest ? `fill-invest` : `fill-tabungan`;
+        const isActive = t.isActive !== false;
+
+        let badgeHtml = isActive
+            ? `<span class="badge ${isInvest ? 'badge-invest' : 'badge-tabungan'}" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;" onclick="window.toggleStatusTarget('${t.id}')" title="Klik untuk menonaktifkan"><span class="material-icons-round" style="font-size:12px;">check_circle</span> Aktif</span>`
+            : `<span class="badge" style="background:#e2e8f0; color:#64748b; cursor:pointer; display:inline-flex; align-items:center; gap:4px;" onclick="window.toggleStatusTarget('${t.id}')" title="Klik untuk mengaktifkan kembali"><span class="material-icons-round" style="font-size:12px;">pause_circle</span> Nonaktif</span>`;
+
+        let fillClass = !isActive ? '' : (isInvest ? `fill-invest` : `fill-tabungan`);
+        let customBarStyle = !isActive ? 'background: #94a3b8;' : '';
         let saranHtml = ''; 
         let sisaUangText = 'Rp 0'; 
         let pct = 0;
@@ -479,7 +548,9 @@ window.renderTargetPage = function() {
             sisaUangText = window.formatRupiah(sisaUang); 
             pct = Math.min((uangDihitung / targetAmt) * 100, 100);
 
-            if (t.deadline) {
+            if (!isActive) {
+                saranHtml = `<div class="pill-box" style="border-color: #e2e8f0; background: #f8fafc; justify-content: center;"><div style="font-size: 12.5px; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">pause_circle_outline</span> Target Dijeda (Tidak masuk beban harian)</div></div>`;
+            } else if (t.deadline) {
                 const today = new Date(); today.setHours(0, 0, 0, 0); 
                 const deadlineDate = new Date(t.deadline); deadlineDate.setHours(0, 0, 0, 0);
                 if (sisaUang <= 0) { 
@@ -495,6 +566,8 @@ window.renderTargetPage = function() {
                     }
                 }
             }
+        } else if (!isActive) {
+            saranHtml = `<div class="pill-box" style="border-color: #e2e8f0; background: #f8fafc; justify-content: center;"><div style="font-size: 12.5px; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">pause_circle_outline</span> Status Nonaktif (Dijeda)</div></div>`;
         }
 
         let cardContent = '';
@@ -502,12 +575,15 @@ window.renderTargetPage = function() {
             let retur = valTerkini - currAmt;
             let returnColor = retur > 0 ? '#10b981' : (retur < 0 ? '#e11d48' : '#64748b'); 
             let returnText = retur > 0 ? '+ ' + window.formatRupiah(retur) : (retur < 0 ? '- ' + window.formatRupiah(Math.abs(retur)) : window.formatRupiah(0));
-            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #4338ca; font-size: 14px;">${window.formatRupiah(valTerkini)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%;"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:14px; margin-top:18px; border:1px solid #e2e8f0;"><div style="font-size:12.5px; color:#64748b; font-weight:700;">Modal: <span style="color:#1a1a1a; font-weight:800; font-size: 13.5px;">${window.formatRupiah(currAmt)}</span></div><div style="font-size:12.5px; color:#64748b; font-weight:700;">Return: <span style="color:${returnColor}; font-weight:800; font-size: 13.5px;">${returnText}</span></div></div><div class="btn-grid two"><button class="btn-action btn-setor-invest" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">add</span> Top Up</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Jual/Tarik</button></div><button class="btn-action btn-update" style="margin-top:12px; width:100%;" onclick="window.openActionModal('${t.id}', 'update')"><span class="material-icons-round" style="font-size:18px;">sync</span> Update Nilai Terkini</button>`;
+            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #4338ca; font-size: 14px;">${window.formatRupiah(valTerkini)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:14px; margin-top:18px; border:1px solid #e2e8f0;"><div style="font-size:12.5px; color:#64748b; font-weight:700;">Modal: <span style="color:#1a1a1a; font-weight:800; font-size: 13.5px;">${window.formatRupiah(currAmt)}</span></div><div style="font-size:12.5px; color:#64748b; font-weight:700;">Return: <span style="color:${returnColor}; font-weight:800; font-size: 13.5px;">${returnText}</span></div></div><div class="btn-grid two"><button class="btn-action btn-setor-invest" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">add</span> Top Up</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Jual/Tarik</button></div><button class="btn-action btn-update" style="margin-top:12px; width:100%;" onclick="window.openActionModal('${t.id}', 'update')"><span class="material-icons-round" style="font-size:18px;">sync</span> Update Nilai Terkini</button>`;
         } else {
-            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%;"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid two"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Tarik</button></div>`;
+            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid two"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Tarik</button></div>`;
         }
 
-        html += `<div class="target-card"><div class="target-top"><div class="target-info-wrap"><div class="target-title">${window.escapeHTML(t.name)}</div></div><div style="display: flex; align-items: center; gap: 10px;">${badgeHtml}<div class="list-actions"><button class="cat-action-btn" onclick="window.openTargetModal('${t.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button><button class="cat-action-btn danger" onclick="window.hapusTarget('${t.id}')"><span class="material-icons-round">delete_outline</span></button></div></div></div>${cardContent}</div>`;
+        const toggleIcon = isActive ? 'pause' : 'play_arrow';
+        const toggleTitle = isActive ? 'Nonaktifkan / Jeda Target' : 'Aktifkan Target';
+
+        html += `<div class="target-card" style="${!isActive ? 'opacity: 0.8; background: #fcfcfd;' : ''}"><div class="target-top"><div class="target-info-wrap"><div class="target-title">${window.escapeHTML(t.name)}</div></div><div style="display: flex; align-items: center; gap: 8px;">${badgeHtml}<div class="list-actions"><button class="cat-action-btn" onclick="window.toggleStatusTarget('${t.id}')" title="${toggleTitle}"><span class="material-icons-round" style="font-size:18px;">${toggleIcon}</span></button><button class="cat-action-btn" onclick="window.openTargetModal('${t.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button><button class="cat-action-btn danger" onclick="window.hapusTarget('${t.id}')"><span class="material-icons-round">delete_outline</span></button></div></div></div>${cardContent}</div>`;
     });
     container.innerHTML = html;
 };
@@ -586,7 +662,7 @@ window.simpanTarget = async function() {
             if(window.targets[idx].nilaiTerkini < 0) window.targets[idx].nilaiTerkini = 0; 
         }
     } else { 
-        window.targets.push({ id: window.generateUUID(), tipe, name, targetAmount, currentAmount: currentAmount, nilaiTerkini: currentAmount, deadline: deadline }); 
+        window.targets.push({ id: window.generateUUID(), tipe, name, targetAmount, currentAmount: currentAmount, nilaiTerkini: currentAmount, deadline: deadline, isActive: true }); 
     }
     window.closeModal('modal-target'); 
     await window.saveDataToFirestore();

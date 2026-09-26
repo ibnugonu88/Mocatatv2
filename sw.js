@@ -1,76 +1,77 @@
-const CACHE_NAME = 'mocatat-cache-v13';
-
-// Daftar aset statis yang perlu di-cache
+const CACHE_NAME = 'mocatat-cache-v45';
 const urlsToCache = [
-    './',
-    './index.html',
-    './riwayat.html',
-    './analitik.html',
-    './dompet.html',
-    './kategori.html',
-    './kendaraan.html',
-    './target.html',
-    './lokasi.html',
-    './style.css',
-    './app.js',
-    './core.js',
-    './fitur-beranda.js',
-    './fitur-analitik.js',
-    './fitur-kelola.js',
-    './manifest.json',
-    './1789744450301.png', 
-    './1789744567730.png'  
+  './',
+  './index.html',
+  './riwayat.html',
+  './analitik.html',
+  './dompet.html',
+  './kategori.html',
+  './target.html',
+  './kendaraan.html',
+  './lokasi.html',
+  './edukasi.html',
+  './admin.html',
+  './style.css',
+  './app.js',
+  './core.js',
+  './fitur-beranda.js',
+  './fitur-transaksi.js',
+  './fitur-admin.js',
+  './fitur-analitik.js',
+  './fitur-kelola.js',
+  './manifest.json'
 ];
 
-// 1. INSTALL: Menyimpan aset ke Cache
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-        .then(cache => {
-            console.log('[Service Worker] Caching App Shell');
-            return cache.addAll(urlsToCache);
-        })
-    );
-    self.skipWaiting();
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
 });
 
-// 2. ACTIVATE: Membersihkan Cache versi lama jika ada pembaruan
 self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME];
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (!cacheWhitelist.includes(cacheName)) {
-                        console.log('[Service Worker] Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
         })
-    );
-    self.clients.claim();
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
-// 3. FETCH: Stale-While-Revalidate untuk memuat instan & update diam-diam di latar belakang
 self.addEventListener('fetch', event => {
-    // Biarkan request Firebase API (Firestore & Auth) langsung ke internet agar tidak kacau
-    if (!event.request.url.startsWith(self.location.origin)) {
-        return;
-    }
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const resClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
 
-    event.respondWith(
-        caches.match(event.request).then(cachedResponse => {
-            const fetchPromise = fetch(event.request).then(networkResponse => {
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(event.request, networkResponse.clone());
-                });
-                return networkResponse;
-            }).catch(() => {
-                console.log('[Service Worker] Offline fallback');
-            });
+// Ketika Notifikasi di Status Bar Atas HP Diklik oleh User
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : './index.html?open=notifikasi';
 
-            return cachedResponse || fetchPromise;
-        })
-    );
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (const client of windowClients) {
+        if ('focus' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });

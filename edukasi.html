@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Edukasi & Kalkulator Investasi - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* =========================================
+           1. GAYA BANNER & ARTIKEL EDUKASI
+           ========================================= */
+        .banner-slider-wrap {
+            padding: 15px 20px 5px 20px;
+        }
+        .cms-banner-track {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 4px;
+        }
+        .cms-banner-track::-webkit-scrollbar { display: none; }
+        .cms-banner-card {
+            flex: 0 0 100%;
+            box-sizing: border-box;
+            scroll-snap-align: center;
+            border-radius: 20px;
+            padding: 18px 20px;
+            color: white;
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .theme-teal { background: linear-gradient(135deg, #249a95 0%, #1565c0 100%); }
+        .theme-indigo { background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%); }
+        .theme-emerald { background: linear-gradient(135deg, #059669 0%, #0d9488 100%); }
+        .theme-amber { background: linear-gradient(135deg, #d97706 0%, #ea580c 100%); }
+        .theme-rose { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
+
+        .cms-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .cms-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.2s ease;
+        }
+        .cms-dot.active {
+            width: 18px;
+            border-radius: 4px;
+            background: #249a95;
+        }
+
+        .edu-article-card {
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.025);
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+        .edu-article-card:active { transform: scale(0.985); }
+
+        .edu-badge {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 4px 9px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .edu-reksadana { background: #e0f2f1; color: #0f766e; }
+        .edu-saham { background: #e0e7ff; color: #4338ca; }
+        .edu-tips { background: #fef3c7; color: #b45309; }
+
+        /* =========================================
+           2. GAYA KALKULATOR SAHAM, RD, KRIPTO & PORTOFOLIO
+           ========================================= */
+        .calc-subnav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 6px;
+            margin-bottom: 14px;
+        }
+        .calc-subnav::-webkit-scrollbar { display: none; }
+        .calc-pill {
+            padding: 9px 14px;
+            border-radius: 12px;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .calc-pill.active {
+            background: #249a95;
+            color: white;
+            border-color: #249a95;
+            box-shadow: 0 4px 12px rgba(36, 154, 149, 0.25);
+        }
+
+        .inv-view { display: none; width: 100%; }
+        .inv-view.active { display: block; animation: fadeIn 0.25s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .inv-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+            margin-bottom: 14px;
+            border: 1px solid #f1f5f9;
+        }
+        .inv-hero-card {
+            background: linear-gradient(135deg, #187773 0%, #249a95 60%, #2bb0aa 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 20px rgba(36, 154, 149, 0.22);
+        }
+        .inv-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .inv-stat-card {
+            background: white;
+            padding: 14px 12px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .inv-stat-val {
+            font-size: 16px;
+            font-weight: 800;
+            margin-top: 4px;
+            color: #1a1a1a;
+        }
+
+        .inv-form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .inv-form-row .form-group { flex: 1; }
+
+        .input-error { border-color: #ef4444 !important; background: #fff1f2 !important; }
+        .inv-err-msg {
+            color: #ef4444;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .inv-result-box {
+            background-color: #f8fafc;
+            border-radius: 14px;
+            padding: 15px;
+            margin-top: 14px;
+            border: 1.5px solid #e2e8f0;
+        }
+        .inv-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12.5px;
+            color: #475569;
+            font-weight: 600;
+        }
+        .inv-result-item.bold {
+            font-weight: 800;
+            font-size: 13.5px;
+            color: #1a1a1a;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 9px;
+            margin-top: 6px;
+        }
+
+        .text-profit { color: #10b981 !important; font-weight: 800 !important; }
+        .text-loss { color: #ef4444 !important; font-weight: 800 !important; }
+
+        .inv-btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .btn-inv-primary {
+            flex: 1.4;
+            background: #249a95;
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(36, 154, 149, 0.25);
+        }
+        .btn-inv-outline {
+            flex: 0.8;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1.5px solid #e2e8f0;
+            padding: 13px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-inv-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .badge-asset {
+            padding: 4px 9px;
+            border-radius: 8px;
+            font-size: 10.5px;
+            font-weight: 800;
+        }
+        .badge-stock { background-color: #e0f2fe; color: #0369a1; }
+        .badge-mf { background-color: #e0f2f1; color: #0f766e; }
+        .badge-crypto { background-color: #fef3c7; color: #b45309; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="loading-screen" class="loading-screen">Memuat Materi & Kalkulator...<div class="spinner"></div></div>
+
+        <!-- HEADER BERSIH -->
+        <header class="header-simple">
+            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
+            <span>Edukasi & Kalkulator Investasi</span>
+        </header>
+
+        <!-- BANNER CAROUSEL DI ATAS HALAMAN EDUKASI -->
+        <div id="edukasi-banner-wrap" class="banner-slider-wrap" style="display: none;"></div>
+
+        <!-- TAB NAVIGASI UTAMA: MATERI VS KALKULATOR PORTOFOLIO -->
+        <div class="modern-tabs" style="margin-top: 10px;">
+            <div class="modern-tab active" id="tab-edu-materi" onclick="window.switchEduMainTab('materi')">📚 Materi Belajar</div>
+            <div class="modern-tab" id="tab-edu-simulasi" onclick="window.switchEduMainTab('simulasi')">🧮 Kalkulator & Portofolio</div>
+        </div>
+
+        <!-- =======================================================
+             PANEL 1: DAFTAR MATERI EDUKASI (DARI ADMIN CMS)
+             ======================================================= -->
+        <div class="list-wrapper" id="panel-edu-materi" style="padding-top: 5px; padding-bottom: 40px;">
+            <div class="chip-group" id="edu-filter-chips" style="margin-bottom: 10px;">
+                <div class="chip active" onclick="window.filterKategoriEdukasi('all', this)">Semua</div>
+                <div class="chip" onclick="window.filterKategoriEdukasi('Reksadana', this)">🌱 Reksadana</div>
+                <div class="chip" onclick="window.filterKategoriEdukasi('Saham', this)">📈 Saham</div>
+                <div class="chip" onclick="window.filterKategoriEdukasi('Tips Keuangan', this)">💡 Tips Keuangan</div>
+            </div>
+
+            <div id="edu-articles-container"></div>
+        </div>
+
+        <!-- =======================================================
+             PANEL 2: KALKULATOR SAHAM, REKSADANA, KRIPTO & PORTOFOLIO
+             ======================================================= -->
+        <div class="list-wrapper" id="panel-edu-simulasi" style="display: none; padding-top: 5px; padding-bottom: 50px; flex-direction: column;">
+            
+            <!-- Sub-Navigasi Kalkulator -->
+            <div class="calc-subnav">
+                <div class="calc-pill active" id="cpill-dashboard" onclick="window.switchCalcView('dashboard', this)">📊 Ringkasan</div>
+                <div class="calc-pill" id="cpill-stock" onclick="window.switchCalcView('stock', this)">📈 Saham</div>
+                <div class="calc-pill" id="cpill-reksadana" onclick="window.switchCalcView('reksadana', this)">🌱 Reksadana</div>
+                <div class="calc-pill" id="cpill-crypto" onclick="window.switchCalcView('crypto', this)">🪙 Kripto</div>
+                <div class="calc-pill" id="cpill-portfolio" onclick="window.switchCalcView('portfolio', this)">💼 Portofolio</div>
+                <div class="calc-pill" id="cpill-history" onclick="window.switchCalcView('history', this)">🕒 Riwayat</div>
+                <div class="calc-pill" id="cpill-settings" onclick="window.switchCalcView('settings', this)">⚙️ Data</div>
+            </div>
+
+            <!-- 1. VIEW RINGKASAN INVESTASI (DASHBOARD) -->
+            <div id="view-dashboard" class="inv-view active">
+                <div class="inv-hero-card">
+                    <div style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.9;">Total Nilai Portofolio Saat Ini</div>
+                    <div id="dash-total-value" style="font-size: 28px; font-weight: 800; margin: 4px 0 8px 0;">Rp 0</div>
+                    <div style="font-size: 12.5px; font-weight: 600; opacity: 0.95; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between;">
+                        <span>Total Modal Pokok:</span>
+                        <strong id="dash-total-capital">Rp 0</strong>
+                    </div>
+                </div>
+
+                <div class="inv-grid-2">
+                    <div class="inv-stat-card">
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">Total Profit / Loss</div>
+                        <div id="dash-total-pl" class="inv-stat-val">Rp 0</div>
+                    </div>
+                    <div class="inv-stat-card">
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">Total Return (%)</div>
+                        <div id="dash-total-return" class="inv-stat-val">0.00%</div>
+                    </div>
+                    <div class="inv-stat-card" onclick="window.switchCalcView('stock')" style="cursor:pointer;">
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">📈 Aset Saham</div>
+                        <div id="dash-count-stock" class="inv-stat-val">0</div>
+                    </div>
+                    <div class="inv-stat-card" onclick="window.switchCalcView('reksadana')" style="cursor:pointer;">
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">🌱 Aset Reksadana</div>
+                        <div id="dash-count-mf" class="inv-stat-val">0</div>
+                    </div>
+                    <div class="inv-stat-card" onclick="window.switchCalcView('crypto')" style="cursor:pointer; grid-column: span 2;">
+                        <div style="font-size: 11.5px; color: #64748b; font-weight: 700;">🪙 Aset Kripto</div>
+                        <div id="dash-count-crypto" class="inv-stat-val">0</div>
+                    </div>
+                </div>
+
+                <div class="inv-card" style="text-align: center; padding: 15px;">
+                    <div style="font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 10px;">
+                        Pilih instrumen di bawah untuk mulai menghitung profit & menyimpan portofolio:
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('stock')">+ Hitung Saham</button>
+                        <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('reksadana')">+ Reksadana</button>
+                        <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('crypto')">+ Kripto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. VIEW KALKULATOR SAHAM (DILENGKAPI KEMBALI SECARA UTUH) -->
+            <div id="view-stock" class="inv-view">
+                <div class="inv-card">
+                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 14px; display:flex; align-items:center; gap:6px;">
+                        <span>📈 Kalkulator Saham & Dividen</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Kode / Nama Saham</label>
+                        <input type="text" id="s-name" class="form-input" placeholder="Misal: BBCA, BBRI, TLKM" autocomplete="off" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Harga Beli / Lembar (Rp)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="s-buy" placeholder="0">
+                            <div class="inv-err-msg" id="err-s-buy">Harga beli harus > 0</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Jumlah Lot (1 Lot = 100 Lbr)</label>
+                            <input type="number" id="s-lot" class="form-input" step="1" min="1" placeholder="0">
+                            <div class="inv-err-msg" id="err-s-lot">Lot harus > 0</div>
+                        </div>
+                    </div>
+
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Harga Jual / Saat Ini (Rp)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="s-sell" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dividen / Lembar (Opsional)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="s-div" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Fee Broker Beli (%)</label>
+                            <input type="number" id="s-fee-buy" class="form-input" step="0.01" min="0" value="0.15">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fee Broker Jual (%)</label>
+                            <input type="number" id="s-fee-sell" class="form-input" step="0.01" min="0" value="0.25">
+                        </div>
+                    </div>
+
+                    <div class="inv-result-box">
+                        <div class="inv-result-item"><span>Jumlah Lembar</span> <span id="rs-shares">0 lembar</span></div>
+                        <div class="inv-result-item"><span>Modal Bruto</span> <span id="rs-gross-buy">Rp 0</span></div>
+                        <div class="inv-result-item"><span>Fee Beli</span> <span id="rs-fee-buy">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Total Modal Bersih</span> <span id="rs-total-buy">Rp 0</span></div>
+                        
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+                        
+                        <div class="inv-result-item"><span>Nilai Jual Bruto</span> <span id="rs-gross-sell">Rp 0</span></div>
+                        <div class="inv-result-item"><span>Fee Jual</span> <span id="rs-fee-sell">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Nilai Jual Bersih</span> <span id="rs-net-sell">Rp 0</span></div>
+
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+
+                        <div class="inv-result-item bold"><span>Capital Gain / Loss</span> <span id="rs-pl">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Return Harga (%)</span> <span id="rs-return">0.00%</span></div>
+                        <div class="inv-result-item"><span>Total Dividen Tunai</span> <span id="rs-div-total">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Total Profit + Dividen</span> <span id="rs-total-profit">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Total Return Akhir (%)</span> <span id="rs-total-return">0.00%</span></div>
+                    </div>
+
+                    <div class="inv-btn-row">
+                        <button class="btn-inv-outline" onclick="window.resetStock()">Reset</button>
+                        <button class="btn-inv-primary" onclick="window.saveStock()">Simpan ke Portofolio</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. VIEW KALKULATOR REKSADANA -->
+            <div id="view-reksadana" class="inv-view">
+                <div class="inv-card">
+                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 14px;">
+                        🌱 Kalkulator Unit & NAB Reksadana
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nama Produk Reksadana</label>
+                        <input type="text" id="m-name" class="form-input" placeholder="Misal: Sucorinvest Money Market" autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Total Modal Investasi (Rp)</label>
+                        <input type="text" inputmode="decimal" class="form-input format-rp" id="m-capital" placeholder="0">
+                        <div class="inv-err-msg" id="err-m-capital">Modal harus > 0</div>
+                    </div>
+
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">NAB Beli / Unit (Rp)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="m-nav-buy" placeholder="Misal: 1.500">
+                            <div class="inv-err-msg" id="err-m-nav">NAB tidak boleh 0</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">NAB Saat Ini (Rp)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="m-nav-now" placeholder="Misal: 1.620">
+                        </div>
+                    </div>
+
+                    <div class="inv-result-box">
+                        <div class="inv-result-item"><span>Jumlah Unit Penyertaan</span> <span id="rm-units">0 unit</span></div>
+                        <div class="inv-result-item bold"><span>Total Modal</span> <span id="rm-capital">Rp 0</span></div>
+                        
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+                        
+                        <div class="inv-result-item bold"><span>Nilai Saat Ini</span> <span id="rm-value">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Profit / Loss</span> <span id="rm-pl">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Return (%)</span> <span id="rm-return">0.00%</span></div>
+                    </div>
+
+                    <div class="inv-btn-row">
+                        <button class="btn-inv-outline" onclick="window.resetMF()">Reset</button>
+                        <button class="btn-inv-primary" onclick="window.saveMF()">Simpan ke Portofolio</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. VIEW KALKULATOR KRIPTO -->
+            <div id="view-crypto" class="inv-view">
+                <div class="inv-card">
+                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 14px;">
+                        🪙 Kalkulator Koin Kripto
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nama Koin / Token</label>
+                        <input type="text" id="c-name" class="form-input" placeholder="Misal: BTC, ETH, SOL" autocomplete="off" style="text-transform: uppercase;">
+                    </div>
+                    
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Harga Beli (Rp)</label>
+                            <input type="text" inputmode="decimal" class="form-input format-rp" id="c-buy" placeholder="0">
+                            <div class="inv-err-msg" id="err-c-buy">Harga beli harus > 0</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Jumlah Koin</label>
+                            <input type="number" id="c-coin" class="form-input" step="any" min="0" placeholder="0.00">
+                            <div class="inv-err-msg" id="err-c-coin">Koin harus valid</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Harga Jual / Saat Ini (Rp)</label>
+                        <input type="text" inputmode="decimal" class="form-input format-rp" id="c-sell" placeholder="0">
+                    </div>
+
+                    <div class="inv-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Fee Beli (%)</label>
+                            <input type="number" id="c-fee-buy" class="form-input" step="0.01" min="0" value="0.11">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fee Jual (%)</label>
+                            <input type="number" id="c-fee-sell" class="form-input" step="0.01" min="0" value="0.11">
+                        </div>
+                    </div>
+
+                    <div class="inv-result-box">
+                        <div class="inv-result-item"><span>Jumlah Koin</span> <span id="rc-coins">0 koin</span></div>
+                        <div class="inv-result-item"><span>Modal Bruto</span> <span id="rc-gross-buy">Rp 0</span></div>
+                        <div class="inv-result-item"><span>Fee Beli</span> <span id="rc-fee-buy">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Total Modal Bersih</span> <span id="rc-total-buy">Rp 0</span></div>
+                        
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+                        
+                        <div class="inv-result-item"><span>Nilai Jual Bruto</span> <span id="rc-gross-sell">Rp 0</span></div>
+                        <div class="inv-result-item"><span>Fee Jual</span> <span id="rc-fee-sell">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Nilai Saat Ini (Bersih)</span> <span id="rc-net-sell">Rp 0</span></div>
+                        
+                        <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+                        
+                        <div class="inv-result-item bold"><span>Profit / Loss</span> <span id="rc-pl">Rp 0</span></div>
+                        <div class="inv-result-item bold"><span>Return (%)</span> <span id="rc-return">0.00%</span></div>
+                    </div>
+
+                    <div class="inv-btn-row">
+                        <button class="btn-inv-outline" onclick="window.resetCrypto()">Reset</button>
+                        <button class="btn-inv-primary" onclick="window.saveCrypto()">Simpan ke Portofolio</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. VIEW PORTOFOLIO SAYA -->
+            <div id="view-portfolio" class="inv-view">
+                <div id="portfolio-container"></div>
+            </div>
+
+            <!-- 6. VIEW RIWAYAT PERHITUNGAN -->
+            <div id="view-history" class="inv-view">
+                <div class="inv-card" style="padding: 12px; margin-bottom: 14px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="hist-filter" class="form-input" style="margin:0; flex:1;" onchange="window.renderHistory()">
+                            <option value="all">Semua Instrumen</option>
+                            <option value="stock">📈 Saham</option>
+                            <option value="mf">🌱 Reksadana</option>
+                            <option value="crypto">🪙 Kripto</option>
+                        </select>
+                        <button class="btn-inv-danger" onclick="window.confirmClearHistory()">Hapus Riwayat</button>
+                    </div>
+                </div>
+                <div id="history-container"></div>
+            </div>
+
+            <!-- 7. VIEW KELOLA DATA (EXPORT / IMPORT JSON) -->
+            <div id="view-settings" class="inv-view">
+                <div class="inv-card">
+                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px;">Cadangkan & Pulihkan Portofolio</div>
+                    <p style="font-size: 12.5px; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
+                        Data portofolio Anda otomatis tersimpan di perangkat & akun MoCatat Anda. Anda juga dapat mengekspor ke file JSON sebagai cadangan.
+                    </p>
+                    <button class="btn-inv-primary" style="width:100%; margin-bottom: 10px;" onclick="window.exportData()">📥 Export Portofolio ke JSON</button>
+                    <button class="btn-inv-outline" style="width:100%; margin-bottom: 16px;" onclick="document.getElementById('import-file').click()">📤 Import Data dari JSON</button>
+                    <input type="file" id="import-file" style="display: none;" accept=".json" onchange="window.importData(event)">
+                    
+                    <div style="height: 1px; background: #e2e8f0; margin: 16px 0;"></div>
+                    
+                    <button class="btn-inv-danger" style="width:100%; padding:13px;" onclick="window.confirmResetAll()">🗑️ Hapus Seluruh Portofolio & Riwayat</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MODAL UPDATE HARGA PORTOFOLIO -->
+        <div id="modal-update" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3 id="mu-title">Update Harga Aset</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-update')"><span class="material-icons-round">close</span></button>
+                </div>
+                <input type="hidden" id="mu-id">
+                <input type="hidden" id="mu-type">
+                <div class="form-group">
+                    <label class="form-label" id="mu-label">Harga Saat Ini (Rp)</label>
+                    <input type="text" inputmode="decimal" class="form-input format-rp" id="mu-price" placeholder="0">
+                </div>
+                <div class="inv-btn-row">
+                    <button class="btn-inv-outline" onclick="window.closeModal('modal-update')">Batal</button>
+                    <button class="btn-inv-primary" onclick="window.submitUpdatePrice()">Simpan Harga Baru</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL BACA ARTIKEL PENUH -->
+        <div id="modal-baca-edukasi" class="modal-overlay">
+            <div class="modal-box" style="max-height: 86vh; overflow-y: auto;">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <span id="read-edu-badge" class="edu-badge edu-reksadana">Reksadana</span>
+                    <button class="btn-close" onclick="window.closeModal('modal-baca-edukasi')"><span class="material-icons-round">close</span></button>
+                </div>
+                <h3 id="read-edu-title" style="font-size: 18px; font-weight: 800; color: #1a1a1a; line-height: 1.35; margin-bottom: 6px;"></h3>
+                <div id="read-edu-meta" style="font-size: 11.5px; color: #94a3b8; font-weight: 700; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;"></div>
+                <div id="read-edu-body" style="font-size: 13.5px; color: #334155; line-height: 1.72; font-weight: 500; white-space: pre-line; margin-bottom: 18px;"></div>
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac; border-radius: 14px; padding: 14px; margin-bottom: 18px;">
+                    <div style="font-size: 11.5px; font-weight: 800; color: #15803d; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                        <span class="material-icons-round" style="font-size: 16px;">tips_and_updates</span> INTI STRATEGI & TIPS
+                    </div>
+                    <div id="read-edu-tip" style="font-size: 12.5px; color: #166534; font-weight: 700; line-height: 1.45;"></div>
+                </div>
+                <button class="btn-submit" onclick="window.closeModal('modal-baca-edukasi'); window.switchEduMainTab('simulasi');">Hitung Simulasi di Kalkulator ➔</button>
+            </div>
+        </div>
+
+        <!-- CUSTOM DIALOG MOCATAT -->
+        <div id="custom-dialog" class="custom-dialog-overlay">
+            <div class="custom-dialog-box">
+                <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
+                <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
+                <p class="custom-dialog-msg" id="dialog-msg"></p>
+                <div class="custom-dialog-actions" id="dialog-actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA EDUKASI + KALKULATOR SAHAM, REKSADANA & KRIPTO -->
+    <script type="module">
+        import { auth, db, doc, getDoc, setDoc } from "./core.js";
+        import "./fitur-admin.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        window.activeEduFilter = 'all';
+
+        // ==========================================
+        // A. BAGIAN MATERI EDUKASI & BANNER
+        // ==========================================
+        window.switchEduMainTab = function(tab) {
+            document.getElementById('tab-edu-materi').classList.toggle('active', tab === 'materi');
+            document.getElementById('tab-edu-simulasi').classList.toggle('active', tab === 'simulasi');
+            document.getElementById('panel-edu-materi').style.display = tab === 'materi' ? 'flex' : 'none';
+            document.getElementById('panel-edu-simulasi').style.display = tab === 'simulasi' ? 'flex' : 'none';
+            if (tab === 'simulasi') window.updateDashboard();
+        };
+
+        window.onEduBannerScroll = function(el) {
+            const idx = Math.round(el.scrollLeft / (el.clientWidth || 1));
+            const dots = document.querySelectorAll('#edu-banner-dots .cms-dot');
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        };
+
+        window.klikBannerEdukasi = function(action) {
+            if (!action || action === 'edukasi') {
+                window.switchEduMainTab('materi');
+            } else {
+                window.location.href = action;
+            }
+        };
+
+        window.filterKategoriEdukasi = function(cat, el) {
+            window.activeEduFilter = cat;
+            document.querySelectorAll('#edu-filter-chips .chip').forEach(c => c.classList.remove('active'));
+            if (el) el.classList.add('active');
+            window.renderArticlesList();
+        };
+
+        window.renderEdukasiPage = function() {
+            const { banners } = window.getCMSContent();
+            const bannerWrap = document.getElementById('edukasi-banner-wrap');
+
+            if (bannerWrap) {
+                if (banners.length === 0) {
+                    bannerWrap.style.display = 'none';
+                } else {
+                    bannerWrap.style.display = 'block';
+                    bannerWrap.innerHTML = `
+                        <div class="cms-banner-track" onscroll="window.onEduBannerScroll(this)">
+                            ${banners.map(b => {
+                                const bgStyle = b.imageUrl ? `background-image: linear-gradient(135deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.55) 100%), url('${window.escapeHTML(b.imageUrl)}');` : '';
+                                const jsAction = window.escapeHTML(b.action || 'edukasi').replace(/'/g, "\\'");
+                                return `
+                                <div class="cms-banner-card ${window.escapeHTML(b.theme || 'theme-teal')}" style="${bgStyle}" onclick="window.klikBannerEdukasi('${jsAction}')">
+                                    <div style="font-size:10px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; background:rgba(255,255,255,0.22); display:inline-block; padding:3px 9px; border-radius:8px; margin-bottom:8px;">
+                                        ${window.escapeHTML(b.tag || 'INFO MOCATAT')}
+                                    </div>
+                                    <div style="font-size:16.5px; font-weight:800; margin-bottom:5px; line-height:1.25;">${window.escapeHTML(b.title)}</div>
+                                    <div style="font-size:12px; opacity:0.92; font-weight:500; line-height:1.45;">${window.escapeHTML(b.subtitle)}</div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        ${banners.length > 1 ? `<div class="cms-dots" id="edu-banner-dots">${banners.map((_, i) => `<div class="cms-dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>` : ''}
+                    `;
+                }
+            }
+            window.renderArticlesList();
+        };
+
+        window.renderArticlesList = function() {
+            const container = document.getElementById('edu-articles-container');
+            if (!container) return;
+
+            const { educations } = window.getCMSContent();
+            const filtered = window.activeEduFilter === 'all'
+                ? educations
+                : educations.filter(e => (e.category || '').toLowerCase() === window.activeEduFilter.toLowerCase());
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon-wrapper"><span class="material-icons-round">menu_book</span></div>
+                    <h4>Belum Ada Materi di Kategori Ini</h4>
+                    <p>Silakan pilih kategori materi edukasi lainnya di atas.</p>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(ed => {
+                const catClass = ed.category === 'Saham' ? 'edu-saham' : (ed.category === 'Tips Keuangan' ? 'edu-tips' : 'edu-reksadana');
+                const catIcon = ed.category === 'Saham' ? 'trending_up' : (ed.category === 'Tips Keuangan' ? 'lightbulb' : 'savings');
+                return `
+                <div class="edu-article-card" onclick="window.bukaArtikelEdukasi('${window.escapeHTML(ed.id)}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span class="edu-badge ${catClass}">
+                            <span class="material-icons-round" style="font-size:13px;">${catIcon}</span> ${window.escapeHTML(ed.category)}
+                        </span>
+                        <span style="font-size:11px; color:#94a3b8; font-weight:700;">⏱️ ${window.escapeHTML(ed.readTime || '3 Menit')}</span>
+                    </div>
+                    <div style="font-size:15px; font-weight:800; color:#1a1a1a; margin-bottom:5px; line-height:1.35;">${window.escapeHTML(ed.title)}</div>
+                    <div style="font-size:12.5px; color:#64748b; font-weight:500; line-height:1.5; margin-bottom:10px;">${window.escapeHTML(ed.summary)}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px dashed #f1f5f9; font-size:11.5px; font-weight:800; color:#249a95;">
+                        <span>Baca Selengkapnya</span>
+                        <span class="material-icons-round" style="font-size:16px;">arrow_forward</span>
+                    </div>
+                </div>`;
+            }).join('');
+        };
+
+        window.bukaArtikelEdukasi = function(eduId) {
+            const { educations } = window.getCMSContent();
+            const item = educations.find(e => String(e.id) === String(eduId));
+            if (!item) return;
+
+            const badgeEl = document.getElementById('read-edu-badge');
+            const catClass = item.category === 'Saham' ? 'edu-saham' : (item.category === 'Tips Keuangan' ? 'edu-tips' : 'edu-reksadana');
+            badgeEl.className = `edu-badge ${catClass}`;
+            badgeEl.innerText = item.category || 'Edukasi';
+
+            document.getElementById('read-edu-title').innerText = item.title || '';
+            document.getElementById('read-edu-meta').innerText = `⏱️ Waktu baca ± ${item.readTime || '3 Menit'} • Edukasi Finansial MoCatat`;
+            document.getElementById('read-edu-body').innerText = item.content || '';
+            document.getElementById('read-edu-tip').innerText = item.tip || '';
+
+            document.getElementById('modal-baca-edukasi').classList.add('show');
+        };
+
+        // ==========================================
+        // B. BAGIAN KALKULATOR SAHAM, REKSADANA, KRIPTO & PORTOFOLIO
+        // ==========================================
+        let portfolio = [];
+        let historyData = [];
+
+        const STORAGE_KEY_PORTFOLIO = 'inv_calc_portfolio';
+        const STORAGE_KEY_HISTORY = 'inv_calc_history';
+
+        function formatInputValue(val) {
+            if (val === 0 || val === '0') return '0';
+            if (!val) return '';
+            let strVal = val.toString().replace(/\./g, ',');
+            let split = strVal.split(',');
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+            return split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+        }
+
+        function handleRpInput() {
+            let cursorPostion = this.selectionStart;
+            let originalLen = this.value.length;
+
+            let val = this.value.replace(/\./g, '');
+            val = val.replace(/[^0-9,]/g, '');
+
+            const parts = val.split(',');
+            if (parts.length > 2) {
+                val = parts[0] + ',' + parts.slice(1).join('');
+            }
+            
+            if (val) {
+                let split = val.split(',');
+                let sisa = split[0].length % 3;
+                let rupiah = split[0].substr(0, sisa);
+                let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+                if (ribuan) {
+                    let separator = sisa ? '.' : '';
+                    rupiah += separator + ribuan.join('.');
+                }
+                this.value = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+            } else {
+                this.value = '';
+            }
+
+            let newLen = this.value.length;
+            cursorPostion += (newLen - originalLen);
+            try { this.setSelectionRange(cursorPostion, cursorPostion); } catch(err) {}
+        }
+
+        document.querySelectorAll('.format-rp').forEach(input => {
+            input.addEventListener('input', handleRpInput);
+        });
+
+        function getNum(id) {
+            const el = document.getElementById(id);
+            if (!el || el.value === '') return 0;
+            let valStr = el.value;
+            if (el.classList.contains('format-rp')) {
+                valStr = valStr.replace(/\./g, '').replace(/,/g, '.');
+            }
+            const val = parseFloat(valStr);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function loadCalcData() {
+            try {
+                const p = localStorage.getItem(STORAGE_KEY_PORTFOLIO);
+                const h = localStorage.getItem(STORAGE_KEY_HISTORY);
+                if (p) portfolio = JSON.parse(p);
+                if (h) historyData = JSON.parse(h);
+            } catch (e) {}
+        }
+
+        async function saveCalcData() {
+            localStorage.setItem(STORAGE_KEY_PORTFOLIO, JSON.stringify(portfolio));
+            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyData));
+            window.updateDashboard();
+            if (document.getElementById('view-portfolio').classList.contains('active')) window.renderPortfolio();
+            if (document.getElementById('view-history').classList.contains('active')) window.renderHistory();
+
+            // Sinkronkan juga ke Firestore User MoCatat
+            if (window.currentUserId) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), {
+                        calcPortfolio: portfolio,
+                        calcHistory: historyData
+                    }, { merge: true });
+                } catch (e) {}
+            }
+        }
+
+        const idrFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const idrDecimal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        function formatRp(val, isDecimal = false) {
+            if (isNaN(val) || val === undefined || val === null) return "Rp 0";
+            return isDecimal ? idrDecimal.format(val) : idrFmt.format(val);
+        }
+
+        function formatPct(val) {
+            if (isNaN(val) || !isFinite(val)) return "0.00%";
+            const prefix = val > 0 ? "+" : "";
+            return prefix + val.toFixed(2) + "%";
+        }
+
+        function getPlClass(val) {
+            if (val > 0) return 'text-profit';
+            if (val < 0) return 'text-loss';
+            return '';
+        }
+        
+        function getPlText(val) {
+            if (val > 0) return ' (Profit)';
+            if (val < 0) return ' (Loss)';
+            return '';
+        }
+
+        function generateId() {
+            return Date.now().toString() + Math.floor(Math.random() * 1000);
+        }
+
+        function showAlert(title, desc, type = 'info') {
+            if (typeof window.customAlert === 'function') {
+                window.customAlert(title, desc, type);
+            } else {
+                alert(title + ": " + desc);
+            }
+        }
+
+        window.switchCalcView = function(viewId, el) {
+            document.querySelectorAll('.inv-view').forEach(v => v.classList.remove('active'));
+            const targetView = document.getElementById('view-' + viewId);
+            if (targetView) targetView.classList.add('active');
+            
+            document.querySelectorAll('.calc-pill').forEach(n => n.classList.remove('active'));
+            if (el) {
+                el.classList.add('active');
+            } else {
+                const pill = document.getElementById('cpill-' + viewId);
+                if (pill) pill.classList.add('active');
+            }
+
+            if (viewId === 'dashboard') window.updateDashboard();
+            if (viewId === 'portfolio') window.renderPortfolio();
+            if (viewId === 'history') window.renderHistory();
+        };
+
+        // 1. KALKULATOR SAHAM
+        const sInputs = ['s-buy', 's-lot', 's-sell', 's-fee-buy', 's-fee-sell', 's-div'];
+        sInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', calcStock);
+        });
+
+        function calcStockCore() {
+            const buy = getNum('s-buy');
+            const lot = getNum('s-lot');
+            const sell = getNum('s-sell');
+            const fBuyPct = getNum('s-fee-buy');
+            const fSellPct = getNum('s-fee-sell');
+            const div = getNum('s-div');
+
+            const shares = lot * 100;
+            const grossBuy = buy * shares;
+            const feeBuy = grossBuy * (fBuyPct / 100);
+            const totalBuy = grossBuy + feeBuy;
+
+            const grossSell = sell * shares;
+            const feeSell = grossSell * (fSellPct / 100);
+            const netSell = sell > 0 ? grossSell - feeSell : 0; 
+
+            const pl = sell > 0 ? netSell - totalBuy : 0;
+            const ret = totalBuy > 0 && sell > 0 ? (pl / totalBuy) * 100 : 0;
+
+            const divTotal = div * shares;
+            const totalProfit = pl + divTotal;
+            const totalRet = totalBuy > 0 ? (totalProfit / totalBuy) * 100 : 0;
+
+            return { shares, grossBuy, feeBuy, totalBuy, grossSell, feeSell, netSell, pl, ret, divTotal, totalProfit, totalRet };
+        }
+
+        function calcStock() {
+            const res = calcStockCore();
+            document.getElementById('rs-shares').innerText = res.shares.toLocaleString('id-ID') + " lembar";
+            document.getElementById('rs-gross-buy').innerText = formatRp(res.grossBuy);
+            document.getElementById('rs-fee-buy').innerText = formatRp(res.feeBuy);
+            document.getElementById('rs-total-buy').innerText = formatRp(res.totalBuy);
+            
+            document.getElementById('rs-gross-sell').innerText = formatRp(res.grossSell);
+            document.getElementById('rs-fee-sell').innerText = formatRp(res.feeSell);
+            document.getElementById('rs-net-sell').innerText = formatRp(res.netSell);
+            
+            const elPl = document.getElementById('rs-pl');
+            elPl.innerText = formatRp(res.pl) + getPlText(res.pl);
+            elPl.className = getPlClass(res.pl);
+            
+            const elRet = document.getElementById('rs-return');
+            elRet.innerText = formatPct(res.ret);
+            elRet.className = getPlClass(res.ret);
+            
+            document.getElementById('rs-div-total').innerText = formatRp(res.divTotal);
+            
+            const elTProf = document.getElementById('rs-total-profit');
+            elTProf.innerText = formatRp(res.totalProfit) + getPlText(res.totalProfit);
+            elTProf.className = getPlClass(res.totalProfit);
+
+            const elTRet = document.getElementById('rs-total-return');
+            elTRet.innerText = formatPct(res.totalRet);
+            elTRet.className = getPlClass(res.totalRet);
+        }
+
+        window.resetStock = function() {
+            document.getElementById('s-name').value = '';
+            document.getElementById('s-buy').value = '';
+            document.getElementById('s-lot').value = '';
+            document.getElementById('s-sell').value = '';
+            document.getElementById('s-fee-buy').value = '0.15';
+            document.getElementById('s-fee-sell').value = '0.25';
+            document.getElementById('s-div').value = '';
+            
+            document.getElementById('s-buy').classList.remove('input-error');
+            document.getElementById('s-lot').classList.remove('input-error');
+            document.getElementById('err-s-buy').style.display = 'none';
+            document.getElementById('err-s-lot').style.display = 'none';
+            calcStock();
+        };
+
+        window.saveStock = function() {
+            const name = document.getElementById('s-name').value.trim();
+            const buy = getNum('s-buy');
+            const lot = getNum('s-lot');
+
+            let valid = true;
+            if (buy <= 0) { document.getElementById('s-buy').classList.add('input-error'); document.getElementById('err-s-buy').style.display = 'block'; valid = false; }
+            else { document.getElementById('s-buy').classList.remove('input-error'); document.getElementById('err-s-buy').style.display = 'none'; }
+            
+            if (lot <= 0) { document.getElementById('s-lot').classList.add('input-error'); document.getElementById('err-s-lot').style.display = 'block'; valid = false; }
+            else { document.getElementById('s-lot').classList.remove('input-error'); document.getElementById('err-s-lot').style.display = 'none'; }
+
+            if (!valid) return;
+            if (!name) { showAlert('Perhatian', 'Kode atau nama saham tidak boleh kosong.', 'warning'); return; }
+
+            const res = calcStockCore();
+            const item = {
+                id: generateId(),
+                type: 'stock',
+                name: name.toUpperCase(),
+                buyPrice: buy,
+                lot: lot,
+                sellPrice: getNum('s-sell'),
+                feeBuyPct: getNum('s-fee-buy'),
+                feeSellPct: getNum('s-fee-sell'),
+                div: getNum('s-div'),
+                capital: res.totalBuy,
+                currentValue: res.netSell || res.totalBuy,
+                pl: res.totalProfit, 
+                ret: res.totalRet
+            };
+
+            portfolio.push(item);
+            logHistory(item, 'Simpan Baru');
+            saveCalcData();
+            showAlert('Berhasil! 🎉', `Saham ${item.name} berhasil disimpan ke Portofolio.`);
+            window.resetStock();
+            window.switchCalcView('portfolio');
+        };
+
+        // 2. KALKULATOR REKSADANA
+        const mInputs = ['m-capital', 'm-nav-buy', 'm-nav-now'];
+        mInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', calcMF);
+        });
+
+        function calcMFCore() {
+            const cap = getNum('m-capital');
+            const navB = getNum('m-nav-buy');
+            const navN = getNum('m-nav-now');
+
+            const units = navB > 0 ? cap / navB : 0;
+            const value = units * navN;
+            const pl = navN > 0 ? value - cap : 0;
+            const ret = cap > 0 && navN > 0 ? (pl / cap) * 100 : 0;
+
+            return { units, cap, value, pl, ret };
+        }
+
+        function calcMF() {
+            const res = calcMFCore();
+            document.getElementById('rm-units').innerText = res.units.toFixed(4) + " unit";
+            document.getElementById('rm-capital').innerText = formatRp(res.cap);
+            document.getElementById('rm-value').innerText = res.value > 0 ? formatRp(res.value, true) : "Rp 0";
+            
+            const elPl = document.getElementById('rm-pl');
+            elPl.innerText = formatRp(res.pl) + getPlText(res.pl);
+            elPl.className = getPlClass(res.pl);
+            
+            const elRet = document.getElementById('rm-return');
+            elRet.innerText = formatPct(res.ret);
+            elRet.className = getPlClass(res.ret);
+        }
+
+        window.resetMF = function() {
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-capital').value = '';
+            document.getElementById('m-nav-buy').value = '';
+            document.getElementById('m-nav-now').value = '';
+            
+            document.getElementById('m-capital').classList.remove('input-error');
+            document.getElementById('m-nav-buy').classList.remove('input-error');
+            document.getElementById('err-m-capital').style.display = 'none';
+            document.getElementById('err-m-nav').style.display = 'none';
+            calcMF();
+        };
+
+        window.saveMF = function() {
+            const name = document.getElementById('m-name').value.trim();
+            const cap = getNum('m-capital');
+            const nav = getNum('m-nav-buy');
+
+            let valid = true;
+            if (cap <= 0) { document.getElementById('m-capital').classList.add('input-error'); document.getElementById('err-m-capital').style.display = 'block'; valid = false; }
+            else { document.getElementById('m-capital').classList.remove('input-error'); document.getElementById('err-m-capital').style.display = 'none'; }
+            
+            if (nav <= 0) { document.getElementById('m-nav-buy').classList.add('input-error'); document.getElementById('err-m-nav').style.display = 'block'; valid = false; }
+            else { document.getElementById('m-nav-buy').classList.remove('input-error'); document.getElementById('err-m-nav').style.display = 'none'; }
+
+            if (!valid) return;
+            if (!name) { showAlert('Perhatian', 'Nama produk reksadana tidak boleh kosong.', 'warning'); return; }
+
+            const res = calcMFCore();
+            const navN = getNum('m-nav-now');
+            const item = {
+                id: generateId(),
+                type: 'mf',
+                name: name,
+                modal: cap,
+                navBuy: nav,
+                navNow: navN,
+                capital: cap,
+                currentValue: res.value > 0 ? res.value : cap,
+                pl: res.pl,
+                ret: res.ret
+            };
+
+            portfolio.push(item);
+            logHistory(item, 'Simpan Baru');
+            saveCalcData();
+            showAlert('Berhasil! 🎉', `Reksadana ${item.name} berhasil disimpan ke Portofolio.`);
+            window.resetMF();
+            window.switchCalcView('portfolio');
+        };
+
+        // 3. KALKULATOR KRIPTO
+        const cInputs = ['c-buy', 'c-coin', 'c-sell', 'c-fee-buy', 'c-fee-sell'];
+        cInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', calcCrypto);
+        });
+
+        function calcCryptoCore() {
+            const buy = getNum('c-buy');
+            const coins = getNum('c-coin');
+            const sell = getNum('c-sell');
+            const fBuyPct = getNum('c-fee-buy');
+            const fSellPct = getNum('c-fee-sell');
+
+            const grossBuy = buy * coins;
+            const feeBuy = grossBuy * (fBuyPct / 100);
+            const totalBuy = grossBuy + feeBuy;
+
+            const grossSell = sell * coins;
+            const feeSell = grossSell * (fSellPct / 100);
+            const netSell = sell > 0 ? grossSell - feeSell : 0; 
+
+            const pl = sell > 0 ? netSell - totalBuy : 0;
+            const ret = totalBuy > 0 && sell > 0 ? (pl / totalBuy) * 100 : 0;
+
+            return { coins, grossBuy, feeBuy, totalBuy, grossSell, feeSell, netSell, pl, ret };
+        }
+
+        function calcCrypto() {
+            const res = calcCryptoCore();
+            document.getElementById('rc-coins').innerText = res.coins + " koin";
+            document.getElementById('rc-gross-buy').innerText = formatRp(res.grossBuy);
+            document.getElementById('rc-fee-buy').innerText = formatRp(res.feeBuy);
+            document.getElementById('rc-total-buy').innerText = formatRp(res.totalBuy);
+            
+            document.getElementById('rc-gross-sell').innerText = formatRp(res.grossSell);
+            document.getElementById('rc-fee-sell').innerText = formatRp(res.feeSell);
+            document.getElementById('rc-net-sell').innerText = formatRp(res.netSell);
+            
+            const elPl = document.getElementById('rc-pl');
+            elPl.innerText = formatRp(res.pl) + getPlText(res.pl);
+            elPl.className = getPlClass(res.pl);
+            
+            const elRet = document.getElementById('rc-return');
+            elRet.innerText = formatPct(res.ret);
+            elRet.className = getPlClass(res.ret);
+        }
+
+        window.resetCrypto = function() {
+            document.getElementById('c-name').value = '';
+            document.getElementById('c-buy').value = '';
+            document.getElementById('c-coin').value = '';
+            document.getElementById('c-sell').value = '';
+            document.getElementById('c-fee-buy').value = '0.11';
+            document.getElementById('c-fee-sell').value = '0.11';
+            
+            document.getElementById('c-buy').classList.remove('input-error');
+            document.getElementById('c-coin').classList.remove('input-error');
+            document.getElementById('err-c-buy').style.display = 'none';
+            document.getElementById('err-c-coin').style.display = 'none';
+            calcCrypto();
+        };
+
+        window.saveCrypto = function() {
+            const name = document.getElementById('c-name').value.trim();
+            const buy = getNum('c-buy');
+            const coins = getNum('c-coin');
+
+            let valid = true;
+            if (buy <= 0) { document.getElementById('c-buy').classList.add('input-error'); document.getElementById('err-c-buy').style.display = 'block'; valid = false; }
+            else { document.getElementById('c-buy').classList.remove('input-error'); document.getElementById('err-c-buy').style.display = 'none'; }
+            
+            if (coins <= 0) { document.getElementById('c-coin').classList.add('input-error'); document.getElementById('err-c-coin').style.display = 'block'; valid = false; }
+            else { document.getElementById('c-coin').classList.remove('input-error'); document.getElementById('err-c-coin').style.display = 'none'; }
+
+            if (!valid) return;
+            if (!name) { showAlert('Perhatian', 'Nama koin kripto tidak boleh kosong.', 'warning'); return; }
+
+            const res = calcCryptoCore();
+            const item = {
+                id: generateId(),
+                type: 'crypto',
+                name: name.toUpperCase(),
+                buyPrice: buy,
+                coins: coins,
+                sellPrice: getNum('c-sell'),
+                feeBuyPct: getNum('c-fee-buy'),
+                feeSellPct: getNum('c-fee-sell'),
+                capital: res.totalBuy,
+                currentValue: res.netSell || res.totalBuy,
+                pl: res.pl, 
+                ret: res.ret
+            };
+
+            portfolio.push(item);
+            logHistory(item, 'Simpan Baru');
+            saveCalcData();
+            showAlert('Berhasil! 🎉', `Koin ${item.name} berhasil disimpan ke Portofolio.`);
+            window.resetCrypto();
+            window.switchCalcView('portfolio');
+        };
+
+        // 4. PORTOFOLIO & UPDATE HARGA
+        window.renderPortfolio = function() {
+            const container = document.getElementById('portfolio-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (portfolio.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon-wrapper"><span class="material-icons-round">pie_chart_outline</span></div>
+                    <h4>Belum Ada Portofolio</h4>
+                    <p>Silakan gunakan kalkulator Saham, Reksadana, atau Kripto untuk menyimpan aset.</p>
+                </div>`;
+                return;
+            }
+
+            portfolio.forEach(p => {
+                const isStock = p.type === 'stock';
+                const isCrypto = p.type === 'crypto';
+                let badge = '';
+                if (isStock) badge = `<span class="badge-asset badge-stock">📈 Saham</span>`;
+                else if (isCrypto) badge = `<span class="badge-asset badge-crypto">🪙 Kripto</span>`;
+                else badge = `<span class="badge-asset badge-mf">🌱 Reksadana</span>`;
+                
+                const plClass = getPlClass(p.pl);
+                const el = document.createElement('div');
+                el.className = 'inv-card';
+                el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="font-size:15px; font-weight:800; color:#1a1a1a;">${window.escapeHTML(p.name)}</span>
+                        ${badge}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#64748b; font-weight:600; margin-bottom:5px;">
+                        <span>Modal Pokok:</span> <strong style="color:#1a1a1a;">${formatRp(p.capital)}</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#64748b; font-weight:600; margin-bottom:10px;">
+                        <span>Nilai Terkini:</span> <strong style="color:#1a1a1a;">${formatRp(p.currentValue, p.type === 'mf')}</strong>
+                    </div>
+                    <div style="height:1px; background:#f1f5f9; margin:10px 0;"></div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:4px;">
+                        <span>Profit / Loss:</span> <span class="${plClass}">${formatRp(p.pl)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:14px;">
+                        <span>Return:</span> <span class="${plClass}">${formatPct(p.ret)}</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-inv-outline" style="flex:1; padding:9px; font-size:12px; color:#0f766e; background:#e0f2f1; border:none;" onclick="window.openUpdateModal('${p.id}')">✏️ Update Harga</button>
+                        <button class="btn-inv-danger" style="padding:9px 14px; font-size:12px;" onclick="window.confirmDeletePortfolio('${p.id}')">🗑️ Hapus</button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        };
+
+        window.confirmDeletePortfolio = function(id) {
+            window.customConfirm("Hapus Portofolio?", "Yakin ingin menghapus aset ini dari daftar portofolio?", () => {
+                portfolio = portfolio.filter(p => String(p.id) !== String(id));
+                saveCalcData();
+            });
+        };
+
+        window.openUpdateModal = function(id) {
+            const item = portfolio.find(p => String(p.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('mu-id').value = id;
+            document.getElementById('mu-type').value = item.type;
+            document.getElementById('mu-title').innerText = `Update Harga ${item.name}`;
+            
+            if (item.type === 'stock') {
+                document.getElementById('mu-label').innerText = "Harga Saham Saat Ini / Lembar (Rp)";
+                document.getElementById('mu-price').value = formatInputValue(item.sellPrice || item.buyPrice || 0);
+            } else if (item.type === 'crypto') {
+                document.getElementById('mu-label').innerText = "Harga Koin Saat Ini (Rp)";
+                document.getElementById('mu-price').value = formatInputValue(item.sellPrice || item.buyPrice || 0);
+            } else {
+                document.getElementById('mu-label').innerText = "NAB Saat Ini / Unit (Rp)";
+                document.getElementById('mu-price').value = formatInputValue(item.navNow || item.navBuy || 0);
+            }
+            document.getElementById('modal-update').classList.add('show');
+        };
+
+        window.submitUpdatePrice = function() {
+            const id = document.getElementById('mu-id').value;
+            const newPrice = getNum('mu-price');
+            if (newPrice <= 0) {
+                showAlert("Perhatian", "Harga harus lebih besar dari 0!", "warning");
+                return;
+            }
+
+            const itemIndex = portfolio.findIndex(p => String(p.id) === String(id));
+            if (itemIndex === -1) return;
+            const item = portfolio[itemIndex];
+
+            if (item.type === 'stock') {
+                item.sellPrice = newPrice;
+                const shares = item.lot * 100;
+                const grossSell = newPrice * shares;
+                const feeSell = grossSell * (item.feeSellPct / 100);
+                const netSell = grossSell - feeSell;
+                
+                item.currentValue = netSell;
+                const pl = netSell - item.capital;
+                const divTotal = (item.div || 0) * shares;
+                item.pl = pl + divTotal;
+                item.ret = (item.pl / item.capital) * 100;
+            } else if (item.type === 'crypto') {
+                item.sellPrice = newPrice;
+                const grossSell = newPrice * item.coins;
+                const feeSell = grossSell * (item.feeSellPct / 100);
+                const netSell = grossSell - feeSell;
+                
+                item.currentValue = netSell;
+                item.pl = netSell - item.capital;
+                item.ret = (item.pl / item.capital) * 100;
+            } else {
+                item.navNow = newPrice;
+                const units = item.modal / item.navBuy;
+                item.currentValue = units * newPrice;
+                item.pl = item.currentValue - item.capital;
+                item.ret = (item.pl / item.capital) * 100;
+            }
+
+            portfolio[itemIndex] = item;
+            logHistory(item, 'Update Harga');
+            saveCalcData();
+            window.closeModal('modal-update');
+        };
+
+        // 5. DASHBOARD RINGKASAN & RIWAYAT
+        window.updateDashboard = function() {
+            let tCap = 0, tVal = 0, tPl = 0, cStock = 0, cMf = 0, cCrypto = 0;
+
+            portfolio.forEach(p => {
+                tCap += Number(p.capital || 0);
+                tVal += Number(p.currentValue || 0);
+                tPl += Number(p.pl || 0);
+                if (p.type === 'stock') cStock++;
+                if (p.type === 'mf') cMf++;
+                if (p.type === 'crypto') cCrypto++;
+            });
+
+            const tRet = tCap > 0 ? (tPl / tCap) * 100 : 0;
+
+            document.getElementById('dash-total-value').innerText = formatRp(tVal);
+            document.getElementById('dash-total-capital').innerText = formatRp(tCap);
+            
+            const elPl = document.getElementById('dash-total-pl');
+            elPl.innerText = formatRp(tPl);
+            elPl.className = 'inv-stat-val ' + getPlClass(tPl);
+            
+            const elRet = document.getElementById('dash-total-return');
+            elRet.innerText = formatPct(tRet);
+            elRet.className = 'inv-stat-val ' + getPlClass(tRet);
+
+            document.getElementById('dash-count-stock').innerText = cStock;
+            document.getElementById('dash-count-mf').innerText = cMf;
+            document.getElementById('dash-count-crypto').innerText = cCrypto;
+        };
+
+        function logHistory(item, action) {
+            const date = new Date();
+            const dStr = date.toLocaleDateString('id-ID') + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+            historyData.unshift({
+                date: dStr,
+                action: action,
+                name: item.name,
+                type: item.type,
+                capital: item.capital,
+                pl: item.pl,
+                ret: item.ret
+            });
+            if (historyData.length > 100) historyData.pop();
+        }
+
+        window.renderHistory = function() {
+            const container = document.getElementById('history-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const filter = document.getElementById('hist-filter').value;
+            let filtered = historyData;
+            if (filter !== 'all') {
+                filtered = historyData.filter(h => h.type === filter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="empty-state"><h4>Belum ada riwayat perhitungan</h4></div>`;
+                return;
+            }
+
+            filtered.forEach(h => {
+                let typeName = 'Reksadana';
+                if (h.type === 'stock') typeName = 'Saham';
+                if (h.type === 'crypto') typeName = 'Kripto';
+
+                const plClass = getPlClass(h.pl);
+                const el = document.createElement('div');
+                el.className = 'inv-card';
+                el.style.padding = '14px 16px';
+                el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8; font-weight:700; margin-bottom:4px;">
+                        <span>${window.escapeHTML(h.date)}</span>
+                        <span style="color:#249a95;">${window.escapeHTML(h.action)}</span>
+                    </div>
+                    <div style="font-size:14px; font-weight:800; color:#1a1a1a; margin-bottom:6px;">${window.escapeHTML(h.name)} (${typeName})</div>
+                    <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:600; color:#64748b;">
+                        <span>Modal: ${formatRp(h.capital)}</span>
+                        <span class="${plClass}">${formatRp(h.pl)} (${formatPct(h.ret)})</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        };
+
+        window.confirmClearHistory = function() {
+            window.customConfirm("Hapus Riwayat?", "Yakin ingin menghapus semua riwayat perhitungan investasi?", () => {
+                historyData = [];
+                saveCalcData();
+            });
+        };
+
+        window.exportData = function() {
+            const data = { portfolio: portfolio, history: historyData };
+            const json = JSON.stringify(data);
+            const blob = new Blob([json], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MoCatat_Portofolio_${new Date().getTime()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.importData = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.portfolio && Array.isArray(data.portfolio)) {
+                        portfolio = data.portfolio;
+                        historyData = data.history || [];
+                        saveCalcData();
+                        showAlert('Berhasil! 🎉', 'Data portofolio berhasil diimpor!');
+                    } else {
+                        showAlert('Error', 'Format file JSON tidak valid.', 'error');
+                    }
+                } catch (err) {
+                    showAlert('Error', 'Gagal membaca file JSON.', 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        window.confirmResetAll = function() {
+            window.customConfirm("Hapus Semua Data?", "PERINGATAN: Seluruh portofolio dan riwayat kalkulator akan dihapus permanen. Lanjutkan?", () => {
+                portfolio = [];
+                historyData = [];
+                saveCalcData();
+                showAlert('Sukses', 'Seluruh data kalkulator telah dibersihkan.');
+            });
+        };
+
+        // Inisialisasi Awal
+        loadCalcData();
+        window.updateDashboard();
+        window.renderEdukasiPage();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (typeof window.sembunyikanLoading === 'function') window.sembunyikanLoading();
+            if (user) {
+                window.currentUserId = user.uid;
+                await window.syncCMSFromFirestoreOnce();
+                // Muat portofolio dari Firestore jika perangkat baru
+                try {
+                    const uSnap = await getDoc(doc(db, "users", user.uid));
+                    if (uSnap.exists()) {
+                        const uData = uSnap.data();
+                        if (Array.isArray(uData.calcPortfolio) && portfolio.length === 0) {
+                            portfolio = uData.calcPortfolio;
+                            localStorage.setItem(STORAGE_KEY_PORTFOLIO, JSON.stringify(portfolio));
+                        }
+                        if (Array.isArray(uData.calcHistory) && historyData.length === 0) {
+                            historyData = uData.calcHistory;
+                            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyData));
+                        }
+                    }
+                } catch (e) {}
+                window.updateDashboard();
+                window.renderEdukasiPage();
+            }
+        });
+    </script>
+
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

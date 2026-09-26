@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Admin - MoCatat</title>
+    <meta name="theme-color" content="#249a95">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- PANGGIL FILE CSS SENTRAL -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #f2f7f7;
+            color: #1a1a1a;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .surface-wrapper {
+            max-width: 1080px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #f2f7f7;
+            padding-bottom: 100px;
+        }
+
+        /* =========================================
+           1. SIDEBAR DRAWER (WARNA ASLI MOCATAT)
+           ========================================= */
+        .drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 41, 40, 0.55);
+            backdrop-filter: blur(3px);
+            z-index: 998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .drawer-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .surface-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            max-width: 82vw;
+            background: #ffffff;
+            color: #1a1a1a;
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 16px;
+            box-sizing: border-box;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.15);
+        }
+        .surface-drawer.show {
+            transform: translateX(0);
+        }
+        .drawer-top-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px 16px 4px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+        .drawer-profile-card {
+            background: linear-gradient(135deg, #e0f2f1 0%, #f0fdf4 100%);
+            border: 1px solid #b2dfdb;
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 20px;
+        }
+        .drawer-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #249a95 0%, #166e6a 100%);
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .drawer-menu-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            padding: 0 10px;
+            margin-bottom: 8px;
+        }
+        .drawer-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .drawer-nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 12px;
+            border-radius: 12px;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .drawer-nav-item:hover {
+            background: #f1f5f9;
+            color: #0f766e;
+        }
+        .drawer-nav-item.active {
+            background: #249a95;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(36, 154, 149, 0.3);
+        }
+        .drawer-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        .drawer-badge {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #e0f2f1;
+            color: #0f766e;
+        }
+        .drawer-nav-item.active .drawer-badge {
+            background: rgba(255,255,255,0.25);
+            color: #ffffff;
+        }
+        .drawer-footer {
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .drawer-btn-action {
+            width: 100%;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            padding: 10px 12px;
+            border-radius: 11px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: inherit;
+        }
+        .drawer-btn-logout {
+            width: 100%;
+            background: #fff1f2;
+            color: #e11d48;
+            border: 1px solid #fecdd3;
+            padding: 10px 12px;
+            border-radius: 11px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: inherit;
+        }
+
+        /* =========================================
+           2. HERO HEADER HIJAU TOSCA ASLI MOCATAT
+           ========================================= */
+        .surface-dark-zone {
+            background: linear-gradient(135deg, #187773 0%, #249a95 55%, #2bb0aa 100%);
+            color: #ffffff;
+            padding: 0 18px 74px 18px;
+            border-bottom-left-radius: 26px;
+            border-bottom-right-radius: 26px;
+            box-shadow: 0 6px 20px rgba(36, 154, 149, 0.18);
+        }
+        @media (min-width: 768px) {
+            .surface-dark-zone { padding: 0 32px 82px 32px; }
+        }
+
+        .surface-topnav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 62px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+        }
+        .surface-top-left {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        .btn-hamburger {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .btn-hamburger:active { transform: scale(0.95); }
+
+        .surface-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 17px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+        .surface-brand-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #249a95;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .surface-top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-top-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Hero Text */
+        .surface-subbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 600;
+        }
+        .surface-greeting {
+            font-size: 22px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 5px 0;
+            letter-spacing: -0.4px;
+        }
+        .surface-greeting strong { font-weight: 800; }
+        .surface-desc {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.88);
+            line-height: 1.45;
+            max-width: 480px;
+            margin: 0;
+        }
+
+        /* =========================================
+           3. EMPAT KARTU KPI & DUA GRAFIK (OVERVIEW)
+           ========================================= */
+        .surface-main-body {
+            padding: 0 16px;
+            margin-top: -46px;
+        }
+        @media (min-width: 768px) {
+            .surface-main-body { padding: 0 32px; }
+        }
+        .surface-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 11px;
+            margin-bottom: 16px;
+        }
+        @media (min-width: 900px) {
+            .surface-kpi-row {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+            }
+        }
+        .surface-kpi-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 6px 18px rgba(15, 118, 110, 0.06);
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+        .surface-kpi-card:active { transform: scale(0.98); }
+        .surface-kpi-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 4px;
+        }
+        .surface-kpi-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #e0f2f1;
+            color: #249a95;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .surface-kpi-stat {
+            font-size: 10px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .stat-teal { color: #0f766e; }
+        .stat-amber { color: #d97706; }
+        .stat-muted { color: #94a3b8; font-weight: 600; }
+
+        .surface-kpi-number {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
+            margin-bottom: 2px;
+        }
+        .surface-kpi-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        /* Dua Grafik Analitik */
+        .surface-charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+        @media (min-width: 900px) {
+            .surface-charts-grid {
+                grid-template-columns: 1.35fr 1fr;
+            }
+        }
+        .surface-chart-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chart-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .chart-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14.5px;
+            font-weight: 800;
+            color: #1a1a1a;
+        }
+        .chart-sub-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .chart-desc-text {
+            font-size: 11.5px;
+            color: #64748b;
+            line-height: 1.45;
+            max-width: 260px;
+        }
+        .chart-legend-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+        }
+        .legend-line-solid {
+            display: inline-block;
+            width: 14px;
+            height: 2.5px;
+            background: #249a95;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+        .legend-line-dashed {
+            display: inline-block;
+            width: 14px;
+            height: 0;
+            border-top: 2px dashed #f59e0b;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+
+        /* Grafik Kanan: Capsule Bar Chart Bernuansa Tosca */
+        .realtime-metrics-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 6px 0 16px 0;
+        }
+        .rt-metric-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 3px;
+        }
+        .rt-dot-teal {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #249a95;
+            display: inline-block;
+        }
+        .rt-dot-striped {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: repeating-linear-gradient(-45deg, #249a95, #249a95 2px, #ffffff 2px, #ffffff 4px);
+            border: 1px solid #249a95;
+            display: inline-block;
+        }
+        .rt-metric-val {
+            font-size: 16.5px;
+            font-weight: 800;
+            color: #1a1a1a;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+        .capsule-bars-stage {
+            position: relative;
+            height: 190px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 42px 4px 24px 4px;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 6px;
+        }
+        .capsule-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            position: relative;
+            cursor: pointer;
+        }
+        .capsule-bar {
+            width: 22px;
+            border-radius: 12px;
+            background: #e2eceb;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .capsule-col.active .capsule-bar {
+            background: #249a95;
+            box-shadow: 0 6px 16px rgba(36, 154, 149, 0.28);
+        }
+        .capsule-col.active .capsule-bar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 38%;
+            background: repeating-linear-gradient(-45deg, #187773, #187773 4px, #ffffff 4px, #ffffff 8px);
+            border-top: 2px solid #187773;
+        }
+        .capsule-month {
+            position: absolute;
+            bottom: -22px;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        .capsule-col.active .capsule-month {
+            color: #0f766e;
+            font-weight: 800;
+        }
+        .surface-floating-tooltip {
+            background: #166e6a;
+            color: #ffffff;
+            padding: 7px 10px;
+            border-radius: 9px;
+            font-size: 10px;
+            line-height: 1.4;
+            box-shadow: 0 8px 20px rgba(22, 110, 106, 0.28);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 5;
+        }
+        .surface-floating-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: #166e6a transparent;
+        }
+
+        /* =========================================
+           4. HALAMAN MANAJEMEN LEGA (TANPA KOTAK GANDA)
+           ========================================= */
+        .manage-top-bar {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 12px 15px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-back-overview {
+            background: #e0f2f1;
+            color: #0f766e;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 11.5px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+
+        .admin-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.025);
+        }
+        .banner-preview-box {
+            border-radius: 14px;
+            padding: 15px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+            background-size: cover;
+            background-position: center;
+        }
+        .theme-teal { background: linear-gradient(135deg, #249a95 0%, #1565c0 100%); }
+        .theme-indigo { background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%); }
+        .theme-emerald { background: linear-gradient(135deg, #059669 0%, #0d9488 100%); }
+        .theme-amber { background: linear-gradient(135deg, #d97706 0%, #ea580c 100%); }
+        .theme-rose { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
+
+        .badge-status {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .badge-on { background: #dcfce7; color: #15803d; }
+        .badge-off { background: #f1f5f9; color: #64748b; }
+
+        .edu-cat-badge {
+            font-size: 10.5px;
+            font-weight: 800;
+            padding: 4px 9px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cat-reksadana { background: #e0f2f1; color: #0f766e; }
+        .cat-saham { background: #e0e7ff; color: #4338ca; }
+        .cat-tips { background: #fef3c7; color: #b45309; }
+
+        .search-user-wrap {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            width: 100%;
+        }
+        .btn-refresh-users {
+            background: #249a95;
+            color: #ffffff;
+            border: none;
+            width: 46px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(36, 154, 149, 0.25);
+        }
+        .form-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            color: #1a1a1a;
+            background: #f8fafc;
+            outline: none;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .fab-tambah {
+            background: #249a95 !important;
+            color: #ffffff !important;
+            box-shadow: 0 10px 25px rgba(36, 154, 149, 0.35) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =======================================================
+         1. MENU HAMBURGER (WARNA ASLI MOCATAT)
+         ======================================================= -->
+    <div class="drawer-backdrop" id="drawer-backdrop" onclick="window.toggleHamburgerMenu(false)"></div>
+    <aside class="surface-drawer" id="surface-drawer">
+        <div>
+            <!-- Header Drawer -->
+            <div class="drawer-top-head">
+                <div style="display:flex; align-items:center; gap:9px; font-size:16px; font-weight:800; color:#249a95;">
+                    <div style="width:28px; height:28px; border-radius:8px; background:#249a95; color:white; display:flex; align-items:center; justify-content:center;">
+                        <span class="material-icons-round" style="font-size:17px;">account_balance_wallet</span>
+                    </div>
+                    <span>MoCatat <span style="font-size:11px; font-weight:700; color:#64748b;">Admin</span></span>
+                </div>
+                <button onclick="window.toggleHamburgerMenu(false)" style="width:32px; height:32px; border-radius:8px; border:none; background:#f1f5f9; color:#475569; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                    <span class="material-icons-round" style="font-size:18px;">close</span>
+                </button>
+            </div>
+
+            <!-- Kartu Profil Admin -->
+            <div class="drawer-profile-card">
+                <div class="drawer-avatar">A</div>
+                <div style="min-width:0;">
+                    <div style="font-size:13px; font-weight:800; color:#0f766e;">Admin MoCatat</div>
+                    <div style="font-size:11px; color:#475569; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">admin@gmail.com</div>
+                </div>
+            </div>
+
+            <!-- Daftar Menu Navigasi -->
+            <div class="drawer-menu-label">MENU UTAMA</div>
+            <div class="drawer-nav-list">
+                <div class="drawer-nav-item active" id="dnav-overview" onclick="window.pilihMenuSurface('overview')">
+                    <div class="drawer-nav-left">
+                        <span class="material-icons-round" style="font-size:19px;">space_dashboard</span>
+                        <span>Overview Analitik</span>
+                    </div>
+                </div>
+
+                <div class="drawer-nav-item" id="dnav-banner" onclick="window.pilihMenuSurface('banner')">
+                    <div class="drawer-nav-left">
+                        <span class="material-icons-round" style="font-size:19px;">view_carousel</span>
+                        <span>Kelola Banner</span>
+                    </div>
+                    <span class="drawer-badge" id="dbadge-banner">0</span>
+                </div>
+
+                <div class="drawer-nav-item" id="dnav-edukasi" onclick="window.pilihMenuSurface('edukasi')">
+                    <div class="drawer-nav-left">
+                        <span class="material-icons-round" style="font-size:19px;">school</span>
+                        <span>Materi Edukasi</span>
+                    </div>
+                    <span class="drawer-badge" id="dbadge-edukasi">0</span>
+                </div>
+
+                <div class="drawer-nav-item" id="dnav-users" onclick="window.pilihMenuSurface('users')">
+                    <div class="drawer-nav-left">
+                        <span class="material-icons-round" style="font-size:19px;">group</span>
+                        <span>Daftar Pengguna</span>
+                    </div>
+                    <span class="drawer-badge" id="dbadge-users">0</span>
+                </div>
+
+                <div class="drawer-nav-item" id="dnav-broadcast" onclick="window.pilihMenuSurface('broadcast')">
+                    <div class="drawer-nav-left">
+                        <span class="material-icons-round" style="font-size:19px;">campaign</span>
+                        <span>Broadcast Notifikasi</span>
+                    </div>
+                    <span class="drawer-badge" id="dbadge-broadcast">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Bawah Drawer -->
+        <div class="drawer-footer">
+            <button class="drawer-btn-action" onclick="window.toggleHamburgerMenu(false); window.muatKontenBawaan();">
+                <span class="material-icons-round" style="font-size:18px;">auto_fix_high</span>
+                <span>Muat Paket Konten Default</span>
+            </button>
+            <button class="drawer-btn-logout" onclick="window.toggleHamburgerMenu(false); window.keluarAdmin();">
+                <span class="material-icons-round" style="font-size:18px;">logout</span>
+                <span>Keluar dari Admin</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- =======================================================
+         2. CONTAINER UTAMA DASHBOARD
+         ======================================================= -->
+    <div class="surface-wrapper">
+        <div id="loading-screen" class="loading-screen">Memuat Dashboard...<div class="spinner"></div></div>
+
+        <!-- HEADER HIJAU TOSCA ASLI MOCATAT -->
+        <header class="surface-dark-zone">
+            <nav class="surface-topnav">
+                <div class="surface-top-left">
+                    <button class="btn-hamburger" onclick="window.toggleHamburgerMenu(true)" title="Buka Menu Navigasi">
+                        <span class="material-icons-round" style="font-size:22px;">menu</span>
+                    </button>
+                    <div class="surface-brand" onclick="window.pilihMenuSurface('overview')" style="cursor:pointer;">
+                        <div class="surface-brand-badge">
+                            <span class="material-icons-round" style="font-size:18px;">account_balance_wallet</span>
+                        </div>
+                        <span>MoCatat</span>
+                    </div>
+                </div>
+
+                <div class="surface-top-right">
+                    <button class="btn-top-icon" onclick="window.pilihMenuSurface('broadcast')" title="Broadcast Pengumuman">
+                        <span class="material-icons-round" style="font-size:19px;">campaign</span>
+                    </button>
+                    <button class="btn-top-icon" onclick="window.loadAdminUsersData(); window.loadAdminCMSData();" title="Segarkan Data">
+                        <span class="material-icons-round" style="font-size:19px;">sync</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Baris Breadcrumb & Tanggal -->
+            <div class="surface-subbar">
+                <span>Menu / <strong style="color:#ffffff;" id="surface-breadcrumb-label">Overview Dashboard</strong></span>
+                <span id="surface-date-display">Sabtu, 26 Sep 2026</span>
+            </div>
+
+            <!-- Sapaan Utama -->
+            <div>
+                <h1 class="surface-greeting" id="surface-hero-title">Halo, <strong>Admin MoCatat</strong></h1>
+                <p class="surface-desc" id="surface-hero-sub">
+                    Ringkasan aktivitas pengguna aplikasi, pertumbuhan dompet, dan materi literasi investasi MoCatat.
+                </p>
+            </div>
+        </header>
+
+        <!-- =======================================================
+             3. ISI HALAMAN (DIPISAH ANTARA OVERVIEW & MANAJEMEN)
+             ======================================================= -->
+        <div class="surface-main-body">
+            
+            <!-- TAMPILAN A: KHUSUS OVERVIEW (4 KARTU KPI + 2 GRAFIK) -->
+            <div id="surface-view-overview">
+                <!-- 4 KPI Cards -->
+                <section class="surface-kpi-row">
+                    <div class="surface-kpi-card" onclick="window.pilihMenuSurface('users')">
+                        <div class="surface-kpi-top">
+                            <div class="surface-kpi-icon">
+                                <span class="material-icons-round" style="font-size:18px;">people_alt</span>
+                            </div>
+                            <div class="surface-kpi-stat">
+                                <span class="stat-teal">↗ Total</span>
+                                <span class="stat-muted" id="kpi-sub-dompet">+0 dompet</span>
+                            </div>
+                        </div>
+                        <div class="surface-kpi-number" id="tot-user-terdaftar">0 User</div>
+                        <div class="surface-kpi-label">Pengguna terdaftar</div>
+                    </div>
+
+                    <div class="surface-kpi-card" onclick="window.pilihMenuSurface('users')">
+                        <div class="surface-kpi-top">
+                            <div class="surface-kpi-icon" style="background:#dcfce7; color:#15803d;">
+                                <span class="material-icons-round" style="font-size:18px;">sensors</span>
+                            </div>
+                            <div class="surface-kpi-stat">
+                                <span style="color:#15803d;">● Online</span>
+                                <span class="stat-muted">hari ini</span>
+                            </div>
+                        </div>
+                        <div class="surface-kpi-number" id="kpi-online-val">0 Aktif</div>
+                        <div class="surface-kpi-label">User online / aktif</div>
+                    </div>
+
+                    <div class="surface-kpi-card" onclick="window.pilihMenuSurface('banner')">
+                        <div class="surface-kpi-top">
+                            <div class="surface-kpi-icon">
+                                <span class="material-icons-round" style="font-size:18px;">view_carousel</span>
+                            </div>
+                            <div class="surface-kpi-stat">
+                                <span class="stat-teal">↗ Kelola</span>
+                            </div>
+                        </div>
+                        <div class="surface-kpi-number" id="tot-banner-aktif">0 Banner</div>
+                        <div class="surface-kpi-label">Banner tayang aktif</div>
+                    </div>
+
+                    <div class="surface-kpi-card" onclick="window.pilihMenuSurface('edukasi')">
+                        <div class="surface-kpi-top">
+                            <div class="surface-kpi-icon" style="background:#fef3c7; color:#d97706;">
+                                <span class="material-icons-round" style="font-size:18px;">menu_book</span>
+                            </div>
+                            <div class="surface-kpi-stat">
+                                <span class="stat-amber">↗ Materi</span>
+                                <span class="stat-muted" id="kpi-sub-target">+0 target</span>
+                            </div>
+                        </div>
+                        <div class="surface-kpi-number" id="tot-edukasi-aktif">0 Artikel</div>
+                        <div class="surface-kpi-label">Edukasi investasi</div>
+                    </div>
+                </section>
+
+                <!-- 2 Kartu Grafik Analitik Berdampingan -->
+                <section class="surface-charts-grid">
+                    <!-- Grafik Kiri: Activity Overtime -->
+                    <div class="surface-chart-card">
+                        <div>
+                            <div class="chart-card-top">
+                                <div class="chart-title-wrap">
+                                    <span>Pertumbuhan Aktivitas</span>
+                                    <span class="material-icons-round" style="font-size:15px; color:#cbd5e1;">help_outline</span>
+                                </div>
+                                <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="window.pilihMenuSurface('users')">•••</button>
+                            </div>
+                            <div class="chart-sub-row">
+                                <div class="chart-desc-text">
+                                    Perbandingan jumlah dompet aktif dan target investasi seluruh pengguna MoCatat.
+                                </div>
+                                <div class="chart-legend-box">
+                                    <span><i class="legend-line-solid"></i>Dompet</span>
+                                    <span><i class="legend-line-dashed"></i>Target</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="position: relative; width: 100%; padding-top: 6px;">
+                            <svg viewBox="0 0 560 220" style="width: 100%; height: auto; overflow: visible;">
+                                <g fill="#94a3b8" font-size="10" font-weight="600">
+                                    <text x="0" y="24">30</text>
+                                    <line x1="28" y1="20" x2="545" y2="20" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="0" y="54">25</text>
+                                    <line x1="28" y1="50" x2="545" y2="50" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="0" y="84">20</text>
+                                    <line x1="28" y1="80" x2="545" y2="80" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="0" y="114">15</text>
+                                    <line x1="28" y1="110" x2="545" y2="110" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="0" y="144">10</text>
+                                    <line x1="28" y1="140" x2="545" y2="140" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="6" y="174">5</text>
+                                    <line x1="28" y1="170" x2="545" y2="170" stroke="#f1f5f9" stroke-width="1" />
+                                    <text x="6" y="198">0</text>
+                                    <line x1="28" y1="194" x2="545" y2="194" stroke="#e2e8f0" stroke-width="1" />
+                                </g>
+                                <line x1="252" y1="78" x2="252" y2="194" stroke="#b2dfdb" stroke-width="1.5" stroke-dasharray="3,3" />
+                                <path d="M 45,120 C 75,105 95,140 115,155 C 145,172 165,158 185,150 C 215,138 230,132 252,135 C 280,138 295,98 322,102 C 350,106 370,152 392,152 C 420,152 440,122 462,126 C 490,130 510,145 535,148"
+                                      fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4,4" />
+                                <path d="M 45,142 C 75,112 90,102 115,104 C 140,106 160,126 185,124 C 212,122 232,76 252,78 C 278,80 298,144 322,142 C 350,140 370,118 392,108 C 420,94 440,60 462,62 C 488,64 510,85 535,82"
+                                      fill="none" stroke="#249a95" stroke-width="2.8" />
+                                <circle cx="45" cy="142" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="115" cy="104" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="185" cy="124" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="252" cy="78" r="4.5" fill="#ffffff" stroke="#166e6a" stroke-width="2.5" />
+                                <circle cx="252" cy="135" r="4" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5" />
+                                <circle cx="322" cy="142" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="392" cy="108" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="462" cy="62" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <circle cx="535" cy="82" r="3.5" fill="#ffffff" stroke="#249a95" stroke-width="2" />
+                                <g transform="translate(264, 72)">
+                                    <rect x="0" y="0" width="104" height="54" rx="8" fill="#166e6a" />
+                                    <text x="10" y="17" fill="#b2dfdb" font-size="9.5" font-weight="700">Total Tercatat</text>
+                                    <circle cx="14" cy="30" r="3.5" fill="#249a95" stroke="#ffffff" stroke-width="1.5" />
+                                    <text x="23" y="33" fill="#ffffff" font-size="10" font-weight="700" id="svg-tip-dompet">Dompet: 8</text>
+                                    <circle cx="14" cy="44" r="3.5" fill="#fbbf24" />
+                                    <text x="23" y="47" fill="#ffffff" font-size="10" font-weight="700" id="svg-tip-target">Target: 7</text>
+                                </g>
+                                <g fill="#94a3b8" font-size="10.5" font-weight="600" text-anchor="middle">
+                                    <text x="45" y="214">Feb</text>
+                                    <text x="115" y="214">Mar</text>
+                                    <text x="185" y="214">Apr</text>
+                                    <text x="252" y="214" fill="#0f766e" font-weight="800">Mei</text>
+                                    <text x="322" y="214">Jun</text>
+                                    <text x="392" y="214">Jul</text>
+                                    <text x="462" y="214">Agu</text>
+                                    <text x="535" y="214">Sep</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Grafik Kanan: Real-Time Activity (Capsule Bar) -->
+                    <div class="surface-chart-card">
+                        <div>
+                            <div class="chart-card-top">
+                                <div class="chart-title-wrap">
+                                    <span>Statistik Dompet & Target</span>
+                                    <span class="material-icons-round" style="font-size:15px; color:#cbd5e1;">help_outline</span>
+                                </div>
+                                <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="window.pilihMenuSurface('edukasi')">•••</button>
+                            </div>
+
+                            <div class="realtime-metrics-row">
+                                <div>
+                                    <div class="rt-metric-label"><span class="rt-dot-teal"></span> Total Dompet User</div>
+                                    <div class="rt-metric-val">
+                                        <span id="rt-avg-dompet">0 Dompet</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="rt-metric-label"><span class="rt-dot-striped"></span> Total Target User</div>
+                                    <div class="rt-metric-val">
+                                        <span id="rt-avg-target">0 Target</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="capsule-bars-stage" id="capsule-bars-stage">
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Mar', '5 Dompet', '2 Target')">
+                                <div class="capsule-bar" style="height: 48%;"></div>
+                                <span class="capsule-month">Mar</span>
+                            </div>
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Apr', '6 Dompet', '3 Target')">
+                                <div class="capsule-bar" style="height: 62%;"></div>
+                                <span class="capsule-month">Apr</span>
+                            </div>
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Mei', '7 Dompet', '4 Target')">
+                                <div class="capsule-bar" style="height: 76%;"></div>
+                                <span class="capsule-month">Mei</span>
+                            </div>
+                            <div class="capsule-col active" onclick="window.pilihBatangKapsul(this, 'Jun', '9 Dompet', '7 Target')">
+                                <div class="surface-floating-tooltip" id="capsule-active-tooltip" style="position:absolute; top:-40px;">
+                                    <div style="color:#b2dfdb; font-weight:700; font-size:9px;">Bulan (Jun)</div>
+                                    <div>● Dompet: <strong>9 Dompet</strong></div>
+                                    <div>◐ Target: <strong>7 Target</strong></div>
+                                </div>
+                                <div class="capsule-bar" style="height: 68%;"></div>
+                                <span class="capsule-month">Jun</span>
+                            </div>
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Jul', '8 Dompet', '5 Target')">
+                                <div class="capsule-bar" style="height: 74%;"></div>
+                                <span class="capsule-month">Jul</span>
+                            </div>
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Agu', '10 Dompet', '6 Target')">
+                                <div class="capsule-bar" style="height: 86%;"></div>
+                                <span class="capsule-month">Agu</span>
+                            </div>
+                            <div class="capsule-col" onclick="window.pilihBatangKapsul(this, 'Sep', '8 Dompet', '5 Target')">
+                                <div class="capsule-bar" style="height: 72%;"></div>
+                                <span class="capsule-month">Sep</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAMPILAN B: HALAMAN MANAJEMEN LEGA (TANPA KOTAK PEMBUNGKUS GANDA) -->
+            <div id="surface-view-manage" style="display: none;">
+                <div class="manage-top-bar">
+                    <div style="font-size:14px; font-weight:800; color:#1a1a1a;" id="manage-section-title">Kelola Konten</div>
+                    <button class="btn-back-overview" onclick="window.pilihMenuSurface('overview')">
+                        <span class="material-icons-round" style="font-size:15px;">arrow_back</span> Overview
+                    </button>
+                </div>
+
+                <!-- PANEL 1: KELOLA BANNER -->
+                <div class="list-wrapper" id="panel-admin-banner" style="padding: 0; display: flex; flex-direction: column;">
+                    <div id="admin-banner-container" style="width: 100%;"></div>
+                </div>
+
+                <!-- PANEL 2: KELOLA EDUKASI -->
+                <div class="list-wrapper" id="panel-admin-edukasi" style="padding: 0; display: none; flex-direction: column;">
+                    <div id="admin-edukasi-container" style="width: 100%;"></div>
+                </div>
+
+                <!-- PANEL 3: PANTAU USER AKTIF -->
+                <div class="list-wrapper" id="panel-admin-users" style="padding: 0; display: none; flex-direction: column;">
+                    <div class="search-user-wrap">
+                        <input type="text" id="admin-search-user" class="form-input" placeholder="🔍 Cari nama, email, atau UID user..." oninput="window.renderAdminUsers()" autocomplete="off" style="margin: 0; background: #ffffff;">
+                        <button class="btn-refresh-users" onclick="window.loadAdminUsersData()" title="Segarkan Data User">
+                            <span class="material-icons-round">refresh</span>
+                        </button>
+                    </div>
+                    <div id="admin-users-container" style="width: 100%;"></div>
+                </div>
+
+                <!-- PANEL 4: BROADCAST NOTIFIKASI MASSAL -->
+                <div class="list-wrapper" id="panel-admin-broadcast" style="padding: 0; display: none; flex-direction: column;">
+                    <div id="admin-broadcast-container" style="width: 100%;"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TOMBOL FAB TAMBAH -->
+        <button class="fab-tambah" id="fab-admin-add" style="display: none;" onclick="window.openAdminModal()">
+            <span class="material-icons-round" style="font-size:20px;">add_circle</span> <span id="fab-admin-text">Tambah Banner Baru</span>
+        </button>
+
+        <!-- MODAL FORM BANNER -->
+        <div id="modal-admin-banner" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3 id="banner-modal-title">Tambah Banner</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-admin-banner')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="banner-error-msg" class="error-msg"></div>
+                <input type="hidden" id="banner-id">
+
+                <div class="form-group">
+                    <label class="form-label">Label Kecil Atas (Badge)</label>
+                    <input type="text" id="banner-tag" class="form-input" placeholder="Cth: 💡 EDUKASI INVESTASI / 🔥 INFO PENTING" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Judul Utama Banner</label>
+                    <input type="text" id="banner-title" class="form-input" placeholder="Cth: Mulai Reksadana dari Rp 10.000!" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sub-Teks / Penjelasan Singkat</label>
+                    <input type="text" id="banner-subtitle" class="form-input" placeholder="Cth: Pelajari cara uang narikmu tumbuh tiap hari." autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Tema Warna</label>
+                        <select id="banner-theme" class="form-input">
+                            <option value="theme-teal">Hijau MoCatat</option>
+                            <option value="theme-indigo">Ungu Investasi</option>
+                            <option value="theme-emerald">Hijau Cuan</option>
+                            <option value="theme-amber">Oranye Emas</option>
+                            <option value="theme-rose">Merah Promo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Aksi Saat Diklik</label>
+                        <select id="banner-action" class="form-input">
+                            <option value="edukasi">Buka Pojok Edukasi</option>
+                            <option value="target.html">Buka Menu Target & Investasi</option>
+                            <option value="lokasi.html">Buka Radar Mangkal</option>
+                            <option value="analitik.html">Buka Halaman Analitik</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL Gambar Latar (Opsional, kosongkan jika pakai warna tema)</label>
+                    <input type="url" id="banner-img" class="form-input" placeholder="https://..." autocomplete="off">
+                </div>
+                <button class="btn-submit" id="btn-save-banner" onclick="window.simpanBannerAdmin()">Simpan Banner</button>
+            </div>
+        </div>
+
+        <!-- MODAL FORM EDUKASI -->
+        <div id="modal-admin-edukasi" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3 id="edukasi-modal-title">Tambah Materi Edukasi</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-admin-edukasi')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="edukasi-error-msg" class="error-msg"></div>
+                <input type="hidden" id="edukasi-id">
+
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1.2;">
+                        <label class="form-label">Kategori Materi</label>
+                        <select id="edukasi-category" class="form-input">
+                            <option value="Reksadana">🌱 Reksadana</option>
+                            <option value="Saham">📈 Saham</option>
+                            <option value="Tips Keuangan">💡 Tips Keuangan</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 0.8;">
+                        <label class="form-label">Waktu Baca</label>
+                        <input type="text" id="edukasi-readtime" class="form-input" placeholder="Cth: 3 Menit" value="3 Menit">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Judul Artikel Edukasi</label>
+                    <input type="text" id="edukasi-title" class="form-input" placeholder="Cth: Apa Itu Reksadana Pasar Uang?" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Ringkasan Singkat (Tampil di Daftar Kartu)</label>
+                    <input type="text" id="edukasi-summary" class="form-input" placeholder="Cth: Investasi paling aman untuk pemula, minim risiko dan cair kapan saja." autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Isi Pembahasan Lengkap (Gunakan Enter untuk paragraf baru)</label>
+                    <textarea id="edukasi-content" class="form-textarea" placeholder="Tulis penjelasan lengkap di sini..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Poin Penting / Tips Utama (Kotak Highlight di Bawah Artikel)</label>
+                    <input type="text" id="edukasi-tip" class="form-input" placeholder="Cth: Gunakan uang dingin atau sisihkan 10%-20% dari hasil narik harian." autocomplete="off">
+                </div>
+
+                <button class="btn-submit" id="btn-save-edukasi" onclick="window.simpanEdukasiAdmin()">Simpan Materi Edukasi</button>
+            </div>
+        </div>
+
+        <!-- MODAL KIRIM BROADCAST NOTIFIKASI MASSAL -->
+        <div id="modal-admin-broadcast" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3>📢 Kirim Broadcast ke User</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-admin-broadcast')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="broadcast-error-msg" class="error-msg"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Template Cepat (Klik untuk Isi Otomatis)</label>
+                    <div class="chip-group" style="margin-top: 4px;">
+                        <div class="chip" onclick="window.pilihTemplateBroadcast('⛽ Pengingat Cek Oli & Servis', 'Jangan lupa cek jarak tempuh KM motormu minggu ini di menu Monitor Oli agar mesin tetap awet dan tarikan enteng!')">⛽ Cek Oli</div>
+                        <div class="chip" onclick="window.pilihTemplateBroadcast('🌱 Materi Investasi Baru!', 'Sudah baca materi Reksadana & Saham terbaru di Pojok Edukasi? Yuk sisihkan 20% cuan harianmu hari ini!')">🌱 Info Edukasi</div>
+                        <div class="chip" onclick="window.pilihTemplateBroadcast('🚀 Semangat Narik & Catat!', 'Awali hari dengan catat KM awal motor dan pantau titik gacor di menu Radar Mangkal MoCatat.')">🚀 Semangat Harian</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Judul Pengumuman / Notifikasi</label>
+                    <input type="text" id="broadcast-title" class="form-input" placeholder="Cth: 🔥 Fitur Baru: Pojok Edukasi Investasi!" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Isi Pesan (Akan masuk ke lonceng semua user)</label>
+                    <textarea id="broadcast-body" class="form-textarea" style="min-height: 95px;" placeholder="Tulis isi pengumuman untuk seluruh pengguna di sini..."></textarea>
+                </div>
+
+                <button class="btn-submit" id="btn-send-broadcast" onclick="window.kirimBroadcastAdmin()">Kirim Pengumuman Sekarang</button>
+            </div>
+        </div>
+
+        <!-- CUSTOM DIALOG -->
+        <div id="custom-dialog" class="custom-dialog-overlay">
+            <div class="custom-dialog-box">
+                <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
+                <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
+                <p class="custom-dialog-msg" id="dialog-msg"></p>
+                <div class="custom-dialog-actions" id="dialog-actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANGGIL FILE JS SENTRAL & MODUL ADMIN -->
+    <script type="module" src="app.js"></script>
+    <script type="module" src="fitur-admin.js"></script>
+</body>
+</html>
