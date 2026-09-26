@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mocatat-cache-v45';
+const CACHE_NAME = 'mocatat-cache-v49';
 const urlsToCache = [
   './',
   './index.html',

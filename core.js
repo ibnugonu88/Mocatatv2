@@ -1,11 +1,11 @@
 // ============================================================
 // MOCATAT - CORE MODULE (core.js)
-// Firebase Config, Global State, Utilities, Auth, DB, PWA & Backup
+// 100% Pure Online Cloud Firestore (Tanpa LocalStorage)
 // ============================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -24,15 +24,6 @@ try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-
-    // Mengaktifkan Offline Persistence Firestore
-    enableIndexedDbPersistence(db).catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn("Multiple tabs open, offline persistence can only be enabled in one tab at a time.");
-        } else if (err.code == 'unimplemented') {
-            console.warn("The current browser does not support all of the features required to enable persistence.");
-        }
-    });
     
     isSupported().then((supported) => {
         if (supported) {
@@ -49,14 +40,19 @@ try {
 } catch (error) { console.error("Firebase init failed:", error); }
 
 // ==========================================
-// 1. GLOBAL STATE VARIABLES
+// 1. GLOBAL STATE VARIABLES (MURNI MEMORI & CLOUD)
 // ==========================================
 window.currentUserId = null;
+window.isUserDataLoaded = false;
 window.wallets = []; 
 window.categories = []; 
 window.transactions = []; 
 window.targets = []; 
 window.notifications = [];
+window.seenBroadcastIds = [];
+window.pushedBroadcastIds = [];
+window.calcPortfolio = [];
+window.calcHistory = [];
 window.kmRecords = []; 
 window.vehicleSettings = { accumulatedKmForOil: 0, activeTrip: null };
 window.zones = [];
@@ -164,7 +160,7 @@ window.logoutApp = function() {
 };
 
 // ==========================================
-// 5. DATABASE LOAD & SAVE
+// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY (100% CLOUD)
 // ==========================================
 window.getUserDocPayload = function() {
     return {
@@ -172,6 +168,10 @@ window.getUserDocPayload = function() {
         categories: window.categories,
         targets: window.targets,
         notifications: window.notifications,
+        seenBroadcastIds: window.seenBroadcastIds,
+        pushedBroadcastIds: window.pushedBroadcastIds,
+        calcPortfolio: window.calcPortfolio,
+        calcHistory: window.calcHistory,
         kmRecords: window.kmRecords,
         vehicleSettings: window.vehicleSettings,
         zones: window.zones
@@ -192,18 +192,158 @@ window.recalculateBalances = function() {
     window.wallets.forEach(w => w.balance = computedBalances[w.id] !== undefined ? computedBalances[w.id] : 0);
 };
 
+// Memulihkan Dompet, Kategori & Target otomatis dari Riwayat Transaksi di Server jika sempat terhapus
+window.recoverDataFromTransactions = function() {
+    if (!Array.isArray(window.transactions) || window.transactions.length === 0) return false;
+    let adaYangDipulihkan = false;
+
+    const usedWalletIds = new Set();
+    const walletMapFromTrx = new Map();
+
+    window.transactions.forEach(trx => {
+        if (trx.walletId) {
+            const wId = String(trx.walletId);
+            usedWalletIds.add(wId);
+            if (trx.walletName && !walletMapFromTrx.has(wId)) {
+                walletMapFromTrx.set(wId, trx.walletName);
+            }
+        }
+        if (trx.targetWalletId) {
+            const twId = String(trx.targetWalletId);
+            usedWalletIds.add(twId);
+            if (trx.targetWalletName && !walletMapFromTrx.has(twId)) {
+                walletMapFromTrx.set(twId, trx.targetWalletName);
+            }
+        }
+    });
+
+    walletMapFromTrx.forEach((wName, wId) => {
+        const existsById = window.wallets.some(w => String(w.id) === String(wId));
+        if (!existsById) {
+            const unusedSameNameIdx = window.wallets.findIndex(
+                w => (w.name || '').trim().toLowerCase() === (wName || '').trim().toLowerCase() && !usedWalletIds.has(String(w.id))
+            );
+
+            if (unusedSameNameIdx !== -1) {
+                window.wallets[unusedSameNameIdx].id = wId;
+                usedWalletIds.add(wId);
+                adaYangDipulihkan = true;
+            } else {
+                const lower = (wName || '').toLowerCase();
+                let type = 'cash';
+                if (lower.includes('bank') || lower.includes('bca') || lower.includes('bri') || lower.includes('mandiri') || lower.includes('bni') || lower.includes('bsi') || lower.includes('seabank') || lower.includes('jago')) {
+                    type = 'bank';
+                } else if (lower.includes('gopay') || lower.includes('ovo') || lower.includes('dana') || lower.includes('shopee') || lower.includes('grab') || lower.includes('dompet') || lower.includes('linkaja')) {
+                    type = 'ewallet';
+                }
+                const icon = type === 'bank' ? "account_balance" : (type === 'ewallet' ? "account_balance_wallet" : "payments");
+                const colorClass = type === 'bank' ? "icon-bank" : (type === 'ewallet' ? "icon-ewallet" : "icon-cash");
+
+                window.wallets.push({
+                    id: wId,
+                    name: wName || "Dompet",
+                    type: type,
+                    balance: 0,
+                    icon: icon,
+                    colorClass: colorClass,
+                    isArchived: false
+                });
+                usedWalletIds.add(wId);
+                adaYangDipulihkan = true;
+            }
+        }
+    });
+
+    window.transactions.forEach(trx => {
+        if (!trx.categoryId || String(trx.categoryId) === '999' || trx.type === 'transfer') return;
+        const cId = trx.categoryId;
+        const cName = trx.categoryName || (trx.type === 'in' ? 'Pemasukan' : 'Pengeluaran');
+        const cType = trx.type === 'in' ? 'in' : 'out';
+
+        const existsCat = window.categories.some(c => String(c.id) === String(cId));
+        if (!existsCat) {
+            const lowerC = cName.toLowerCase();
+            let icon = cType === 'in' ? 'payments' : 'category';
+            let color = cType === 'in' ? '#2e7d32' : '#ef6c00';
+            if (lowerC.includes('makan') || lowerC.includes('minum') || lowerC.includes('kopi')) { icon = 'restaurant'; color = '#ef6c00'; }
+            else if (lowerC.includes('bensin') || lowerC.includes('bbm')) { icon = 'local_gas_station'; color = '#e11d48'; }
+            else if (lowerC.includes('servis') || lowerC.includes('oli') || lowerC.includes('motor')) { icon = 'build'; color = '#4338ca'; }
+
+            window.categories.push({
+                id: cId,
+                type: cType,
+                name: cName,
+                budget: 0,
+                icon: icon,
+                color: color
+            });
+            adaYangDipulihkan = true;
+        }
+    });
+
+    if (!window.categories.some(c => String(c.id) === '999')) {
+        window.categories.push({ id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" });
+        adaYangDipulihkan = true;
+    }
+
+    const targetGroup = {};
+    window.transactions.forEach(trx => {
+        if (!trx.targetId) return;
+        const tId = String(trx.targetId);
+        if (!targetGroup[tId]) {
+            targetGroup[tId] = { id: trx.targetId, name: "Target Tabungan", tipe: "biasa", currentAmount: 0, nilaiTerkini: 0 };
+        }
+        if (trx.note) {
+            const cleanedName = trx.note.replace(/^(Setor\/Top Up:|Jual\/Tarik:|Tarik Tabungan:)\s*/i, '').trim();
+            if (cleanedName) targetGroup[tId].name = cleanedName;
+        }
+        const nLower = (targetGroup[tId].name || '').toLowerCase();
+        if (trx.categoryName === 'Pencairan Investasi' || (trx.note && trx.note.includes('Top Up')) || nLower.includes('reksadana') || nLower.includes('saham') || nLower.includes('bibit') || nLower.includes('invest') || nLower.includes('kripto') || nLower.includes('emas')) {
+            targetGroup[tId].tipe = 'investasi';
+        }
+        const amt = Number(trx.amount || 0);
+        if (trx.type === 'out') {
+            targetGroup[tId].currentAmount += amt;
+            targetGroup[tId].nilaiTerkini += amt;
+        } else if (trx.type === 'in') {
+            const deduct = trx.modalDeducted !== undefined ? Number(trx.modalDeducted || 0) : amt;
+            targetGroup[tId].currentAmount = Math.max(0, targetGroup[tId].currentAmount - deduct);
+            targetGroup[tId].nilaiTerkini = Math.max(0, targetGroup[tId].nilaiTerkini - amt);
+        }
+    });
+
+    Object.values(targetGroup).forEach(recT => {
+        const existsTarget = window.targets.some(t => String(t.id) === String(recT.id));
+        if (!existsTarget && (recT.currentAmount > 0 || recT.nilaiTerkini > 0)) {
+            window.targets.push({
+                id: recT.id,
+                tipe: recT.tipe,
+                name: recT.name,
+                targetAmount: 0,
+                currentAmount: recT.currentAmount,
+                nilaiTerkini: recT.nilaiTerkini,
+                deadline: '',
+                isActive: true
+            });
+            adaYangDipulihkan = true;
+        }
+    });
+
+    return adaYangDipulihkan;
+};
+
 window.saveDataToFirestore = async function() { 
     window.callPageRender(); 
-    if(!window.currentUserId) return; 
+    if (!window.currentUserId || !window.isUserDataLoaded) return; 
     try { 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true }); 
     } catch (e) { 
-        console.warn("Save to cloud delayed/failed:", e); 
+        console.warn("Save to cloud failed:", e); 
     }
 };
 
 window.saveDataToFirestoreSilently = async function() { 
-    if(!window.currentUserId) return; 
+    if (!window.currentUserId || !window.isUserDataLoaded) return; 
     try { 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true }); 
     } catch (e) { console.warn("Silent save failed:", e.message); } 
@@ -227,6 +367,8 @@ export function initAuthListener() {
         const navBottom = document.getElementById('bottom-navigation');
         if (user) {
             window.currentUserId = user.uid; 
+            window.isUserDataLoaded = false;
+
             const displayName = window.escapeHTML(user.displayName || "Pengguna");
             if(document.getElementById('user-name')) document.getElementById('user-name').innerText = displayName; 
             if(document.getElementById('profile-name-text')) document.getElementById('profile-name-text').innerText = displayName;
@@ -243,20 +385,20 @@ export function initAuthListener() {
                 const docSnap = await getDoc(docRef);
                 let isNewUser = true;
 
-                let localZones = [];
-                try { localZones = JSON.parse(localStorage.getItem("mocatat_daerah_manual_v1")) || []; } catch(e) {}
-
                 if (docSnap.exists()) {
                     isNewUser = false;
                     const data = docSnap.data();
-                    window.wallets = data.wallets || []; 
-                    window.categories = data.categories || []; 
-                    window.targets = data.targets || [];
-                    window.notifications = data.notifications || [{ id: window.generateUUID(), title: "Selamat Datang! 🎉", body: "Mulai catat keuanganmu hari ini.", date: window.getLocalDateString(), read: false }];
-                    window.kmRecords = data.kmRecords || []; 
+                    window.wallets = Array.isArray(data.wallets) ? data.wallets : []; 
+                    window.categories = Array.isArray(data.categories) ? data.categories : []; 
+                    window.targets = Array.isArray(data.targets) ? data.targets : [];
+                    window.notifications = Array.isArray(data.notifications) ? data.notifications : [{ id: window.generateUUID(), title: "Selamat Datang!", body: "Mulai catat keuanganmu hari ini.", date: window.getLocalDateString(), read: false }];
+                    window.seenBroadcastIds = Array.isArray(data.seenBroadcastIds) ? data.seenBroadcastIds : [];
+                    window.pushedBroadcastIds = Array.isArray(data.pushedBroadcastIds) ? data.pushedBroadcastIds : [];
+                    window.calcPortfolio = Array.isArray(data.calcPortfolio) ? data.calcPortfolio : [];
+                    window.calcHistory = Array.isArray(data.calcHistory) ? data.calcHistory : [];
+                    window.kmRecords = Array.isArray(data.kmRecords) ? data.kmRecords : []; 
                     window.vehicleSettings = data.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
-                    window.zones = (Array.isArray(data.zones) && data.zones.length > 0) ? data.zones : localZones;
-                    try { localStorage.setItem("mocatat_daerah_manual_v1", JSON.stringify(window.zones)); } catch(e) {}
+                    window.zones = Array.isArray(data.zones) ? data.zones : [];
 
                     if (data.transactions && Array.isArray(data.transactions) && data.transactions.length > 0) {
                         const allOldTrx = data.transactions;
@@ -274,46 +416,56 @@ export function initAuthListener() {
                     }
                 } 
                 
-                if(isNewUser) {
+                // Tarik seluruh transaksi dari Cloud Firestore
+                try {
+                    const trxSnapshot = await getDocs(collection(db, "users", window.currentUserId, "transactions"));
+                    window.transactions = [];
+                    trxSnapshot.forEach((docTrx) => {
+                        window.transactions.push(docTrx.data());
+                    });
+                } catch (err) {
+                    console.error("Gagal muat transaksi:", err);
+                }
+
+                // Pulihkan Dompet, Kategori & Target dari Riwayat Transaksi jika sempat hilang
+                const recovered = window.recoverDataFromTransactions();
+
+                let needInitialSave = recovered || isNewUser;
+                if (!window.wallets || window.wallets.length === 0) {
                     window.wallets = [{ id: window.generateUUID(), name: "Uang Tunai", type: "cash", balance: 0, icon: "payments", colorClass: "icon-cash", isArchived: false }];
+                    needInitialSave = true;
+                }
+                if (!window.categories || window.categories.length === 0) {
                     window.categories = [ 
                         { id: 1, type: 'out', name: "Makanan & Minuman", budget: 1500000, icon: "restaurant", color: "#ef6c00" }, 
                         { id: 2, type: 'in', name: "Pemasukan", budget: 0, icon: "payments", color: "#2e7d32" }, 
                         { id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" } 
                     ];
-                    window.targets = []; 
-                    window.kmRecords = []; 
-                    window.vehicleSettings = { accumulatedKmForOil: 0, activeTrip: null };
-                    window.zones = localZones;
-                    window.notifications = [{ id: window.generateUUID(), title: "Selamat Datang! 🎉", body: "Mulai catat keuanganmu hari ini.", date: window.getLocalDateString(), read: false }];
-                    await window.saveDataToFirestore(); 
+                    needInitialSave = true;
                 }
 
-                window.callPageRender(); 
+                window.recalculateBalances();
+                window.isUserDataLoaded = true;
+
+                if (needInitialSave) {
+                    await window.saveDataToFirestore();
+                } else {
+                    window.callPageRender();
+                }
                 
                 if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 500); }
                 else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 500); }
 
-                getDocs(collection(db, "users", window.currentUserId, "transactions"))
-                    .then((trxSnapshot) => {
-                        window.transactions = [];
-                        trxSnapshot.forEach((docTrx) => {
-                            window.transactions.push(docTrx.data());
-                        });
-                        
-                        window.recalculateBalances(); 
-                        window.callPageRender(); 
-                    })
-                    .catch((err) => console.error("Gagal muat transaksi:", err));
-
             } catch (error) { 
                 console.error("Data load failed:", error); 
                 window.sembunyikanLoading(); 
-                window.customAlert("Error", "Gagal memuat data", "error");
+                window.customAlert("Error", "Gagal memuat data dari server. Periksa koneksi internet Anda.", "error");
             }
         } else {
             window.currentUserId = null; 
+            window.isUserDataLoaded = false;
             window.wallets = []; window.categories = []; window.transactions = []; window.targets = []; window.notifications = []; window.zones = [];
+            window.seenBroadcastIds = []; window.pushedBroadcastIds = []; window.calcPortfolio = []; window.calcHistory = [];
             if(navBottom) navBottom.classList.remove('show'); 
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             if(document.getElementById('page-login')) document.getElementById('page-login').classList.add('active');
@@ -364,11 +516,11 @@ window.toggleFirebaseNotification = async function() {
 
     if (Notification.permission === 'granted') {
         window.updateNotifStatusUI();
-        return window.customAlert("Sudah Aktif 🔔", "Notifikasi Firebase sudah aktif di perangkat ini.");
+        return window.customAlert("Sudah Aktif", "Notifikasi Firebase sudah aktif di perangkat ini.");
     }
 
     if (Notification.permission === 'denied') {
-        return window.customAlert("Izin Diblokir", "Izin notifikasi sebelumnya ditolak. Silakan aktifkan kembali melalui Pengaturan Situs (ikon gembok di pojok kiri atas browser).", "warning");
+        return window.customAlert("Izin Diblokir", "Izin notifikasi sebelumnya ditolak. Silakan aktifkan kembali melalui Pengaturan Situs.", "warning");
     }
 
     try {
@@ -388,7 +540,7 @@ window.toggleFirebaseNotification = async function() {
                     console.warn("Info token FCM:", tokenErr);
                 }
             }
-            window.customAlert("Berhasil Diaktifkan! 🎉", "Notifikasi Firebase sekarang sudah aktif untuk akun Anda.");
+            window.customAlert("Berhasil Diaktifkan!", "Notifikasi Firebase sekarang sudah aktif untuk akun Anda.");
         } else {
             window.customAlert("Tidak Diizinkan", "Anda belum mengizinkan akses notifikasi.", "warning");
         }
@@ -404,20 +556,6 @@ if ('serviceWorker' in navigator) {
             .then(registration => {
                 window.swRegistration = registration;
                 window.updateNotifStatusUI();
-                console.log('[PWA] Service Worker terdaftar dengan scope:', registration.scope);
-                
-                if (messaging && Notification.permission === 'granted') {
-                    getToken(messaging, { 
-                        vapidKey: "MASUKKAN_VAPID_KEY_FIREBASE_KAMU_DI_SINI",
-                        serviceWorkerRegistration: registration 
-                    }).then(async (currentToken) => {
-                        if (currentToken && window.currentUserId) {
-                            await setDoc(doc(db, "users", window.currentUserId), { fcmToken: currentToken }, { merge: true });
-                        }
-                    }).catch((err) => {
-                        console.warn('Gagal mendapatkan token FCM:', err);
-                    });
-                }
             })
             .catch(err => {
                 console.error('[PWA] Pendaftaran Service Worker gagal:', err);
@@ -426,7 +564,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP
+// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP (MURNI CLOUD)
 // ==========================================
 window.injectImportButtonUI = function() {
     const exportItem = document.querySelector('.settings-item[onclick*="exportDataJSON"]');
@@ -467,6 +605,8 @@ window.exportDataJSON = function() {
         transactions: window.transactions || [],
         targets: window.targets || [],
         notifications: window.notifications || [],
+        calcPortfolio: window.calcPortfolio || [],
+        calcHistory: window.calcHistory || [],
         kmRecords: window.kmRecords || [],
         vehicleSettings: window.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null },
         zones: window.zones || [],
@@ -560,15 +700,15 @@ window.prosesRestoreDataJSON = async function(parsed) {
         window.transactions = Array.isArray(parsed.transactions) ? parsed.transactions : [];
         window.targets = Array.isArray(parsed.targets) ? parsed.targets : [];
         window.notifications = Array.isArray(parsed.notifications) ? parsed.notifications : [];
+        window.calcPortfolio = Array.isArray(parsed.calcPortfolio) ? parsed.calcPortfolio : [];
+        window.calcHistory = Array.isArray(parsed.calcHistory) ? parsed.calcHistory : [];
         window.kmRecords = Array.isArray(parsed.kmRecords) ? parsed.kmRecords : [];
         window.vehicleSettings = parsed.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
         window.zones = Array.isArray(parsed.zones) ? parsed.zones : [];
 
-        try {
-            localStorage.setItem("mocatat_daerah_manual_v1", JSON.stringify(window.zones));
-        } catch (e) {}
-
+        window.recoverDataFromTransactions();
         window.recalculateBalances();
+        window.isUserDataLoaded = true;
 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload());
 
@@ -584,7 +724,7 @@ window.prosesRestoreDataJSON = async function(parsed) {
         }
 
         window.callPageRender();
-        window.customAlert("Berhasil Dipulihkan! 🎉", "Seluruh data backup JSON berhasil diimpor dan disinkronkan ke akun Anda.");
+        window.customAlert("Berhasil Dipulihkan!", "Seluruh data backup JSON berhasil diimpor dan disinkronkan ke akun Cloud Anda.");
     } catch (err) {
         console.error("Restore failed:", err);
         window.sembunyikanLoading();

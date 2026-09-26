@@ -1,15 +1,13 @@
 // ============================================================
 // MOCATAT - FITUR ADMIN, CMS EDUKASI, USER, BROADCAST & RESET PASSWORD
-// Versi Final (Warna Asli MoCatat & Layout Anti-Menumpuk)
+// 100% Pure Online Cloud Firestore (Tanpa LocalStorage)
 // ============================================================
 
 import { auth, db, doc, getDoc, setDoc } from "./core.js";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, getDocs, deleteDoc, deleteField, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Email Resmi Admin (Autentikasi penuh ditangani oleh Firebase Auth)
 const ADMIN_EMAIL = "admin@gmail.com";
-export const CMS_STORAGE_KEY = "mocatat_cms_content_v1";
 
 window.activeAdminTab = 'overview';
 window.cmsBanners = [];
@@ -107,6 +105,10 @@ export const DEFAULT_EDUCATIONS = [
         isActive: true
     }
 ];
+
+// Set nilai awal di memori sebelum ditarik dari Firestore
+window.cmsBanners = JSON.parse(JSON.stringify(DEFAULT_BANNERS));
+window.cmsEducations = JSON.parse(JSON.stringify(DEFAULT_EDUCATIONS));
 
 // ==========================================
 // 2. FITUR LUPA PASSWORD (USER LOGIN & PANEL ADMIN)
@@ -221,7 +223,7 @@ window.kirimResetPasswordAdmin = function(email, displayName) {
     if (!email || !email.includes('@')) {
         window.customAlert(
             "Email Belum Tercatat",
-            "Akun lama ini belum membuka aplikasi kembali sehingga alamat emailnya belum tercatat di Firestore. Anda dapat melihat emailnya lewat menu Authentication di Firebase Console.",
+            "Akun lama ini belum membuka aplikasi kembali sehingga alamat emailnya belum tercatat di Firestore.",
             "warning"
         );
         return;
@@ -248,19 +250,11 @@ if (document.readyState === 'loading') {
 }
 
 // ==========================================
-// 3. HELPER NOTIFIKASI BAWAAN PONSEL & REALTIME LISTENER
+// 3. HELPER KONTEN CLOUD & REALTIME LISTENER (TANPA LOCALSTORAGE)
 // ==========================================
 window.getCMSContent = function() {
-    let banners = DEFAULT_BANNERS;
-    let educations = DEFAULT_EDUCATIONS;
-    try {
-        const raw = localStorage.getItem(CMS_STORAGE_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed.banners) && parsed.banners.length > 0) banners = parsed.banners;
-            if (Array.isArray(parsed.educations) && parsed.educations.length > 0) educations = parsed.educations;
-        }
-    } catch (e) {}
+    const banners = (Array.isArray(window.cmsBanners) && window.cmsBanners.length > 0) ? window.cmsBanners : DEFAULT_BANNERS;
+    const educations = (Array.isArray(window.cmsEducations) && window.cmsEducations.length > 0) ? window.cmsEducations : DEFAULT_EDUCATIONS;
     return {
         banners: banners.filter(b => b.isActive !== false),
         educations: educations.filter(ed => ed.isActive !== false)
@@ -340,45 +334,33 @@ window.recordUserHeartbeat = async function(user) {
     } catch (e) {}
 };
 
-window.processIncomingPublicContent = function(gData) {
+window.processIncomingPublicContent = async function(gData) {
     if (!gData) return;
-    const foundBanners = Array.isArray(gData.banners) ? gData.banners : null;
-    const foundEducations = Array.isArray(gData.educations) ? gData.educations : null;
-    const foundBroadcasts = Array.isArray(gData.broadcasts) ? gData.broadcasts : null;
+    if (Array.isArray(gData.banners) && gData.banners.length > 0) window.cmsBanners = gData.banners;
+    if (Array.isArray(gData.educations) && gData.educations.length > 0) window.cmsEducations = gData.educations;
+    if (Array.isArray(gData.broadcasts)) window.cmsBroadcasts = gData.broadcasts;
 
-    if (foundBanners || foundEducations || foundBroadcasts) {
-        const existingRaw = localStorage.getItem(CMS_STORAGE_KEY);
-        const existingObj = existingRaw ? JSON.parse(existingRaw) : {};
-        localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify({
-            banners: foundBanners || existingObj.banners || DEFAULT_BANNERS,
-            educations: foundEducations || existingObj.educations || DEFAULT_EDUCATIONS,
-            broadcasts: foundBroadcasts || existingObj.broadcasts || []
-        }));
-        if (typeof window.setupRedesignedBerandaLayout === 'function') {
-            window.setupRedesignedBerandaLayout();
-        }
-        if (typeof window.renderEdukasiPage === 'function') {
-            window.renderEdukasiPage();
-        }
+    if (typeof window.setupRedesignedBerandaLayout === 'function') {
+        window.setupRedesignedBerandaLayout();
+    }
+    if (typeof window.renderEdukasiPage === 'function') {
+        window.renderEdukasiPage();
     }
 
-    if (Array.isArray(foundBroadcasts) && foundBroadcasts.length > 0 && window.currentUserId) {
+    // Pastikan data user dari Firestore sudah dimuat penuh sebelum memproses Broadcast
+    const foundBroadcasts = Array.isArray(gData.broadcasts) ? gData.broadcasts : [];
+    if (foundBroadcasts.length > 0 && window.currentUserId && window.isUserDataLoaded) {
         if (!Array.isArray(window.notifications)) window.notifications = [];
+        if (!Array.isArray(window.seenBroadcastIds)) window.seenBroadcastIds = [];
+        if (!Array.isArray(window.pushedBroadcastIds)) window.pushedBroadcastIds = [];
 
-        const seenKey = "mocatat_seen_broadcasts_" + window.currentUserId;
-        const phoneNotifKey = "mocatat_pushed_phone_" + window.currentUserId;
-        let seenIds = [];
-        let pushedIds = [];
-        try { seenIds = JSON.parse(localStorage.getItem(seenKey) || "[]"); } catch (e) {}
-        try { pushedIds = JSON.parse(localStorage.getItem(phoneNotifKey) || "[]"); } catch (e) {}
-
-        let adaBroadcastBaru = false;
+        let adaPerubahanCloud = false;
         let newestUnpushed = null;
 
         foundBroadcasts.forEach((bc, index) => {
             if (!bc || !bc.id) return;
             const sudahAdaDiNotif = window.notifications.some(n => String(n.id) === String(bc.id));
-            const sudahPernahDilihat = seenIds.includes(bc.id);
+            const sudahPernahDilihat = window.seenBroadcastIds.includes(bc.id);
 
             if (!sudahAdaDiNotif && !sudahPernahDilihat) {
                 window.notifications.unshift({
@@ -388,26 +370,31 @@ window.processIncomingPublicContent = function(gData) {
                     date: bc.date || window.getLocalDateString(),
                     read: false
                 });
-                seenIds.push(bc.id);
-                adaBroadcastBaru = true;
+                window.seenBroadcastIds.push(bc.id);
+                adaPerubahanCloud = true;
             }
 
-            if (!pushedIds.includes(bc.id)) {
-                pushedIds.push(bc.id);
+            if (!window.pushedBroadcastIds.includes(bc.id)) {
+                window.pushedBroadcastIds.push(bc.id);
                 if (index === 0) newestUnpushed = bc;
+                adaPerubahanCloud = true;
             }
         });
-
-        try { localStorage.setItem(phoneNotifKey, JSON.stringify(pushedIds)); } catch (e) {}
 
         if (newestUnpushed) {
             window.munculkanNotifBawaanPonsel(newestUnpushed.title || 'Info MoCatat', newestUnpushed.body || '', newestUnpushed.id);
         }
 
-        if (adaBroadcastBaru) {
-            try { localStorage.setItem(seenKey, JSON.stringify(seenIds)); } catch (e) {}
+        if (adaPerubahanCloud) {
             if (typeof window.renderNotifications === 'function') window.renderNotifications();
-            if (typeof window.saveDataToFirestoreSilently === 'function') window.saveDataToFirestoreSilently();
+            try {
+                // Hanya simpan field notifikasi agar TIDAK PERNAH menimpa dompet/kategori/target
+                await setDoc(doc(db, "users", window.currentUserId), {
+                    notifications: window.notifications,
+                    seenBroadcastIds: window.seenBroadcastIds,
+                    pushedBroadcastIds: window.pushedBroadcastIds
+                }, { merge: true });
+            } catch (e) {}
         }
     }
 };
@@ -476,8 +463,6 @@ onAuthStateChanged(auth, (user) => {
             window.pilihMenuSurface('overview');
             window.loadAdminCMSData();
             window.loadAdminUsersData();
-        } else if (!isAdmin) {
-            window.recordUserHeartbeat(user);
         }
     } else if (isPageAdmin) {
         window.location.replace("index.html");
@@ -610,7 +595,7 @@ window.pilihBatangKapsul = function(colEl, monthName, valDompet, valTarget) {
 };
 
 // ==========================================
-// 6. LOGIKA PANTAU, RESET PASSWORD & HAPUS USER (ANTI-MENUMPUK)
+// 6. LOGIKA PANTAU, RESET PASSWORD & HAPUS USER
 // ==========================================
 window.loadAdminUsersData = async function() {
     const usersMap = {};
@@ -763,7 +748,6 @@ window.renderAdminUsers = function() {
 
         html += `
         <div class="admin-card" style="padding:16px; margin-bottom:12px;">
-            <!-- Baris 1: Avatar + Nama & Email Utuh + Badge Status -->
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
                 <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
                     <div style="width:44px; height:44px; border-radius:13px; background:${avatarBg}; color:${avatarColor}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;">
@@ -783,7 +767,6 @@ window.renderAdminUsers = function() {
                 </span>
             </div>
 
-            <!-- Baris 2: Kotak Info Terakhir Aktif & Jumlah Dompet/Target (Tidak Bertumpuk) -->
             <div style="background:#f8fafc; border:1px solid #edf2f7; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:6px; margin-bottom:12px; font-size:11.5px; color:#475569; font-weight:600;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
                     <span style="color:#64748b;">🕒 Terakhir aktif:</span>
@@ -795,7 +778,6 @@ window.renderAdminUsers = function() {
                 </div>
             </div>
 
-            <!-- Baris 3: Tombol Aksi (Reset Password & Hapus User) -->
             <div style="display:flex; gap:8px;">
                 <button onclick="window.kirimResetPasswordAdmin('${safeEmailJS}', '${safeNameJS}')" style="flex:1; background:#e0f2f1; color:#0f766e; border:none; padding:9px 12px; border-radius:10px; font-size:11.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-family:inherit;">
                     <span class="material-icons-round" style="font-size:16px;">lock_reset</span> Reset Password
@@ -938,53 +920,31 @@ window.hapusBroadcastAdmin = function(id) {
 };
 
 // ==========================================
-// 8. LOGIKA KELOLA KONTEN & UPDATE KPI / GRAFIK
+// 8. LOGIKA KELOLA KONTEN CLOUD FIRESTORE (TANPA LOCALSTORAGE)
 // ==========================================
 window.loadAdminCMSData = async function() {
-    try {
-        const localRaw = localStorage.getItem(CMS_STORAGE_KEY);
-        if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            window.cmsBanners = Array.isArray(parsed.banners) ? parsed.banners : [];
-            window.cmsEducations = Array.isArray(parsed.educations) ? parsed.educations : [];
-            window.cmsBroadcasts = Array.isArray(parsed.broadcasts) ? parsed.broadcasts : [];
-        }
-    } catch (e) {}
-
+    let loadedFromServer = false;
     try {
         const globalSnap = await getDoc(doc(db, "app_settings", "public_content"));
         if (globalSnap.exists()) {
             const gData = globalSnap.data();
-            if (Array.isArray(gData.banners)) window.cmsBanners = gData.banners;
-            if (Array.isArray(gData.educations)) window.cmsEducations = gData.educations;
-            if (Array.isArray(gData.broadcasts)) window.cmsBroadcasts = gData.broadcasts;
-        } else if (window.currentUserId) {
-            const userSnap = await getDoc(doc(db, "users", window.currentUserId));
-            if (userSnap.exists()) {
-                const uData = userSnap.data();
-                if (Array.isArray(uData.cmsBanners)) window.cmsBanners = uData.cmsBanners;
-                if (Array.isArray(uData.cmsEducations)) window.cmsEducations = uData.cmsEducations;
-                if (Array.isArray(uData.cmsBroadcasts)) window.cmsBroadcasts = uData.cmsBroadcasts;
+            if (Array.isArray(gData.banners) && gData.banners.length > 0) {
+                window.cmsBanners = gData.banners;
+                loadedFromServer = true;
+            }
+            if (Array.isArray(gData.educations) && gData.educations.length > 0) {
+                window.cmsEducations = gData.educations;
+                loadedFromServer = true;
+            }
+            if (Array.isArray(gData.broadcasts)) {
+                window.cmsBroadcasts = gData.broadcasts;
             }
         }
-    } catch (e) {
-        if (window.currentUserId) {
-            try {
-                const userSnap = await getDoc(doc(db, "users", window.currentUserId));
-                if (userSnap.exists()) {
-                    const uData = userSnap.data();
-                    if (Array.isArray(uData.cmsBanners)) window.cmsBanners = uData.cmsBanners;
-                    if (Array.isArray(uData.cmsEducations)) window.cmsEducations = uData.cmsEducations;
-                    if (Array.isArray(uData.cmsBroadcasts)) window.cmsBroadcasts = uData.cmsBroadcasts;
-                }
-            } catch (err2) {}
-        }
-    }
+    } catch (e) {}
 
-    if (window.cmsBanners.length === 0 && window.cmsEducations.length === 0 && !localStorage.getItem(CMS_STORAGE_KEY + "_initialized")) {
+    if (!loadedFromServer) {
         window.cmsBanners = JSON.parse(JSON.stringify(DEFAULT_BANNERS));
         window.cmsEducations = JSON.parse(JSON.stringify(DEFAULT_EDUCATIONS));
-        localStorage.setItem(CMS_STORAGE_KEY + "_initialized", "true");
         await window.saveAdminCMSData();
     }
 
@@ -1000,20 +960,9 @@ window.saveAdminCMSData = async function() {
         updatedAt: new Date().toISOString()
     };
 
-    try {
-        localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(payload));
-    } catch (e) {}
-
     window.renderAdminPage();
 
     if (window.currentUserId) {
-        try {
-            await setDoc(doc(db, "users", window.currentUserId), {
-                cmsBanners: window.cmsBanners,
-                cmsEducations: window.cmsEducations,
-                cmsBroadcasts: window.cmsBroadcasts
-            }, { merge: true });
-        } catch (e) {}
         try {
             await setDoc(doc(db, "app_settings", "public_content"), payload, { merge: true });
         } catch (e) {}
@@ -1326,12 +1275,12 @@ window.hapusEdukasiAdmin = function(id) {
 window.muatKontenBawaan = function() {
     window.customConfirm(
         "Muat Paket Materi & Banner Bawaan?",
-        "Sistem akan menambahkan 3 Banner dan 5 Materi Edukasi (Reksadana, Saham & Tips Keuangan) ke dalam aplikasi Anda. Lanjutkan?",
+        "Sistem akan menyimpan 3 Banner dan 5 Materi Edukasi (Reksadana, Saham & Tips Keuangan) ke Cloud Firestore. Lanjutkan?",
         async () => {
             window.cmsBanners = JSON.parse(JSON.stringify(DEFAULT_BANNERS));
             window.cmsEducations = JSON.parse(JSON.stringify(DEFAULT_EDUCATIONS));
             await window.saveAdminCMSData();
-            window.customAlert("Berhasil! 🎉", "3 Banner dan 5 Materi Edukasi Investasi siap ditampilkan.");
+            window.customAlert("Berhasil! 🎉", "3 Banner dan 5 Materi Edukasi Investasi telah disimpan ke server.");
         }
     );
 };

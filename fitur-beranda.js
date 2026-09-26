@@ -1,6 +1,6 @@
 // ============================================================
 // MOCATAT - FITUR BERANDA & DASHBOARD (fitur-beranda.js)
-// Mencakup: Dashboard, Slide 3 Fitur (Oli, Radar, Edukasi) & Notifikasi (Bisa Dihapus)
+// 100% Online Cloud Firestore (Tanpa LocalStorage)
 // ============================================================
 
 import { db, doc, setDoc } from "./core.js";
@@ -8,7 +8,7 @@ import "./fitur-transaksi.js";
 import "./fitur-admin.js";
 
 // ==========================================
-// 1. NAVIGASI TAB & NOTIFIKASI BERANDA (DENGAN FITUR HAPUS)
+// 1. NAVIGASI TAB & NOTIFIKASI BERANDA (MURNI CLOUD)
 // ==========================================
 window.switchTab = function(pageId, navIndex) {
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
@@ -25,26 +25,16 @@ window.switchTab = function(pageId, navIndex) {
     window.scrollTo(0, 0);
 };
 
-// Catat ID broadcast yang sudah pernah masuk agar tidak muncul lagi setelah dihapus user
+// Catat ID broadcast yang sudah dilihat/dihapus langsung ke array Cloud Firestore
 window.markBroadcastIdsAsSeen = function(notifArray) {
     if (!window.currentUserId || !Array.isArray(notifArray)) return;
-    const seenKey = "mocatat_seen_broadcasts_" + window.currentUserId;
-    let seenIds = [];
-    try {
-        seenIds = JSON.parse(localStorage.getItem(seenKey) || "[]");
-    } catch (e) {}
+    if (!Array.isArray(window.seenBroadcastIds)) window.seenBroadcastIds = [];
 
-    let changed = false;
     notifArray.forEach(n => {
-        if (n && n.id && !seenIds.includes(n.id)) {
-            seenIds.push(n.id);
-            changed = true;
+        if (n && n.id && !window.seenBroadcastIds.includes(n.id)) {
+            window.seenBroadcastIds.push(n.id);
         }
     });
-
-    if (changed) {
-        try { localStorage.setItem(seenKey, JSON.stringify(seenIds)); } catch (e) {}
-    }
 };
 
 window.bukaNotifikasi = function() { 
@@ -66,7 +56,6 @@ window.bukaNotifikasi = function() {
 window.hapusNotifikasiUser = async function(notifId, fallbackIndex) {
     if (!Array.isArray(window.notifications)) return;
 
-    // Pastikan ID tercatat sudah dilihat supaya tidak masuk ulang saat refresh
     window.markBroadcastIdsAsSeen(window.notifications);
 
     if (notifId && notifId !== 'undefined' && notifId !== '') {
@@ -82,13 +71,11 @@ window.hapusNotifikasiUser = async function(notifId, fallbackIndex) {
 
     window.renderNotifications();
 
-    if (typeof window.saveDataToFirestoreSilently === 'function') {
-        window.saveDataToFirestoreSilently();
-    }
-    if (window.currentUserId) {
+    if (window.currentUserId && window.isUserDataLoaded) {
         try {
             await setDoc(doc(db, "users", window.currentUserId), {
-                notifications: window.notifications
+                notifications: window.notifications,
+                seenBroadcastIds: window.seenBroadcastIds
             }, { merge: true });
         } catch (e) {}
     }
@@ -105,13 +92,11 @@ window.hapusSemuaNotifikasiUser = function() {
             window.notifications = [];
             window.renderNotifications();
 
-            if (typeof window.saveDataToFirestoreSilently === 'function') {
-                window.saveDataToFirestoreSilently();
-            }
-            if (window.currentUserId) {
+            if (window.currentUserId && window.isUserDataLoaded) {
                 try {
                     await setDoc(doc(db, "users", window.currentUserId), {
-                        notifications: []
+                        notifications: [],
+                        seenBroadcastIds: window.seenBroadcastIds
                     }, { merge: true });
                 } catch (e) {}
             }
@@ -131,7 +116,6 @@ window.renderNotifications = function() {
         return; 
     }
 
-    // Beri ID otomatis jika ada notifikasi lama yang belum punya ID
     window.notifications.forEach((n, idx) => {
         if (!n.id) n.id = 'notif-old-' + idx + '-' + Date.now();
         if (!n.read) unreadCount++;
@@ -334,7 +318,6 @@ window.setupRedesignedBerandaLayout = function() {
 
     if (!hubContainer) return;
 
-    // Slide 1: Monitor Oli & KM
     const accKm = Number((window.vehicleSettings && window.vehicleSettings.accumulatedKmForOil) || 0);
     const activeTrip = window.vehicleSettings ? window.vehicleSettings.activeTrip : null;
     const kmFormatted = accKm.toFixed(1).replace('.', ',');
@@ -357,18 +340,14 @@ window.setupRedesignedBerandaLayout = function() {
         oliBadgeText = `⛽ ${Math.min(100, Math.round((accKm / 2000) * 100))}% UMUR OLI`;
     }
 
-    // Slide 2: Radar & Lokasi Mangkal
     const totalDaerah = Array.isArray(window.zones) ? window.zones.length : 0;
     const totalTitik = Array.isArray(window.zones) ? window.zones.reduce((acc, z) => acc + (z.locations ? z.locations.length : 0), 0) : 0;
     const labelLokasi = totalDaerah > 0 ? `${totalDaerah} Daerah • ${totalTitik} Titik Mangkal aktif` : `Kelola daerah & cek titik gacor per jam`;
 
-    // Slide 3: Edukasi & Simulasi Investasi
     const eduCount = typeof window.getEduCount === 'function' ? window.getEduCount() : 5;
 
     hubContainer.innerHTML = `
         <div class="trio-slider-track" id="trio-slider-track" onscroll="window.onTrioSlideScroll(this)">
-            
-            <!-- SLIDE 1: MONITOR OLI & KM MOTOR -->
             <div class="trio-slide-card" onclick="window.location.href='kendaraan.html'">
                 <div class="trio-left">
                     <div class="trio-icon" style="background:${oliBadgeBg}; color:${oliBadgeColor};">
@@ -383,7 +362,6 @@ window.setupRedesignedBerandaLayout = function() {
                 <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
             </div>
 
-            <!-- SLIDE 2: RADAR & LOKASI MANGKAL -->
             <div class="trio-slide-card" onclick="window.location.href='lokasi.html'">
                 <div class="trio-left">
                     <div class="trio-icon" style="background:#e0f2f1; color:#249a95;">
@@ -398,7 +376,6 @@ window.setupRedesignedBerandaLayout = function() {
                 <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
             </div>
 
-            <!-- SLIDE 3: EDUKASI REKSADANA & SAHAM -->
             <div class="trio-slide-card" onclick="window.location.href='edukasi.html'">
                 <div class="trio-left">
                     <div class="trio-icon" style="background:#ede9fe; color:#4338ca;">
@@ -412,7 +389,6 @@ window.setupRedesignedBerandaLayout = function() {
                 </div>
                 <span class="material-icons-round" style="color:#cbd5e1; font-size:20px; flex-shrink:0;">chevron_right</span>
             </div>
-
         </div>
         <div class="trio-dots" id="trio-slider-dots">
             <div class="trio-dot active" onclick="window.scrollToTrioSlide(0)"></div>
@@ -545,9 +521,8 @@ window.renderDashboard = function() {
         historyContainer.innerHTML = dashHTML;
     }
 
-    // Pasang Slide 3 Sekawan & Sinkronisasi Konten Edukasi
     window.setupRedesignedBerandaLayout();
-    if (typeof window.syncCMSFromFirestoreOnce === 'function') {
+    if (window.isUserDataLoaded && typeof window.syncCMSFromFirestoreOnce === 'function') {
         window.syncCMSFromFirestoreOnce();
     }
 };

@@ -270,7 +270,7 @@
 <body>
 
     <div class="app-container">
-        <div id="loading-screen" class="loading-screen">Memuat Materi & Kalkulator...<div class="spinner"></div></div>
+        <div id="loading-screen" class="loading-screen">Memuat Materi & Kalkulator Cloud...<div class="spinner"></div></div>
 
         <!-- HEADER BERSIH -->
         <header class="header-simple">
@@ -288,7 +288,7 @@
         </div>
 
         <!-- =======================================================
-             PANEL 1: DAFTAR MATERI EDUKASI (DARI ADMIN CMS)
+             PANEL 1: DAFTAR MATERI EDUKASI (DARI CLOUD FIRESTORE)
              ======================================================= -->
         <div class="list-wrapper" id="panel-edu-materi" style="padding-top: 5px; padding-bottom: 40px;">
             <div class="chip-group" id="edu-filter-chips" style="margin-bottom: 10px;">
@@ -320,7 +320,10 @@
             <!-- 1. VIEW RINGKASAN INVESTASI (DASHBOARD) -->
             <div id="view-dashboard" class="inv-view active">
                 <div class="inv-hero-card">
-                    <div style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.9;">Total Nilai Portofolio Saat Ini</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.9;">Total Nilai Portofolio Saat Ini</div>
+                        <span style="font-size:10px; background:rgba(255,255,255,0.22); padding:3px 8px; border-radius:20px; font-weight:800;">☁️ Tersinkron ke Target</span>
+                    </div>
                     <div id="dash-total-value" style="font-size: 28px; font-weight: 800; margin: 4px 0 8px 0;">Rp 0</div>
                     <div style="font-size: 12.5px; font-weight: 600; opacity: 0.95; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between;">
                         <span>Total Modal Pokok:</span>
@@ -353,17 +356,20 @@
 
                 <div class="inv-card" style="text-align: center; padding: 15px;">
                     <div style="font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 10px;">
-                        Pilih instrumen di bawah untuk mulai menghitung profit & menyimpan portofolio:
+                        Pilih instrumen untuk menghitung profit & otomatis masuk ke menu Target Investasi:
                     </div>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                         <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('stock')">+ Hitung Saham</button>
                         <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('reksadana')">+ Reksadana</button>
                         <button class="btn-inv-outline" style="flex:1; padding:10px 6px; font-size:12px;" onclick="window.switchCalcView('crypto')">+ Kripto</button>
                     </div>
+                    <button class="btn-inv-primary" style="width:100%; padding:11px; font-size:12.5px;" onclick="window.location.href='target.html'">
+                        🎯 Lihat di Menu Target & Investasi ➔
+                    </button>
                 </div>
             </div>
 
-            <!-- 2. VIEW KALKULATOR SAHAM (DILENGKAPI KEMBALI SECARA UTUH) -->
+            <!-- 2. VIEW KALKULATOR SAHAM -->
             <div id="view-stock" class="inv-view">
                 <div class="inv-card">
                     <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 14px; display:flex; align-items:center; gap:6px;">
@@ -433,7 +439,7 @@
 
                     <div class="inv-btn-row">
                         <button class="btn-inv-outline" onclick="window.resetStock()">Reset</button>
-                        <button class="btn-inv-primary" onclick="window.saveStock()">Simpan ke Portofolio</button>
+                        <button class="btn-inv-primary" onclick="window.saveStock()">Simpan ke Portofolio & Target</button>
                     </div>
                 </div>
             </div>
@@ -481,7 +487,7 @@
 
                     <div class="inv-btn-row">
                         <button class="btn-inv-outline" onclick="window.resetMF()">Reset</button>
-                        <button class="btn-inv-primary" onclick="window.saveMF()">Simpan ke Portofolio</button>
+                        <button class="btn-inv-primary" onclick="window.saveMF()">Simpan ke Portofolio & Target</button>
                     </div>
                 </div>
             </div>
@@ -547,7 +553,7 @@
 
                     <div class="inv-btn-row">
                         <button class="btn-inv-outline" onclick="window.resetCrypto()">Reset</button>
-                        <button class="btn-inv-primary" onclick="window.saveCrypto()">Simpan ke Portofolio</button>
+                        <button class="btn-inv-primary" onclick="window.saveCrypto()">Simpan ke Portofolio & Target</button>
                     </div>
                 </div>
             </div>
@@ -573,12 +579,12 @@
                 <div id="history-container"></div>
             </div>
 
-            <!-- 7. VIEW KELOLA DATA (EXPORT / IMPORT JSON) -->
+            <!-- 7. VIEW KELOLA DATA (EXPORT / IMPORT CLOUD JSON) -->
             <div id="view-settings" class="inv-view">
                 <div class="inv-card">
-                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px;">Cadangkan & Pulihkan Portofolio</div>
+                    <div style="font-size: 15px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px;">Cadangkan & Pulihkan Portofolio Cloud</div>
                     <p style="font-size: 12.5px; color: #64748b; margin-bottom: 16px; line-height: 1.5;">
-                        Data portofolio Anda otomatis tersimpan di perangkat & akun MoCatat Anda. Anda juga dapat mengekspor ke file JSON sebagai cadangan.
+                        Seluruh portofolio Anda tersimpan secara online di akun Cloud Firestore MoCatat dan terhubung langsung dengan menu Target & Kekayaan Bersih.
                     </p>
                     <button class="btn-inv-primary" style="width:100%; margin-bottom: 10px;" onclick="window.exportData()">📥 Export Portofolio ke JSON</button>
                     <button class="btn-inv-outline" style="width:100%; margin-bottom: 16px;" onclick="document.getElementById('import-file').click()">📤 Import Data dari JSON</button>
@@ -645,11 +651,13 @@
         </div>
     </div>
 
-    <!-- LOGIKA EDUKASI + KALKULATOR SAHAM, REKSADANA & KRIPTO -->
+    <!-- PANGGIL FILE JS SENTRAL TERLEBIH DAHULU -->
+    <script type="module" src="app.js"></script>
+
+    <!-- LOGIKA EDUKASI + KALKULATOR 100% CLOUD & SINKRON TARGET -->
     <script type="module">
-        import { auth, db, doc, getDoc, setDoc } from "./core.js";
+        import { auth, db, doc, setDoc } from "./core.js";
         import "./fitur-admin.js";
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         window.activeEduFilter = 'all';
 
@@ -775,14 +783,8 @@
         };
 
         // ==========================================
-        // B. BAGIAN KALKULATOR SAHAM, REKSADANA, KRIPTO & PORTOFOLIO
+        // B. BAGIAN KALKULATOR 100% CLOUD & SINKRON TARGET
         // ==========================================
-        let portfolio = [];
-        let historyData = [];
-
-        const STORAGE_KEY_PORTFOLIO = 'inv_calc_portfolio';
-        const STORAGE_KEY_HISTORY = 'inv_calc_history';
-
         function formatInputValue(val) {
             if (val === 0 || val === '0') return '0';
             if (!val) return '';
@@ -845,30 +847,59 @@
             return isNaN(val) ? 0 : val;
         }
 
-        function loadCalcData() {
-            try {
-                const p = localStorage.getItem(STORAGE_KEY_PORTFOLIO);
-                const h = localStorage.getItem(STORAGE_KEY_HISTORY);
-                if (p) portfolio = JSON.parse(p);
-                if (h) historyData = JSON.parse(h);
-            } catch (e) {}
-        }
+        // JEMBATAN SINKRONISASI OTOMATIS PORTOFOLIO KALKULATOR <-> MENU TARGET & INVESTASI
+        window.syncPortfolioToTargets = function() {
+            if (!Array.isArray(window.targets)) window.targets = [];
+            if (!Array.isArray(window.calcPortfolio)) window.calcPortfolio = [];
+
+            const activePortTargetIds = new Set();
+
+            window.calcPortfolio.forEach(p => {
+                const targetId = 'port-' + String(p.id);
+                activePortTargetIds.add(targetId);
+
+                const prefix = p.type === 'stock' ? '📈 Saham: ' : (p.type === 'crypto' ? '🪙 Kripto: ' : '🌱 Reksadana: ');
+                const targetName = prefix + p.name;
+                const modalBulat = Math.round(Number(p.capital || 0));
+                const nilaiBulat = Math.round(Number(p.currentValue || p.capital || 0));
+
+                const existingIdx = window.targets.findIndex(t => String(t.id) === targetId);
+                if (existingIdx !== -1) {
+                    window.targets[existingIdx].name = targetName;
+                    window.targets[existingIdx].tipe = 'investasi';
+                    window.targets[existingIdx].currentAmount = modalBulat;
+                    window.targets[existingIdx].nilaiTerkini = nilaiBulat;
+                } else {
+                    window.targets.push({
+                        id: targetId,
+                        tipe: 'investasi',
+                        name: targetName,
+                        targetAmount: 0,
+                        currentAmount: modalBulat,
+                        nilaiTerkini: nilaiBulat,
+                        deadline: '',
+                        isActive: true
+                    });
+                }
+            });
+        };
 
         async function saveCalcData() {
-            localStorage.setItem(STORAGE_KEY_PORTFOLIO, JSON.stringify(portfolio));
-            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyData));
+            window.syncPortfolioToTargets();
             window.updateDashboard();
             if (document.getElementById('view-portfolio').classList.contains('active')) window.renderPortfolio();
             if (document.getElementById('view-history').classList.contains('active')) window.renderHistory();
 
-            // Sinkronkan juga ke Firestore User MoCatat
-            if (window.currentUserId) {
+            if (window.currentUserId && window.isUserDataLoaded) {
                 try {
                     await setDoc(doc(db, "users", window.currentUserId), {
-                        calcPortfolio: portfolio,
-                        calcHistory: historyData
+                        calcPortfolio: window.calcPortfolio,
+                        calcHistory: window.calcHistory,
+                        targets: window.targets
                     }, { merge: true });
-                } catch (e) {}
+                } catch (e) {
+                    console.warn("Gagal menyimpan portofolio ke Cloud:", e);
+                }
             }
         }
 
@@ -1008,7 +1039,7 @@
             calcStock();
         };
 
-        window.saveStock = function() {
+        window.saveStock = async function() {
             const name = document.getElementById('s-name').value.trim();
             const buy = getNum('s-buy');
             const lot = getNum('s-lot');
@@ -1040,10 +1071,10 @@
                 ret: res.totalRet
             };
 
-            portfolio.push(item);
+            window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
-            saveCalcData();
-            showAlert('Berhasil! 🎉', `Saham ${item.name} berhasil disimpan ke Portofolio.`);
+            await saveCalcData();
+            showAlert('Berhasil Disimpan! 🎉', `Saham ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetStock();
             window.switchCalcView('portfolio');
         };
@@ -1096,7 +1127,7 @@
             calcMF();
         };
 
-        window.saveMF = function() {
+        window.saveMF = async function() {
             const name = document.getElementById('m-name').value.trim();
             const cap = getNum('m-capital');
             const nav = getNum('m-nav-buy');
@@ -1126,10 +1157,10 @@
                 ret: res.ret
             };
 
-            portfolio.push(item);
+            window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
-            saveCalcData();
-            showAlert('Berhasil! 🎉', `Reksadana ${item.name} berhasil disimpan ke Portofolio.`);
+            await saveCalcData();
+            showAlert('Berhasil Disimpan! 🎉', `Reksadana ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetMF();
             window.switchCalcView('portfolio');
         };
@@ -1197,7 +1228,7 @@
             calcCrypto();
         };
 
-        window.saveCrypto = function() {
+        window.saveCrypto = async function() {
             const name = document.getElementById('c-name').value.trim();
             const buy = getNum('c-buy');
             const coins = getNum('c-coin');
@@ -1228,10 +1259,10 @@
                 ret: res.ret
             };
 
-            portfolio.push(item);
+            window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
-            saveCalcData();
-            showAlert('Berhasil! 🎉', `Koin ${item.name} berhasil disimpan ke Portofolio.`);
+            await saveCalcData();
+            showAlert('Berhasil Disimpan! 🎉', `Koin ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetCrypto();
             window.switchCalcView('portfolio');
         };
@@ -1242,7 +1273,7 @@
             if (!container) return;
             container.innerHTML = '';
 
-            if (portfolio.length === 0) {
+            if (!window.calcPortfolio || window.calcPortfolio.length === 0) {
                 container.innerHTML = `
                 <div class="empty-state">
                     <div class="icon-wrapper"><span class="material-icons-round">pie_chart_outline</span></div>
@@ -1252,7 +1283,7 @@
                 return;
             }
 
-            portfolio.forEach(p => {
+            window.calcPortfolio.forEach(p => {
                 const isStock = p.type === 'stock';
                 const isCrypto = p.type === 'crypto';
                 let badge = '';
@@ -1291,14 +1322,15 @@
         };
 
         window.confirmDeletePortfolio = function(id) {
-            window.customConfirm("Hapus Portofolio?", "Yakin ingin menghapus aset ini dari daftar portofolio?", () => {
-                portfolio = portfolio.filter(p => String(p.id) !== String(id));
-                saveCalcData();
+            window.customConfirm("Hapus Portofolio?", "Yakin ingin menghapus aset ini dari Portofolio dan menu Target Investasi?", async () => {
+                window.calcPortfolio = (window.calcPortfolio || []).filter(p => String(p.id) !== String(id));
+                window.targets = (window.targets || []).filter(t => String(t.id) !== ('port-' + String(id)));
+                await saveCalcData();
             });
         };
 
         window.openUpdateModal = function(id) {
-            const item = portfolio.find(p => String(p.id) === String(id));
+            const item = (window.calcPortfolio || []).find(p => String(p.id) === String(id));
             if (!item) return;
 
             document.getElementById('mu-id').value = id;
@@ -1318,7 +1350,7 @@
             document.getElementById('modal-update').classList.add('show');
         };
 
-        window.submitUpdatePrice = function() {
+        window.submitUpdatePrice = async function() {
             const id = document.getElementById('mu-id').value;
             const newPrice = getNum('mu-price');
             if (newPrice <= 0) {
@@ -1326,9 +1358,9 @@
                 return;
             }
 
-            const itemIndex = portfolio.findIndex(p => String(p.id) === String(id));
+            const itemIndex = (window.calcPortfolio || []).findIndex(p => String(p.id) === String(id));
             if (itemIndex === -1) return;
-            const item = portfolio[itemIndex];
+            const item = window.calcPortfolio[itemIndex];
 
             if (item.type === 'stock') {
                 item.sellPrice = newPrice;
@@ -1359,9 +1391,9 @@
                 item.ret = (item.pl / item.capital) * 100;
             }
 
-            portfolio[itemIndex] = item;
+            window.calcPortfolio[itemIndex] = item;
             logHistory(item, 'Update Harga');
-            saveCalcData();
+            await saveCalcData();
             window.closeModal('modal-update');
         };
 
@@ -1369,7 +1401,7 @@
         window.updateDashboard = function() {
             let tCap = 0, tVal = 0, tPl = 0, cStock = 0, cMf = 0, cCrypto = 0;
 
-            portfolio.forEach(p => {
+            (window.calcPortfolio || []).forEach(p => {
                 tCap += Number(p.capital || 0);
                 tVal += Number(p.currentValue || 0);
                 tPl += Number(p.pl || 0);
@@ -1397,9 +1429,10 @@
         };
 
         function logHistory(item, action) {
+            if (!Array.isArray(window.calcHistory)) window.calcHistory = [];
             const date = new Date();
             const dStr = date.toLocaleDateString('id-ID') + ' ' + date.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-            historyData.unshift({
+            window.calcHistory.unshift({
                 date: dStr,
                 action: action,
                 name: item.name,
@@ -1408,7 +1441,7 @@
                 pl: item.pl,
                 ret: item.ret
             });
-            if (historyData.length > 100) historyData.pop();
+            if (window.calcHistory.length > 100) window.calcHistory.pop();
         }
 
         window.renderHistory = function() {
@@ -1417,9 +1450,9 @@
             container.innerHTML = '';
             
             const filter = document.getElementById('hist-filter').value;
-            let filtered = historyData;
+            let filtered = window.calcHistory || [];
             if (filter !== 'all') {
-                filtered = historyData.filter(h => h.type === filter);
+                filtered = filtered.filter(h => h.type === filter);
             }
 
             if (filtered.length === 0) {
@@ -1452,15 +1485,15 @@
         };
 
         window.confirmClearHistory = function() {
-            window.customConfirm("Hapus Riwayat?", "Yakin ingin menghapus semua riwayat perhitungan investasi?", () => {
-                historyData = [];
-                saveCalcData();
+            window.customConfirm("Hapus Riwayat?", "Yakin ingin menghapus semua riwayat perhitungan investasi?", async () => {
+                window.calcHistory = [];
+                await saveCalcData();
             });
         };
 
         window.exportData = function() {
-            const data = { portfolio: portfolio, history: historyData };
-            const json = JSON.stringify(data);
+            const data = { portfolio: window.calcPortfolio || [], history: window.calcHistory || [] };
+            const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], {type: "application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1474,14 +1507,14 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
                     if (data.portfolio && Array.isArray(data.portfolio)) {
-                        portfolio = data.portfolio;
-                        historyData = data.history || [];
-                        saveCalcData();
-                        showAlert('Berhasil! 🎉', 'Data portofolio berhasil diimpor!');
+                        window.calcPortfolio = data.portfolio;
+                        window.calcHistory = data.history || [];
+                        await saveCalcData();
+                        showAlert('Berhasil! 🎉', 'Data portofolio berhasil diimpor ke Cloud & disinkronkan ke menu Target!');
                     } else {
                         showAlert('Error', 'Format file JSON tidak valid.', 'error');
                     }
@@ -1494,46 +1527,31 @@
         };
 
         window.confirmResetAll = function() {
-            window.customConfirm("Hapus Semua Data?", "PERINGATAN: Seluruh portofolio dan riwayat kalkulator akan dihapus permanen. Lanjutkan?", () => {
-                portfolio = [];
-                historyData = [];
-                saveCalcData();
-                showAlert('Sukses', 'Seluruh data kalkulator telah dibersihkan.');
+            window.customConfirm("Hapus Semua Data?", "PERINGATAN: Seluruh portofolio dan riwayat kalkulator akan dihapus permanen. Lanjutkan?", async () => {
+                window.calcPortfolio = [];
+                window.calcHistory = [];
+                window.targets = (window.targets || []).filter(t => !String(t.id).startsWith('port-'));
+                await saveCalcData();
+                showAlert('Sukses', 'Seluruh data kalkulator telah dibersihkan dari Cloud.');
             });
         };
 
-        // Inisialisasi Awal
-        loadCalcData();
-        window.updateDashboard();
-        window.renderEdukasiPage();
-
-        onAuthStateChanged(auth, async (user) => {
-            if (typeof window.sembunyikanLoading === 'function') window.sembunyikanLoading();
-            if (user) {
-                window.currentUserId = user.uid;
-                await window.syncCMSFromFirestoreOnce();
-                // Muat portofolio dari Firestore jika perangkat baru
-                try {
-                    const uSnap = await getDoc(doc(db, "users", user.uid));
-                    if (uSnap.exists()) {
-                        const uData = uSnap.data();
-                        if (Array.isArray(uData.calcPortfolio) && portfolio.length === 0) {
-                            portfolio = uData.calcPortfolio;
-                            localStorage.setItem(STORAGE_KEY_PORTFOLIO, JSON.stringify(portfolio));
-                        }
-                        if (Array.isArray(uData.calcHistory) && historyData.length === 0) {
-                            historyData = uData.calcHistory;
-                            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyData));
-                        }
-                    }
-                } catch (e) {}
-                window.updateDashboard();
-                window.renderEdukasiPage();
+        // Sambungkan ke Router Utama app.js saat data Cloud Firestore selesai dimuat
+        const originalCallPageRender = window.callPageRender;
+        window.callPageRender = function() {
+            if (typeof originalCallPageRender === 'function') originalCallPageRender();
+            window.syncPortfolioToTargets();
+            window.updateDashboard();
+            window.renderEdukasiPage();
+            if (document.getElementById('view-portfolio').classList.contains('active')) window.renderPortfolio();
+            if (document.getElementById('view-history').classList.contains('active')) window.renderHistory();
+            if (window.isUserDataLoaded && typeof window.syncCMSFromFirestoreOnce === 'function') {
+                window.syncCMSFromFirestoreOnce();
             }
-        });
-    </script>
+        };
 
-    <!-- PANGGIL FILE JS SENTRAL -->
-    <script type="module" src="app.js"></script>
+        // Render awal sambil menunggu sesi Cloud selesai
+        window.renderEdukasiPage();
+    </script>
 </body>
 </html>
