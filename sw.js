@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mocatat-cache-v49';
+const CACHE_NAME = 'mocatat-cache-v50';
 const urlsToCache = [
   './',
   './index.html',
@@ -43,16 +43,31 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Mode Stale-While-Revalidate: Buka halaman secara instan (0.1 detik), sambil perbarui file di latar belakang
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  // Jangan cegat request API ke server Firebase Firestore / Google Auth
+  const url = event.request.url;
+  if (url.includes('firestore.googleapis.com') || url.includes('identitytoolkit.googleapis.com') || url.includes('securetoken.googleapis.com')) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const resClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then(cachedResponse => {
+      const fetchPromise = fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const resClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
+
+      // Langsung tampilkan yang ada di memori jika tersedia agar super enteng
+      return cachedResponse || fetchPromise;
+    })
   );
 });
 

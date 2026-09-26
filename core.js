@@ -1,11 +1,11 @@
 // ============================================================
 // MOCATAT - CORE MODULE (core.js)
-// 100% Pure Online Cloud Firestore (Tanpa LocalStorage)
+// Versi Turbo (Instan & Ringan) + 100% Cloud Sync & Auto-Recovery
 // ============================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -24,6 +24,9 @@ try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+
+    // Akselerasi Resmi Firebase Firestore agar pindah halaman instan 0.1 detik
+    enableIndexedDbPersistence(db).catch(() => {});
     
     isSupported().then((supported) => {
         if (supported) {
@@ -40,7 +43,7 @@ try {
 } catch (error) { console.error("Firebase init failed:", error); }
 
 // ==========================================
-// 1. GLOBAL STATE VARIABLES (MURNI MEMORI & CLOUD)
+// 1. GLOBAL STATE VARIABLES
 // ==========================================
 window.currentUserId = null;
 window.isUserDataLoaded = false;
@@ -160,7 +163,7 @@ window.logoutApp = function() {
 };
 
 // ==========================================
-// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY (100% CLOUD)
+// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY
 // ==========================================
 window.getUserDocPayload = function() {
     return {
@@ -192,76 +195,75 @@ window.recalculateBalances = function() {
     window.wallets.forEach(w => w.balance = computedBalances[w.id] !== undefined ? computedBalances[w.id] : 0);
 };
 
-// Memulihkan Dompet, Kategori & Target otomatis dari Riwayat Transaksi di Server jika sempat terhapus
+// Hanya berjalan otomatis jika ada dompet/kategori yang hilang
 window.recoverDataFromTransactions = function() {
     if (!Array.isArray(window.transactions) || window.transactions.length === 0) return false;
     let adaYangDipulihkan = false;
 
+    const existingWalletIds = new Set(window.wallets.map(w => String(w.id)));
     const usedWalletIds = new Set();
-    const walletMapFromTrx = new Map();
+    const missingWalletsMap = new Map();
 
     window.transactions.forEach(trx => {
         if (trx.walletId) {
             const wId = String(trx.walletId);
             usedWalletIds.add(wId);
-            if (trx.walletName && !walletMapFromTrx.has(wId)) {
-                walletMapFromTrx.set(wId, trx.walletName);
+            if (!existingWalletIds.has(wId) && trx.walletName && !missingWalletsMap.has(wId)) {
+                missingWalletsMap.set(wId, trx.walletName);
             }
         }
         if (trx.targetWalletId) {
             const twId = String(trx.targetWalletId);
             usedWalletIds.add(twId);
-            if (trx.targetWalletName && !walletMapFromTrx.has(twId)) {
-                walletMapFromTrx.set(twId, trx.targetWalletName);
+            if (!existingWalletIds.has(twId) && trx.targetWalletName && !missingWalletsMap.has(twId)) {
+                missingWalletsMap.set(twId, trx.targetWalletName);
             }
         }
     });
 
-    walletMapFromTrx.forEach((wName, wId) => {
-        const existsById = window.wallets.some(w => String(w.id) === String(wId));
-        if (!existsById) {
-            const unusedSameNameIdx = window.wallets.findIndex(
-                w => (w.name || '').trim().toLowerCase() === (wName || '').trim().toLowerCase() && !usedWalletIds.has(String(w.id))
-            );
+    missingWalletsMap.forEach((wName, wId) => {
+        const unusedSameNameIdx = window.wallets.findIndex(
+            w => (w.name || '').trim().toLowerCase() === (wName || '').trim().toLowerCase() && !usedWalletIds.has(String(w.id))
+        );
 
-            if (unusedSameNameIdx !== -1) {
-                window.wallets[unusedSameNameIdx].id = wId;
-                usedWalletIds.add(wId);
-                adaYangDipulihkan = true;
-            } else {
-                const lower = (wName || '').toLowerCase();
-                let type = 'cash';
-                if (lower.includes('bank') || lower.includes('bca') || lower.includes('bri') || lower.includes('mandiri') || lower.includes('bni') || lower.includes('bsi') || lower.includes('seabank') || lower.includes('jago')) {
-                    type = 'bank';
-                } else if (lower.includes('gopay') || lower.includes('ovo') || lower.includes('dana') || lower.includes('shopee') || lower.includes('grab') || lower.includes('dompet') || lower.includes('linkaja')) {
-                    type = 'ewallet';
-                }
-                const icon = type === 'bank' ? "account_balance" : (type === 'ewallet' ? "account_balance_wallet" : "payments");
-                const colorClass = type === 'bank' ? "icon-bank" : (type === 'ewallet' ? "icon-ewallet" : "icon-cash");
-
-                window.wallets.push({
-                    id: wId,
-                    name: wName || "Dompet",
-                    type: type,
-                    balance: 0,
-                    icon: icon,
-                    colorClass: colorClass,
-                    isArchived: false
-                });
-                usedWalletIds.add(wId);
-                adaYangDipulihkan = true;
+        if (unusedSameNameIdx !== -1) {
+            window.wallets[unusedSameNameIdx].id = wId;
+            usedWalletIds.add(wId);
+            existingWalletIds.add(wId);
+            adaYangDipulihkan = true;
+        } else {
+            const lower = (wName || '').toLowerCase();
+            let type = 'cash';
+            if (lower.includes('bank') || lower.includes('bca') || lower.includes('bri') || lower.includes('mandiri') || lower.includes('bni') || lower.includes('bsi') || lower.includes('seabank') || lower.includes('jago')) {
+                type = 'bank';
+            } else if (lower.includes('gopay') || lower.includes('ovo') || lower.includes('dana') || lower.includes('shopee') || lower.includes('grab') || lower.includes('dompet') || lower.includes('linkaja')) {
+                type = 'ewallet';
             }
+            const icon = type === 'bank' ? "account_balance" : (type === 'ewallet' ? "account_balance_wallet" : "payments");
+            const colorClass = type === 'bank' ? "icon-bank" : (type === 'ewallet' ? "icon-ewallet" : "icon-cash");
+
+            window.wallets.push({
+                id: wId,
+                name: wName || "Dompet",
+                type: type,
+                balance: 0,
+                icon: icon,
+                colorClass: colorClass,
+                isArchived: false
+            });
+            usedWalletIds.add(wId);
+            existingWalletIds.add(wId);
+            adaYangDipulihkan = true;
         }
     });
 
+    const existingCatIds = new Set(window.categories.map(c => String(c.id)));
     window.transactions.forEach(trx => {
         if (!trx.categoryId || String(trx.categoryId) === '999' || trx.type === 'transfer') return;
-        const cId = trx.categoryId;
-        const cName = trx.categoryName || (trx.type === 'in' ? 'Pemasukan' : 'Pengeluaran');
-        const cType = trx.type === 'in' ? 'in' : 'out';
-
-        const existsCat = window.categories.some(c => String(c.id) === String(cId));
-        if (!existsCat) {
+        const cId = String(trx.categoryId);
+        if (!existingCatIds.has(cId)) {
+            const cName = trx.categoryName || (trx.type === 'in' ? 'Pemasukan' : 'Pengeluaran');
+            const cType = trx.type === 'in' ? 'in' : 'out';
             const lowerC = cName.toLowerCase();
             let icon = cType === 'in' ? 'payments' : 'category';
             let color = cType === 'in' ? '#2e7d32' : '#ef6c00';
@@ -269,26 +271,21 @@ window.recoverDataFromTransactions = function() {
             else if (lowerC.includes('bensin') || lowerC.includes('bbm')) { icon = 'local_gas_station'; color = '#e11d48'; }
             else if (lowerC.includes('servis') || lowerC.includes('oli') || lowerC.includes('motor')) { icon = 'build'; color = '#4338ca'; }
 
-            window.categories.push({
-                id: cId,
-                type: cType,
-                name: cName,
-                budget: 0,
-                icon: icon,
-                color: color
-            });
+            window.categories.push({ id: trx.categoryId, type: cType, name: cName, budget: 0, icon, color });
+            existingCatIds.add(cId);
             adaYangDipulihkan = true;
         }
     });
 
-    if (!window.categories.some(c => String(c.id) === '999')) {
+    if (!existingCatIds.has('999')) {
         window.categories.push({ id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" });
         adaYangDipulihkan = true;
     }
 
+    const existingTargetIds = new Set(window.targets.map(t => String(t.id)));
     const targetGroup = {};
     window.transactions.forEach(trx => {
-        if (!trx.targetId) return;
+        if (!trx.targetId || existingTargetIds.has(String(trx.targetId))) return;
         const tId = String(trx.targetId);
         if (!targetGroup[tId]) {
             targetGroup[tId] = { id: trx.targetId, name: "Target Tabungan", tipe: "biasa", currentAmount: 0, nilaiTerkini: 0 };
@@ -313,8 +310,7 @@ window.recoverDataFromTransactions = function() {
     });
 
     Object.values(targetGroup).forEach(recT => {
-        const existsTarget = window.targets.some(t => String(t.id) === String(recT.id));
-        if (!existsTarget && (recT.currentAmount > 0 || recT.nilaiTerkini > 0)) {
+        if (recT.currentAmount > 0 || recT.nilaiTerkini > 0) {
             window.targets.push({
                 id: recT.id,
                 tipe: recT.tipe,
@@ -399,67 +395,53 @@ export function initAuthListener() {
                     window.kmRecords = Array.isArray(data.kmRecords) ? data.kmRecords : []; 
                     window.vehicleSettings = data.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
                     window.zones = Array.isArray(data.zones) ? data.zones : [];
-
-                    if (data.transactions && Array.isArray(data.transactions) && data.transactions.length > 0) {
-                        const allOldTrx = data.transactions;
-                        const CHUNK_SIZE = 450;
-                        for (let i = 0; i < allOldTrx.length; i += CHUNK_SIZE) {
-                            const chunk = allOldTrx.slice(i, i + CHUNK_SIZE);
-                            const batch = writeBatch(db);
-                            chunk.forEach(trx => {
-                                const trxRef = doc(db, "users", window.currentUserId, "transactions", trx.id.toString());
-                                batch.set(trxRef, trx);
-                            });
-                            await batch.commit();
-                        }
-                        await setDoc(docRef, { transactions: deleteField() }, { merge: true });
-                    }
                 } 
                 
-                // Tarik seluruh transaksi dari Cloud Firestore
-                try {
-                    const trxSnapshot = await getDocs(collection(db, "users", window.currentUserId, "transactions"));
-                    window.transactions = [];
-                    trxSnapshot.forEach((docTrx) => {
-                        window.transactions.push(docTrx.data());
-                    });
-                } catch (err) {
-                    console.error("Gagal muat transaksi:", err);
-                }
-
-                // Pulihkan Dompet, Kategori & Target dari Riwayat Transaksi jika sempat hilang
-                const recovered = window.recoverDataFromTransactions();
-
-                let needInitialSave = recovered || isNewUser;
-                if (!window.wallets || window.wallets.length === 0) {
-                    window.wallets = [{ id: window.generateUUID(), name: "Uang Tunai", type: "cash", balance: 0, icon: "payments", colorClass: "icon-cash", isArchived: false }];
-                    needInitialSave = true;
-                }
-                if (!window.categories || window.categories.length === 0) {
-                    window.categories = [ 
-                        { id: 1, type: 'out', name: "Makanan & Minuman", budget: 1500000, icon: "restaurant", color: "#ef6c00" }, 
-                        { id: 2, type: 'in', name: "Pemasukan", budget: 0, icon: "payments", color: "#2e7d32" }, 
-                        { id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" } 
-                    ];
-                    needInitialSave = true;
-                }
-
-                window.recalculateBalances();
-                window.isUserDataLoaded = true;
-
-                if (needInitialSave) {
-                    await window.saveDataToFirestore();
-                } else {
-                    window.callPageRender();
-                }
+                // Buka halaman SECARA INSTAN tanpa menunggu ratusan transaksi selesai diunduh
+                window.callPageRender(); 
                 
-                if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 500); }
-                else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 500); }
+                if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 400); }
+                else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 400); }
+
+                // Muat transaksi secara paralel di latar belakang (Non-Blocking)
+                getDocs(collection(db, "users", window.currentUserId, "transactions"))
+                    .then(async (trxSnapshot) => {
+                        window.transactions = [];
+                        trxSnapshot.forEach((docTrx) => {
+                            window.transactions.push(docTrx.data());
+                        });
+
+                        const recovered = window.recoverDataFromTransactions();
+                        let needInitialSave = recovered || isNewUser;
+
+                        if (!window.wallets || window.wallets.length === 0) {
+                            window.wallets = [{ id: window.generateUUID(), name: "Uang Tunai", type: "cash", balance: 0, icon: "payments", colorClass: "icon-cash", isArchived: false }];
+                            needInitialSave = true;
+                        }
+                        if (!window.categories || window.categories.length === 0) {
+                            window.categories = [ 
+                                { id: 1, type: 'out', name: "Makanan & Minuman", budget: 1500000, icon: "restaurant", color: "#ef6c00" }, 
+                                { id: 2, type: 'in', name: "Pemasukan", budget: 0, icon: "payments", color: "#2e7d32" }, 
+                                { id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" } 
+                            ];
+                            needInitialSave = true;
+                        }
+
+                        window.recalculateBalances(); 
+                        window.isUserDataLoaded = true;
+
+                        if (needInitialSave) {
+                            await window.saveDataToFirestore();
+                        } else {
+                            window.callPageRender();
+                        }
+                    })
+                    .catch((err) => console.error("Gagal muat transaksi:", err));
 
             } catch (error) { 
                 console.error("Data load failed:", error); 
                 window.sembunyikanLoading(); 
-                window.customAlert("Error", "Gagal memuat data dari server. Periksa koneksi internet Anda.", "error");
+                window.customAlert("Error", "Gagal memuat data", "error");
             }
         } else {
             window.currentUserId = null; 
@@ -564,7 +546,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP (MURNI CLOUD)
+// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP
 // ==========================================
 window.injectImportButtonUI = function() {
     const exportItem = document.querySelector('.settings-item[onclick*="exportDataJSON"]');
