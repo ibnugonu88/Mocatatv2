@@ -656,7 +656,7 @@
 
     <!-- LOGIKA EDUKASI + KALKULATOR 100% CLOUD & SINKRON TARGET -->
     <script type="module">
-        import { auth, db, doc, setDoc } from "./core.js";
+        import { db, doc, setDoc } from "./core.js";
         import "./fitur-admin.js";
 
         window.activeEduFilter = 'all';
@@ -852,12 +852,8 @@
             if (!Array.isArray(window.targets)) window.targets = [];
             if (!Array.isArray(window.calcPortfolio)) window.calcPortfolio = [];
 
-            const activePortTargetIds = new Set();
-
             window.calcPortfolio.forEach(p => {
                 const targetId = 'port-' + String(p.id);
-                activePortTargetIds.add(targetId);
-
                 const prefix = p.type === 'stock' ? '📈 Saham: ' : (p.type === 'crypto' ? '🪙 Kripto: ' : '🌱 Reksadana: ');
                 const targetName = prefix + p.name;
                 const modalBulat = Math.round(Number(p.capital || 0));
@@ -892,13 +888,16 @@
 
             if (window.currentUserId && window.isUserDataLoaded) {
                 try {
-                    await setDoc(doc(db, "users", window.currentUserId), {
-                        calcPortfolio: window.calcPortfolio,
-                        calcHistory: window.calcHistory,
-                        targets: window.targets
-                    }, { merge: true });
+                    const cleanPayload = JSON.parse(JSON.stringify({
+                        calcPortfolio: window.calcPortfolio || [],
+                        calcHistory: window.calcHistory || [],
+                        targets: window.targets || [],
+                        updatedAt: new Date().toISOString()
+                    }));
+                    await setDoc(doc(db, "users", window.currentUserId), cleanPayload, { merge: true });
                 } catch (e) {
-                    console.warn("Gagal menyimpan portofolio ke Cloud:", e);
+                    console.error("Gagal menyimpan portofolio ke Cloud:", e);
+                    showAlert("Gagal Simpan ke Server", "Pastikan koneksi internet Anda aktif.", "error");
                 }
             }
         }
@@ -1074,7 +1073,7 @@
             window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
             await saveCalcData();
-            showAlert('Berhasil Disimpan! 🎉', `Saham ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
+            showAlert('Berhasil Disimpan! 🎉', `Saham ${item.name} berhasil disimpan ke Cloud Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetStock();
             window.switchCalcView('portfolio');
         };
@@ -1160,7 +1159,7 @@
             window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
             await saveCalcData();
-            showAlert('Berhasil Disimpan! 🎉', `Reksadana ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
+            showAlert('Berhasil Disimpan! 🎉', `Reksadana ${item.name} berhasil disimpan ke Cloud Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetMF();
             window.switchCalcView('portfolio');
         };
@@ -1262,7 +1261,7 @@
             window.calcPortfolio.push(item);
             logHistory(item, 'Simpan Baru');
             await saveCalcData();
-            showAlert('Berhasil Disimpan! 🎉', `Koin ${item.name} berhasil disimpan ke Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
+            showAlert('Berhasil Disimpan! 🎉', `Koin ${item.name} berhasil disimpan ke Cloud Portofolio dan otomatis ditambahkan ke menu Target & Investasi.`);
             window.resetCrypto();
             window.switchCalcView('portfolio');
         };
@@ -1452,7 +1451,7 @@
             const filter = document.getElementById('hist-filter').value;
             let filtered = window.calcHistory || [];
             if (filter !== 'all') {
-                filtered = filtered.filter(h => h.type === filter);
+                filtered = historyDataFilter(filtered, filter);
             }
 
             if (filtered.length === 0) {
@@ -1483,6 +1482,10 @@
                 container.appendChild(el);
             });
         };
+
+        function historyDataFilter(arr, type) {
+            return arr.filter(h => h.type === type);
+        }
 
         window.confirmClearHistory = function() {
             window.customConfirm("Hapus Riwayat?", "Yakin ingin menghapus semua riwayat perhitungan investasi?", async () => {
@@ -1527,7 +1530,7 @@
         };
 
         window.confirmResetAll = function() {
-            window.customConfirm("Hapus Semua Data?", "PERINGATAN: Seluruh portofolio dan riwayat kalkulator akan dihapus permanen. Lanjutkan?", async () => {
+            window.customConfirm("Hapus Semua Data?", "PERINGATAN: Seluruh portofolio dan riwayat kalkulator akan dihapus permanen dari Cloud. Lanjutkan?", async () => {
                 window.calcPortfolio = [];
                 window.calcHistory = [];
                 window.targets = (window.targets || []).filter(t => !String(t.id).startsWith('port-'));
@@ -1550,7 +1553,6 @@
             }
         };
 
-        // Render awal sambil menunggu sesi Cloud selesai
         window.renderEdukasiPage();
     </script>
 </body>

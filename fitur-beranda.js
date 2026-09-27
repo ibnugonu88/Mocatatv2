@@ -1,6 +1,6 @@
 // ============================================================
 // MOCATAT - FITUR BERANDA & DASHBOARD (fitur-beranda.js)
-// 100% Online Cloud Firestore (Tanpa LocalStorage)
+// Tahap 2: 100% Online Cloud Firestore (Tanpa LocalStorage)
 // ============================================================
 
 import { db, doc, setDoc } from "./core.js";

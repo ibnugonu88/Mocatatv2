@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mocatat-cache-v50';
+const CACHE_NAME = 'mocatat-cache-v55';
 const urlsToCache = [
   './',
   './index.html',
@@ -43,30 +43,35 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Mode Stale-While-Revalidate: Buka halaman secara instan (0.1 detik), sambil perbarui file di latar belakang
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  // Jangan cegat request API ke server Firebase Firestore / Google Auth
   const url = event.request.url;
-  if (url.includes('firestore.googleapis.com') || url.includes('identitytoolkit.googleapis.com') || url.includes('securetoken.googleapis.com')) {
+
+  // 1. DATA FIREBASE FIRESTORE & AUTH: 100% MURNI ONLINE (Dilarang masuk cache)
+  if (
+    url.includes('firestore.googleapis.com') ||
+    url.includes('identitytoolkit.googleapis.com') ||
+    url.includes('securetoken.googleapis.com') ||
+    url.includes('firebase')
+  ) {
     return;
   }
 
+  // 2. FILE TAMPILAN (HTML, CSS, JS, Font): Buka instan dari memori sambil cek pembaruan di latar belakang
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
-      const fetchPromise = fetch(event.request)
-        .then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200) {
-            const resClone = networkResponse.clone();
+      const networkFetch = fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const resClone = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
           }
-          return networkResponse;
+          return response;
         })
         .catch(() => cachedResponse);
 
-      // Langsung tampilkan yang ada di memori jika tersedia agar super enteng
-      return cachedResponse || fetchPromise;
+      return cachedResponse || networkFetch;
     })
   );
 });

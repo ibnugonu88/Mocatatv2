@@ -297,16 +297,12 @@
         </div>
     </div>
 
-    <!-- LOGIKA HALAMAN LOKASI & RADAR MANGKAL -->
+    <!-- LOGIKA HALAMAN LOKASI & RADAR MANGKAL (100% CLOUD FIRESTORE) -->
     <script>
-        const STORAGE_KEY_DAERAH = "mocatat_daerah_manual_v1";
         window.activeLokasiTab = 'kelola';
         window.activeRadarTime = 'all';
 
         window.syncZonesData = async function() {
-            try {
-                localStorage.setItem(STORAGE_KEY_DAERAH, JSON.stringify(window.zones || []));
-            } catch (e) {}
             if (typeof window.saveDataToFirestore === 'function') {
                 await window.saveDataToFirestore();
             } else {
@@ -468,7 +464,6 @@
             zonesContainer.innerHTML = zHTML;
         };
 
-        // Sinkronkan perubahan nama lokasi ke riwayat transaksi
         window.updateTransactionLocations = async function(oldLocName, newLocName) {
             if (!oldLocName || !newLocName || oldLocName.trim() === newLocName.trim()) return;
             const targetLower = oldLocName.trim().toLowerCase();
@@ -488,7 +483,6 @@
             }
         };
 
-        // Hapus 1 Lokasi Riwayat
         window.hapusLokasiRiwayat = function(locName) {
             window.customConfirm(
                 "Hapus Lokasi Riwayat?",
@@ -514,7 +508,6 @@
             );
         };
 
-        // Hapus Semua Lokasi Riwayat yang Belum Masuk Daerah
         window.hapusSemuaLokasiRiwayat = function() {
             window.customConfirm(
                 "Bersihkan Semua Riwayat Lokasi?",
@@ -677,7 +670,6 @@
             }
         };
 
-        // Buka Modal Tambah Baru
         window.openLokasiModal = function(mode = 'daerah', preselectedZoneId = null) {
             const err = document.getElementById('lokasi-error-msg');
             if (err) err.style.display = 'none';
@@ -698,7 +690,6 @@
             document.getElementById('modal-lokasi').classList.add('show');
         };
 
-        // Buka Modal Edit Daerah (beserta daftar titik lokasinya)
         window.openEditDaerah = function(zoneId) {
             const zone = (window.zones || []).find(z => String(z.id) === String(zoneId));
             if (!zone) return;
@@ -719,7 +710,6 @@
             document.getElementById('modal-lokasi').classList.add('show');
         };
 
-        // Buka Modal Edit Titik Jalan Satuan
         window.openEditTitikJalan = function(zoneId, streetName) {
             const err = document.getElementById('lokasi-error-msg');
             if (err) err.style.display = 'none';
@@ -790,7 +780,6 @@
                 return;
             }
 
-            // Olah daftar titik lokasi dari input koma
             const rawStreets = streetsInput ? streetsInput.value.split(',') : [];
             const cleanStreets = [];
             const seenLower = new Set();
@@ -842,7 +831,6 @@
             if (!targetZone) return;
             if (!Array.isArray(targetZone.locations)) targetZone.locations = [];
 
-            // Mode Edit Titik Jalan
             if (oldZoneId && oldStreetName) {
                 const isSameZone = String(oldZoneId) === String(parentId);
                 const isSameName = oldStreetName.trim().toLowerCase() === streetName.toLowerCase();
@@ -876,7 +864,6 @@
                 return;
             }
 
-            // Mode Tambah Titik Jalan Baru
             const exists = targetZone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
             if (exists) {
                 errBox.innerText = "Titik jalan ini sudah ada di daerah tersebut!";

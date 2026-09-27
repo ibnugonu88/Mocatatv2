@@ -1,11 +1,11 @@
 // ============================================================
 // MOCATAT - CORE MODULE (core.js)
-// Versi Turbo (Instan & Ringan) + 100% Cloud Sync & Auto-Recovery
+// Tahap 1: 100% Murni Cloud Server Firestore (Tanpa Cache Lokal)
 // ============================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -24,9 +24,6 @@ try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-
-    // Akselerasi Resmi Firebase Firestore agar pindah halaman instan 0.1 detik
-    enableIndexedDbPersistence(db).catch(() => {});
     
     isSupported().then((supported) => {
         if (supported) {
@@ -47,6 +44,7 @@ try {
 // ==========================================
 window.currentUserId = null;
 window.isUserDataLoaded = false;
+window.dataRecoveredV1 = false;
 window.wallets = []; 
 window.categories = []; 
 window.transactions = []; 
@@ -163,22 +161,25 @@ window.logoutApp = function() {
 };
 
 // ==========================================
-// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY
+// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY (MURNI CLOUD)
 // ==========================================
 window.getUserDocPayload = function() {
-    return {
-        wallets: window.wallets,
-        categories: window.categories,
-        targets: window.targets,
-        notifications: window.notifications,
-        seenBroadcastIds: window.seenBroadcastIds,
-        pushedBroadcastIds: window.pushedBroadcastIds,
-        calcPortfolio: window.calcPortfolio,
-        calcHistory: window.calcHistory,
-        kmRecords: window.kmRecords,
-        vehicleSettings: window.vehicleSettings,
-        zones: window.zones
+    const rawPayload = {
+        wallets: window.wallets || [],
+        categories: window.categories || [],
+        targets: window.targets || [],
+        notifications: window.notifications || [],
+        seenBroadcastIds: window.seenBroadcastIds || [],
+        pushedBroadcastIds: window.pushedBroadcastIds || [],
+        calcPortfolio: window.calcPortfolio || [],
+        calcHistory: window.calcHistory || [],
+        kmRecords: window.kmRecords || [],
+        vehicleSettings: window.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null },
+        zones: window.zones || [],
+        dataRecoveredV1: true,
+        updatedAt: new Date().toISOString()
     };
+    return JSON.parse(JSON.stringify(rawPayload));
 };
 
 window.recalculateBalances = function() {
@@ -195,7 +196,6 @@ window.recalculateBalances = function() {
     window.wallets.forEach(w => w.balance = computedBalances[w.id] !== undefined ? computedBalances[w.id] : 0);
 };
 
-// Hanya berjalan otomatis jika ada dompet/kategori yang hilang
 window.recoverDataFromTransactions = function() {
     if (!Array.isArray(window.transactions) || window.transactions.length === 0) return false;
     let adaYangDipulihkan = false;
@@ -257,73 +257,78 @@ window.recoverDataFromTransactions = function() {
         }
     });
 
-    const existingCatIds = new Set(window.categories.map(c => String(c.id)));
-    window.transactions.forEach(trx => {
-        if (!trx.categoryId || String(trx.categoryId) === '999' || trx.type === 'transfer') return;
-        const cId = String(trx.categoryId);
-        if (!existingCatIds.has(cId)) {
-            const cName = trx.categoryName || (trx.type === 'in' ? 'Pemasukan' : 'Pengeluaran');
-            const cType = trx.type === 'in' ? 'in' : 'out';
-            const lowerC = cName.toLowerCase();
-            let icon = cType === 'in' ? 'payments' : 'category';
-            let color = cType === 'in' ? '#2e7d32' : '#ef6c00';
-            if (lowerC.includes('makan') || lowerC.includes('minum') || lowerC.includes('kopi')) { icon = 'restaurant'; color = '#ef6c00'; }
-            else if (lowerC.includes('bensin') || lowerC.includes('bbm')) { icon = 'local_gas_station'; color = '#e11d48'; }
-            else if (lowerC.includes('servis') || lowerC.includes('oli') || lowerC.includes('motor')) { icon = 'build'; color = '#4338ca'; }
+    const nonSysCats = window.categories.filter(c => String(c.id) !== '999' && c.type !== 'sys');
+    if (!window.dataRecoveredV1 || nonSysCats.length === 0) {
+        const existingCatIds = new Set(window.categories.map(c => String(c.id)));
+        window.transactions.forEach(trx => {
+            if (!trx.categoryId || String(trx.categoryId) === '999' || trx.type === 'transfer') return;
+            const cId = String(trx.categoryId);
+            if (!existingCatIds.has(cId)) {
+                const cName = trx.categoryName || (trx.type === 'in' ? 'Pemasukan' : 'Pengeluaran');
+                const cType = trx.type === 'in' ? 'in' : 'out';
+                const lowerC = cName.toLowerCase();
+                let icon = cType === 'in' ? 'payments' : 'category';
+                let color = cType === 'in' ? '#2e7d32' : '#ef6c00';
+                if (lowerC.includes('makan') || lowerC.includes('minum') || lowerC.includes('kopi')) { icon = 'restaurant'; color = '#ef6c00'; }
+                else if (lowerC.includes('bensin') || lowerC.includes('bbm')) { icon = 'local_gas_station'; color = '#e11d48'; }
+                else if (lowerC.includes('servis') || lowerC.includes('oli') || lowerC.includes('motor')) { icon = 'build'; color = '#4338ca'; }
 
-            window.categories.push({ id: trx.categoryId, type: cType, name: cName, budget: 0, icon, color });
-            existingCatIds.add(cId);
-            adaYangDipulihkan = true;
-        }
-    });
+                window.categories.push({ id: trx.categoryId, type: cType, name: cName, budget: 0, icon, color });
+                existingCatIds.add(cId);
+                adaYangDipulihkan = true;
+            }
+        });
 
-    if (!existingCatIds.has('999')) {
+        const existingTargetIds = new Set(window.targets.map(t => String(t.id)));
+        const targetGroup = {};
+        window.transactions.forEach(trx => {
+            if (!trx.targetId || existingTargetIds.has(String(trx.targetId))) return;
+            const tId = String(trx.targetId);
+            if (!targetGroup[tId]) {
+                targetGroup[tId] = { id: trx.targetId, name: "Target Tabungan", tipe: "biasa", currentAmount: 0, nilaiTerkini: 0 };
+            }
+            if (trx.note) {
+                const cleanedName = trx.note.replace(/^(Setor\/Top Up:|Jual\/Tarik:|Tarik Tabungan:)\s*/i, '').trim();
+                if (cleanedName) targetGroup[tId].name = cleanedName;
+            }
+            const nLower = (targetGroup[tId].name || '').toLowerCase();
+            if (trx.categoryName === 'Pencairan Investasi' || (trx.note && trx.note.includes('Top Up')) || nLower.includes('reksadana') || nLower.includes('saham') || nLower.includes('bibit') || nLower.includes('invest') || nLower.includes('kripto') || nLower.includes('emas')) {
+                targetGroup[tId].tipe = 'investasi';
+            }
+            const amt = Number(trx.amount || 0);
+            if (trx.type === 'out') {
+                targetGroup[tId].currentAmount += amt;
+                targetGroup[tId].nilaiTerkini += amt;
+            } else if (trx.type === 'in') {
+                const deduct = trx.modalDeducted !== undefined ? Number(trx.modalDeducted || 0) : amt;
+                targetGroup[tId].currentAmount = Math.max(0, targetGroup[tId].currentAmount - deduct);
+                targetGroup[tId].nilaiTerkini = Math.max(0, targetGroup[tId].nilaiTerkini - amt);
+            }
+        });
+
+        Object.values(targetGroup).forEach(recT => {
+            if (recT.currentAmount > 0 || recT.nilaiTerkini > 0) {
+                window.targets.push({
+                    id: recT.id,
+                    tipe: recT.tipe,
+                    name: recT.name,
+                    targetAmount: 0,
+                    currentAmount: recT.currentAmount,
+                    nilaiTerkini: recT.nilaiTerkini,
+                    deadline: '',
+                    isActive: true
+                });
+                adaYangDipulihkan = true;
+            }
+        });
+
+        window.dataRecoveredV1 = true;
+    }
+
+    if (!window.categories.some(c => String(c.id) === '999')) {
         window.categories.push({ id: 999, type: 'sys', name: "Penyesuaian Sistem", budget: 0, icon: "sync", color: "#78909c" });
         adaYangDipulihkan = true;
     }
-
-    const existingTargetIds = new Set(window.targets.map(t => String(t.id)));
-    const targetGroup = {};
-    window.transactions.forEach(trx => {
-        if (!trx.targetId || existingTargetIds.has(String(trx.targetId))) return;
-        const tId = String(trx.targetId);
-        if (!targetGroup[tId]) {
-            targetGroup[tId] = { id: trx.targetId, name: "Target Tabungan", tipe: "biasa", currentAmount: 0, nilaiTerkini: 0 };
-        }
-        if (trx.note) {
-            const cleanedName = trx.note.replace(/^(Setor\/Top Up:|Jual\/Tarik:|Tarik Tabungan:)\s*/i, '').trim();
-            if (cleanedName) targetGroup[tId].name = cleanedName;
-        }
-        const nLower = (targetGroup[tId].name || '').toLowerCase();
-        if (trx.categoryName === 'Pencairan Investasi' || (trx.note && trx.note.includes('Top Up')) || nLower.includes('reksadana') || nLower.includes('saham') || nLower.includes('bibit') || nLower.includes('invest') || nLower.includes('kripto') || nLower.includes('emas')) {
-            targetGroup[tId].tipe = 'investasi';
-        }
-        const amt = Number(trx.amount || 0);
-        if (trx.type === 'out') {
-            targetGroup[tId].currentAmount += amt;
-            targetGroup[tId].nilaiTerkini += amt;
-        } else if (trx.type === 'in') {
-            const deduct = trx.modalDeducted !== undefined ? Number(trx.modalDeducted || 0) : amt;
-            targetGroup[tId].currentAmount = Math.max(0, targetGroup[tId].currentAmount - deduct);
-            targetGroup[tId].nilaiTerkini = Math.max(0, targetGroup[tId].nilaiTerkini - amt);
-        }
-    });
-
-    Object.values(targetGroup).forEach(recT => {
-        if (recT.currentAmount > 0 || recT.nilaiTerkini > 0) {
-            window.targets.push({
-                id: recT.id,
-                tipe: recT.tipe,
-                name: recT.name,
-                targetAmount: 0,
-                currentAmount: recT.currentAmount,
-                nilaiTerkini: recT.nilaiTerkini,
-                deadline: '',
-                isActive: true
-            });
-            adaYangDipulihkan = true;
-        }
-    });
 
     return adaYangDipulihkan;
 };
@@ -334,7 +339,8 @@ window.saveDataToFirestore = async function() {
     try { 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true }); 
     } catch (e) { 
-        console.warn("Save to cloud failed:", e); 
+        console.error("Save to cloud failed:", e);
+        window.customAlert("Gagal Menyimpan ke Server", "Perubahan belum tersimpan ke Cloud. Pastikan koneksi internet Anda aktif.", "error");
     }
 };
 
@@ -347,7 +353,8 @@ window.saveDataToFirestoreSilently = async function() {
 
 window.saveTransactionToDB = async function(trxData) {
     if(!window.currentUserId) throw new Error("No user ID");
-    await setDoc(doc(db, "users", window.currentUserId, "transactions", trxData.id.toString()), trxData);
+    const cleanTrx = JSON.parse(JSON.stringify(trxData));
+    await setDoc(doc(db, "users", window.currentUserId, "transactions", cleanTrx.id.toString()), cleanTrx);
 };
 
 window.deleteTransactionFromDB = async function(trxId) {
@@ -395,15 +402,16 @@ export function initAuthListener() {
                     window.kmRecords = Array.isArray(data.kmRecords) ? data.kmRecords : []; 
                     window.vehicleSettings = data.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
                     window.zones = Array.isArray(data.zones) ? data.zones : [];
+                    window.dataRecoveredV1 = !!data.dataRecoveredV1;
                 } 
                 
-                // Buka halaman SECARA INSTAN tanpa menunggu ratusan transaksi selesai diunduh
+                // Buka kunci izin simpan SEGERA setelah dokumen profil selesai diambil dari Server
+                window.isUserDataLoaded = true;
                 window.callPageRender(); 
                 
                 if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 400); }
                 else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 400); }
 
-                // Muat transaksi secara paralel di latar belakang (Non-Blocking)
                 getDocs(collection(db, "users", window.currentUserId, "transactions"))
                     .then(async (trxSnapshot) => {
                         window.transactions = [];
@@ -428,7 +436,6 @@ export function initAuthListener() {
                         }
 
                         window.recalculateBalances(); 
-                        window.isUserDataLoaded = true;
 
                         if (needInitialSave) {
                             await window.saveDataToFirestore();
@@ -441,7 +448,7 @@ export function initAuthListener() {
             } catch (error) { 
                 console.error("Data load failed:", error); 
                 window.sembunyikanLoading(); 
-                window.customAlert("Error", "Gagal memuat data", "error");
+                window.customAlert("Error", "Gagal memuat data dari server", "error");
             }
         } else {
             window.currentUserId = null; 
@@ -700,7 +707,7 @@ window.prosesRestoreDataJSON = async function(parsed) {
             chunk.forEach(trx => {
                 if (!trx.id) trx.id = window.generateUUID();
                 const trxRef = doc(db, "users", window.currentUserId, "transactions", String(trx.id));
-                batch.set(trxRef, trx);
+                batch.set(trxRef, JSON.parse(JSON.stringify(trx)));
             });
             await batch.commit();
         }

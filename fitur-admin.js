@@ -1,6 +1,6 @@
 // ============================================================
 // MOCATAT - FITUR ADMIN, CMS EDUKASI, USER, BROADCAST & RESET PASSWORD
-// 100% Pure Online Cloud Firestore (Tanpa LocalStorage)
+// Tahap 3: 100% Pure Online Cloud Firestore (Tanpa LocalStorage)
 // ============================================================
 
 import { auth, db, doc, getDoc, setDoc } from "./core.js";
@@ -106,7 +106,6 @@ export const DEFAULT_EDUCATIONS = [
     }
 ];
 
-// Set nilai awal di memori sebelum ditarik dari Firestore
 window.cmsBanners = JSON.parse(JSON.stringify(DEFAULT_BANNERS));
 window.cmsEducations = JSON.parse(JSON.stringify(DEFAULT_EDUCATIONS));
 
@@ -964,7 +963,7 @@ window.saveAdminCMSData = async function() {
 
     if (window.currentUserId) {
         try {
-            await setDoc(doc(db, "app_settings", "public_content"), payload, { merge: true });
+            await setDoc(doc(db, "app_settings", "public_content"), JSON.parse(JSON.stringify(payload)), { merge: true });
         } catch (e) {}
     }
 };

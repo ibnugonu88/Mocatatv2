@@ -661,6 +661,18 @@ window.simpanTarget = async function() {
             window.targets[idx].nilaiTerkini = Number(window.targets[idx].nilaiTerkini||0) + selisihModal; 
             if(window.targets[idx].nilaiTerkini < 0) window.targets[idx].nilaiTerkini = 0; 
         }
+
+        // Sinkronkan ke Portofolio Kalkulator jika target berasal dari Kalkulator
+        if (String(id).startsWith('port-') && Array.isArray(window.calcPortfolio)) {
+            const portId = String(id).replace('port-', '');
+            const pIdx = window.calcPortfolio.findIndex(p => String(p.id) === portId);
+            if (pIdx !== -1) {
+                window.calcPortfolio[pIdx].capital = currentAmount;
+                window.calcPortfolio[pIdx].currentValue = window.targets[idx].nilaiTerkini;
+                window.calcPortfolio[pIdx].pl = window.calcPortfolio[pIdx].currentValue - currentAmount;
+                window.calcPortfolio[pIdx].ret = currentAmount > 0 ? (window.calcPortfolio[pIdx].pl / currentAmount) * 100 : 0;
+            }
+        }
     } else { 
         window.targets.push({ id: window.generateUUID(), tipe, name, targetAmount, currentAmount: currentAmount, nilaiTerkini: currentAmount, deadline: deadline, isActive: true }); 
     }
@@ -673,6 +685,13 @@ window.hapusTarget = function(id) {
         const trxTerkait = window.transactions.filter(t => String(t.targetId) === String(id));
         window.transactions = window.transactions.filter(t => String(t.targetId) !== String(id));
         window.targets = window.targets.filter(x => String(x.id) !== String(id));
+
+        // Jika target berasal dari Kalkulator Portofolio (port-...), hapus juga dari calcPortfolio
+        if (String(id).startsWith('port-') && Array.isArray(window.calcPortfolio)) {
+            const portId = String(id).replace('port-', '');
+            window.calcPortfolio = window.calcPortfolio.filter(p => String(p.id) !== portId);
+        }
+
         window.recalculateBalances(); 
         
         if (window.currentUserId) {
@@ -768,7 +787,21 @@ window.prosesAksiTarget = async function() {
 
     if (type === 'update') { 
         const newNilai = window.parseRupiah(document.getElementById('update-amount').value) || 0; 
-        window.targets[targetIndex].nilaiTerkini = newNilai; 
+        window.targets[targetIndex].nilaiTerkini = newNilai;
+
+        // Sinkronkan nilai terkini ke Portofolio Kalkulator jika berasal dari Kalkulator
+        if (String(id).startsWith('port-') && Array.isArray(window.calcPortfolio)) {
+            const portId = String(id).replace('port-', '');
+            const pIdx = window.calcPortfolio.findIndex(p => String(p.id) === portId);
+            if (pIdx !== -1) {
+                window.calcPortfolio[pIdx].currentValue = newNilai;
+                window.calcPortfolio[pIdx].pl = newNilai - Number(window.calcPortfolio[pIdx].capital || 0);
+                window.calcPortfolio[pIdx].ret = Number(window.calcPortfolio[pIdx].capital || 0) > 0
+                    ? (window.calcPortfolio[pIdx].pl / Number(window.calcPortfolio[pIdx].capital)) * 100
+                    : 0;
+            }
+        }
+
         window.closeModal('modal-action'); 
         await window.saveDataToFirestore(); 
         return; 
@@ -848,6 +881,20 @@ window.prosesAksiTarget = async function() {
                 window.targets[targetIndex].currentAmount = Math.max(0, Number(t.currentAmount||0) - amount);
                 window.targets[targetIndex].nilaiTerkini = window.targets[targetIndex].currentAmount;
                 await window.saveTransactionToDB(newTrx);
+            }
+        }
+
+        // Sinkronkan juga ke Portofolio Kalkulator setelah Top Up / Tarik
+        if (String(id).startsWith('port-') && Array.isArray(window.calcPortfolio)) {
+            const portId = String(id).replace('port-', '');
+            const pIdx = window.calcPortfolio.findIndex(p => String(p.id) === portId);
+            if (pIdx !== -1) {
+                window.calcPortfolio[pIdx].capital = window.targets[targetIndex].currentAmount;
+                window.calcPortfolio[pIdx].currentValue = window.targets[targetIndex].nilaiTerkini;
+                window.calcPortfolio[pIdx].pl = window.calcPortfolio[pIdx].currentValue - window.calcPortfolio[pIdx].capital;
+                window.calcPortfolio[pIdx].ret = window.calcPortfolio[pIdx].capital > 0
+                    ? (window.calcPortfolio[pIdx].pl / window.calcPortfolio[pIdx].capital) * 100
+                    : 0;
             }
         }
 
