@@ -3,85 +3,605 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kategori Transaksi - MoCatat</title>
-    <meta name="theme-color" content="#249a95">
+    <title>Pengaturan Kategori - MoCatat</title>
+    <meta name="theme-color" content="#166e6a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="1789744450301.png">
+    <link rel="icon" type="image/png" href="1789744567730.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
-    <!-- PANGGIL FILE CSS SENTRAL -->
+
     <link rel="stylesheet" href="style.css">
+    <style>
+        .app-container {
+            padding-bottom: calc(165px + env(safe-area-inset-bottom));
+        }
+        .cat-hero-card {
+            background: linear-gradient(145deg, #166e6a 0%, #249a95 60%, #2bb0aa 100%);
+            margin: 16px 20px 16px 20px;
+            padding: 22px 20px;
+            border-radius: 24px;
+            color: white;
+            box-shadow: 0 12px 28px -4px rgba(22, 110, 106, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .cat-pro-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 15px 16px;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cat-status-pill {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .icon-pick-item {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 9px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #475569;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+        .icon-pick-item:active {
+            transform: scale(0.95);
+        }
+        .icon-pick-item.active {
+            background: #e0f2f1;
+            border-color: #249a95;
+            color: #0f766e;
+            font-weight: 800;
+        }
+        .hero-money-input {
+            font-size: 22px !important;
+            font-weight: 800 !important;
+            color: #0f766e !important;
+            background: #f0fdfa !important;
+            border: 2px solid #99f6e4 !important;
+        }
+        .type-switch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .type-switch-btn {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 11px 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #475569;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+        .type-switch-btn.active-out {
+            background: #fff1f2;
+            border-color: #f43f5e;
+            color: #be123c;
+        }
+        .type-switch-btn.active-in {
+            background: #f0fdf4;
+            border-color: #16a34a;
+            color: #15803d;
+        }
+        .fab-above-nav {
+            bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        }
+    </style>
 </head>
 <body>
-
     <div class="app-container">
+
         <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
 
         <header class="header-simple">
-            <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
-            <span>Kategori & Anggaran</span>
+            <a href="index.html?tab=akun" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
+            <span>Pengaturan Kategori</span>
         </header>
 
-        <!-- KARTU RINGKASAN BARU -->
-        <div class="summary-grid">
-            <div class="summary-box in">
-                <span class="material-icons-round bg-icon" style="color: #2e7d32;">south_west</span>
-                <div class="summary-label">Uang Masuk</div>
-                <div class="summary-val" id="tot-masuk">Rp 0</div>
+        <!-- HERO BUDGET SUMMARY CARD -->
+        <div class="cat-hero-card" id="cat-hero-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <div id="cat-hero-subtitle" style="font-size: 11px; font-weight: 800; opacity: 0.92; text-transform: uppercase; letter-spacing: 0.8px;">Plafon Anggaran · Bulan Ini</div>
+                <div id="cat-hero-count" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;">0 Kategori</div>
             </div>
-            <div class="summary-box out">
-                <span class="material-icons-round bg-icon" style="color: #ef6c00;">north_east</span>
-                <div class="summary-label">Uang Keluar</div>
-                <div class="summary-val" id="tot-keluar">Rp 0</div>
+            <div id="cat-hero-total-budget" style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; text-shadow: 0 4px 10px rgba(0,0,0,0.12);">Rp 0</div>
+            <div id="cat-hero-daily-info" style="font-size: 11.5px; opacity: 0.92; font-weight: 600; margin-bottom: 14px;">Batas aman harian: Rp 0/hari</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 13px; padding: 10px 12px;">
+                    <div id="cat-box1-label" style="font-size: 10.5px; font-weight: 700; opacity: 0.9; margin-bottom: 3px;">💸 Terpakai Bulan Ini</div>
+                    <div id="cat-box1-val" style="font-size: 14px; font-weight: 800; color: #ffffff;">Rp 0</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 13px; padding: 10px 12px;">
+                    <div id="cat-box2-label" style="font-size: 10.5px; font-weight: 700; opacity: 0.9; margin-bottom: 3px;">🛡️ Sisa Plafon Aman</div>
+                    <div id="cat-box2-val" style="font-size: 14px; font-weight: 800; color: #fde047;">Rp 0</div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 5px; opacity: 0.95;">
+                    <span id="cat-bar-label">Realisasi Anggaran Bulan Ini</span>
+                    <span id="cat-bar-pct">0%</span>
+                </div>
+                <div style="height: 8px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.22);">
+                    <div id="cat-bar-fill" style="width: 0%; height: 100%; background: #fde047; border-radius: 4px; transition: width 0.3s ease;"></div>
+                </div>
             </div>
         </div>
 
-        <!-- TAB NAVIGASI BARU -->
-        <div class="modern-tabs">
-            <div class="modern-tab active" id="tab-out" onclick="window.switchMainTab('out')">Pengeluaran</div>
-            <div class="modern-tab" id="tab-in" onclick="window.switchMainTab('in')">Pemasukan</div>
+        <!-- TAB SWITCHER: PENGELUARAN VS PEMASUKAN -->
+        <div class="modern-tabs" style="margin-bottom: 12px;">
+            <div class="modern-tab active" id="tab-cat-out" onclick="window.switchCatTabPro('out')">🛑 Pos Pengeluaran</div>
+            <div class="modern-tab" id="tab-cat-in" onclick="window.switchCatTabPro('in')">📈 Pos Pemasukan</div>
         </div>
 
-        <div class="list-wrapper" id="kategori-container" style="padding-top: 5px;"></div>
+        <!-- DAFTAR KATEGORI -->
+        <div class="list-wrapper" style="padding-top: 4px;" id="category-pro-container"></div>
 
-        <!-- TOMBOL FAB BARU -->
-        <button class="fab-tambah" onclick="window.openKategoriModal()">
-            <span class="material-icons-round" style="font-size:20px;">add_circle</span> Kategori Baru
+        <button class="fab-tambah fab-above-nav" onclick="window.openModalCatPro()">
+            <span class="material-icons-round">add_circle</span> Tambah Kategori
         </button>
 
-        <div id="modal-kategori" class="modal-overlay">
+        <!-- MODAL TAMBAH / EDIT KATEGORI -->
+        <div id="modal-cat-pro" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
                 <div class="modal-header">
-                    <h3 id="kat-modal-title">Tambah Kategori</h3>
-                    <button class="btn-close" onclick="window.closeModal('modal-kategori')"><span class="material-icons-round">close</span></button>
+                    <h3 id="modal-cat-pro-title">Tambah Kategori</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-cat-pro')"><span class="material-icons-round">close</span></button>
                 </div>
-                <div id="kat-error-msg" class="error-msg"></div>
-                <input type="hidden" id="kat-id">
-                
-                <div class="form-group">
-                    <label class="form-label">Jenis Kategori</label>
-                    <div class="segmented-control" id="kat-type-segment">
-                        <div class="segmented-btn active" onclick="window.selectKatType('out')">Pengeluaran</div>
-                        <div class="segmented-btn" onclick="window.selectKatType('in')">Pemasukan</div>
-                    </div>
-                    <input type="hidden" id="kat-type" value="out">
+                <div id="cat-pro-error" class="error-msg"></div>
+                <input type="hidden" id="cat-pro-id">
+                <input type="hidden" id="cat-pro-type" value="out">
+                <input type="hidden" id="cat-pro-icon" value="restaurant">
+
+                <label class="form-label">Jenis Transaksi</label>
+                <div class="type-switch-grid">
+                    <button type="button" class="type-switch-btn active-out" id="btn-cattype-out" onclick="window.selectCatTypePro('out')">
+                        <span class="material-icons-round" style="font-size:18px;">north_east</span> Pengeluaran
+                    </button>
+                    <button type="button" class="type-switch-btn" id="btn-cattype-in" onclick="window.selectCatTypePro('in')">
+                        <span class="material-icons-round" style="font-size:18px;">south_west</span> Pemasukan
+                    </button>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Nama Kategori</label>
-                    <input type="text" id="kat-name" class="form-input" placeholder="Misal: Makanan, Gaji" required>
+                    <input type="text" id="cat-pro-name" class="form-input" placeholder="Contoh: Bensin / Makan / Rokok / Servis" autocomplete="off">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Batas Anggaran / Target (Rp)</label>
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="kat-budget" class="form-input format-rupiah" placeholder="Isi 0 jika tanpa batas" required>
+
+                <label class="form-label">Pilih Ikon Kategori</label>
+                <div class="icon-picker-grid" id="cat-icon-picker-grid"></div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="form-label" id="cat-budget-label">Batas Anggaran Sebulan (Rp) — Kosongkan jika tanpa batas</label>
+                    <input type="text" inputmode="numeric" id="cat-pro-budget" class="form-input hero-money-input" placeholder="0 (Tanpa Batas)" oninput="window.formatRupiahCatLive(this); window.updateCatDailyPreview();">
                 </div>
-                <button class="btn-submit" onclick="window.simpanKategori()">Simpan Kategori</button>
+
+                <div id="cat-budget-presets" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <button type="button" onclick="window.setCatPresetBudget(0)" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#475569; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Tanpa Batas</button>
+                    <button type="button" onclick="window.setCatPresetBudget(150000)" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Rp 150rb</button>
+                    <button type="button" onclick="window.setCatPresetBudget(300000)" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Rp 300rb</button>
+                    <button type="button" onclick="window.setCatPresetBudget(450000)" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Rp 450rb</button>
+                    <button type="button" onclick="window.setCatPresetBudget(600000)" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Rp 600rb</button>
+                    <button type="button" onclick="window.setCatPresetBudget(900000)" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">Rp 900rb</button>
+                </div>
+
+                <div id="cat-daily-preview" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; font-weight: 700; color: #166534; display: none;"></div>
+
+                <button class="btn-submit" id="btn-save-cat-pro" onclick="window.simpanKategoriPro()">Simpan Kategori</button>
             </div>
         </div>
 
-        <div id="custom-dialog" class="custom-dialog-overlay"><div class="custom-dialog-box"><div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div><h3 class="custom-dialog-title" id="dialog-title">Informasi</h3><p class="custom-dialog-msg" id="dialog-msg"></p><div class="custom-dialog-actions" id="dialog-actions"></div></div></div>
+        <!-- CUSTOM DIALOG -->
+        <div id="custom-dialog" class="custom-dialog-overlay">
+            <div class="custom-dialog-box">
+                <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
+                <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
+                <p class="custom-dialog-msg" id="dialog-msg"></p>
+                <div class="custom-dialog-actions" id="dialog-actions"></div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" style="display:flex;">
+            <div class="nav-item" onclick="window.location.href='index.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">home</span></div><span>Beranda</span></div>
+            <div class="nav-item" onclick="window.location.href='riwayat.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">history</span></div><span>Riwayat</span></div>
+            <div class="nav-item" onclick="window.location.href='analitik.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">bar_chart</span></div><span>Analitik</span></div>
+            <div class="nav-item active" onclick="window.location.href='index.html?tab=akun'"><div class="nav-icon-wrapper"><span class="material-icons-round">person</span></div><span>Akun</span></div>
+        </nav>
     </div>
 
-    <!-- PANGGIL FILE JS SENTRAL -->
     <script type="module" src="app.js"></script>
+    <script type="module">
+        import { db, doc, setDoc } from "./core.js";
+
+        window.currentCatTab = 'out';
+
+        const ICON_OPTIONS = [
+            { icon: 'local_gas_station', label: 'Bensin' },
+            { icon: 'restaurant', label: 'Makan' },
+            { icon: 'smoking_rooms', label: 'Rokok' },
+            { icon: 'coffee', label: 'Kopi/Jajan' },
+            { icon: 'build', label: 'Servis' },
+            { icon: 'two_wheeler', label: 'Motor' },
+            { icon: 'payments', label: 'Order Grab' },
+            { icon: 'redeem', label: 'Tip/Bonus' },
+            { icon: 'wifi', label: 'Kuota/Pulsa' },
+            { icon: 'home', label: 'Kosan/Rumah' },
+            { icon: 'shopping_bag', label: 'Belanja' },
+            { icon: 'medical_services', label: 'Kesehatan' },
+            { icon: 'family_restroom', label: 'Keluarga' },
+            { icon: 'bolt', label: 'Listrik/Air' },
+            { icon: 'savings', label: 'Tabungan' },
+            { icon: 'category', label: 'Lainnya' }
+        ];
+
+        window.formatRupiahCatLive = function(el) {
+            if (!el) return;
+            const raw = el.value.replace(/[^0-9]/g, '');
+            el.value = raw ? window.formatNumberWithDot(raw) : '';
+        };
+
+        window.switchCatTabPro = function(type) {
+            window.currentCatTab = type;
+            document.getElementById('tab-cat-out').classList.toggle('active', type === 'out');
+            document.getElementById('tab-cat-in').classList.toggle('active', type === 'in');
+            window.renderCategoryProPage();
+        };
+
+        window.renderIconPickerGrid = function(selectedIcon = 'restaurant') {
+            const grid = document.getElementById('cat-icon-picker-grid');
+            if (!grid) return;
+            document.getElementById('cat-pro-icon').value = selectedIcon;
+            grid.innerHTML = ICON_OPTIONS.map(item => `
+                <div class="icon-pick-item ${item.icon === selectedIcon ? 'active' : ''}" onclick="window.selectCatIconPro('${item.icon}', this)">
+                    <span class="material-icons-round" style="font-size:20px;">${item.icon}</span>
+                    <span>${item.label}</span>
+                </div>
+            `).join('');
+        };
+
+        window.selectCatIconPro = function(iconName, el) {
+            document.getElementById('cat-pro-icon').value = iconName;
+            document.querySelectorAll('#cat-icon-picker-grid .icon-pick-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+        };
+
+        window.selectCatTypePro = function(type) {
+            document.getElementById('cat-pro-type').value = type;
+            const btnOut = document.getElementById('btn-cattype-out');
+            const btnIn = document.getElementById('btn-cattype-in');
+            btnOut.className = 'type-switch-btn ' + (type === 'out' ? 'active-out' : '');
+            btnIn.className = 'type-switch-btn ' + (type === 'in' ? 'active-in' : '');
+
+            const budgetLbl = document.getElementById('cat-budget-label');
+            if (budgetLbl) {
+                budgetLbl.innerText = type === 'out'
+                    ? 'Batas Anggaran Sebulan (Rp) — Kosongkan jika tanpa batas'
+                    : 'Target Pemasukan Sebulan (Rp) — Opsional';
+            }
+            window.updateCatDailyPreview();
+        };
+
+        window.setCatPresetBudget = function(nominal) {
+            const inp = document.getElementById('cat-pro-budget');
+            if (!inp) return;
+            inp.value = nominal > 0 ? window.formatNumberWithDot(String(nominal)) : '';
+            window.updateCatDailyPreview();
+        };
+
+        window.updateCatDailyPreview = function() {
+            const previewEl = document.getElementById('cat-daily-preview');
+            if (!previewEl) return;
+            const val = window.parseRupiah(document.getElementById('cat-pro-budget')?.value || '0');
+            const type = document.getElementById('cat-pro-type')?.value || 'out';
+            if (val <= 0) {
+                previewEl.style.display = 'none';
+                return;
+            }
+            const now = new Date();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const perDay = Math.floor(val / daysInMonth);
+            previewEl.style.display = 'block';
+            previewEl.innerHTML = type === 'out'
+                ? `🛑 Setara jatah pengeluaran aman: <strong>${window.formatRupiah(perDay)} / hari</strong> (${daysInMonth} hari bulan ini)`
+                : `🎯 Setara target pemasukan: <strong>${window.formatRupiah(perDay)} / hari</strong> (${daysInMonth} hari bulan ini)`;
+        };
+
+        window.renderCategoryProPage = function() {
+            const container = document.getElementById('category-pro-container');
+            if (!container) return;
+
+            if (!Array.isArray(window.categories)) window.categories = [];
+            const now = new Date();
+            const currentMonthStr = window.getLocalMonthString();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            // Hitung pemakaian & jumlah transaksi bulan ini per kategori
+            const usageByCatId = {};
+            const countByCatId = {};
+            (window.transactions || []).forEach(trx => {
+                if (String(trx.categoryId) === '999' || !trx.date || !trx.date.startsWith(currentMonthStr)) return;
+                if (trx.type !== window.currentCatTab) return;
+                const key = String(trx.categoryId || trx.categoryName || '');
+                const amt = Number(trx.amount || 0);
+                usageByCatId[key] = (usageByCatId[key] || 0) + amt;
+                countByCatId[key] = (countByCatId[key] || 0) + 1;
+            });
+
+            const validCats = window.categories.filter(c => c.type === window.currentCatTab && c.type !== 'sys' && String(c.id) !== '999');
+
+            let totalBudgetTab = 0;
+            let totalRealizedTab = 0;
+            validCats.forEach(c => {
+                totalBudgetTab += Number(c.budget || 0);
+                totalRealizedTab += (usageByCatId[String(c.id)] || usageByCatId[c.name] || 0);
+            });
+
+            const isOut = window.currentCatTab === 'out';
+            const dailyLimit = Math.floor(totalBudgetTab / daysInMonth);
+            const sisaPlafon = totalBudgetTab - totalRealizedTab;
+            const overallPct = totalBudgetTab > 0 ? Math.min(100, Math.round((totalRealizedTab / totalBudgetTab) * 100)) : 0;
+
+            document.getElementById('cat-hero-subtitle').innerText = isOut
+                ? 'Plafon Anggaran · Bulan Ini'
+                : 'Target Pemasukan · Bulan Ini';
+            document.getElementById('cat-hero-count').innerText = `${validCats.length} Kategori`;
+            document.getElementById('cat-hero-total-budget').innerText = totalBudgetTab > 0
+                ? window.formatRupiah(totalBudgetTab)
+                : 'Tanpa Batas';
+            document.getElementById('cat-hero-daily-info').innerText = totalBudgetTab > 0
+                ? (isOut ? `Jatah aman gabungan: ${window.formatRupiah(dailyLimit)}/hari` : `Target rata-rata: ${window.formatRupiah(dailyLimit)}/hari`)
+                : (isOut ? 'Atur anggaran pada pos pengeluaran untuk mengaktifkan batas harian' : 'Daftar kategori sumber pemasukanmu');
+
+            document.getElementById('cat-box1-label').innerText = isOut ? '💸 Terpakai Bulan Ini' : '💰 Terkumpul Bulan Ini';
+            document.getElementById('cat-box1-val').innerText = window.formatRupiah(totalRealizedTab);
+
+            document.getElementById('cat-box2-label').innerText = isOut ? '🛡️ Sisa Plafon Aman' : '🎯 Sisa Target Bulan Ini';
+            if (totalBudgetTab <= 0) {
+                document.getElementById('cat-box2-val').innerText = 'Tanpa Batas';
+                document.getElementById('cat-box2-val').style.color = '#fde047';
+            } else if (sisaPlafon >= 0) {
+                document.getElementById('cat-box2-val').innerText = window.formatRupiah(sisaPlafon);
+                document.getElementById('cat-box2-val').style.color = '#fde047';
+            } else {
+                document.getElementById('cat-box2-val').innerText = isOut ? `Lewat ${window.formatRupiah(Math.abs(sisaPlafon))}` : 'Tercapai! 🎉';
+                document.getElementById('cat-box2-val').style.color = isOut ? '#fca5a5' : '#a7f3d0';
+            }
+
+            document.getElementById('cat-bar-label').innerText = isOut ? 'Pemakaian Anggaran Bulan Ini' : 'Pencapaian Target Pemasukan';
+            document.getElementById('cat-bar-pct').innerText = `${overallPct}%`;
+            document.getElementById('cat-bar-fill').style.width = `${overallPct}%`;
+            document.getElementById('cat-bar-fill').style.background = (isOut && overallPct >= 95) ? '#fca5a5' : '#fde047';
+
+            if (validCats.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">category</span></div>
+                        <h4>Belum Ada Kategori ${isOut ? 'Pengeluaran' : 'Pemasukan'}</h4>
+                        <p>Tekan tombol Tambah Kategori di bawah untuk membuat pos baru.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = validCats.map(c => {
+                const used = usageByCatId[String(c.id)] || usageByCatId[c.name] || 0;
+                const trxCount = countByCatId[String(c.id)] || countByCatId[c.name] || 0;
+                const budget = Number(c.budget || 0);
+                const cleanName = typeof window.unescapeHTML === 'function' ? window.unescapeHTML(c.name) : c.name;
+                const dailyCat = budget > 0 ? Math.floor(budget / daysInMonth) : 0;
+
+                let pct = budget > 0 ? Math.min(100, Math.round((used / budget) * 100)) : 0;
+                let barColor = isOut
+                    ? (pct >= 100 ? '#dc2626' : (pct >= 75 ? '#f59e0b' : '#249a95'))
+                    : '#16a34a';
+                const iconBg = isOut ? '#fff7ed' : '#f0fdf4';
+                const iconColor = isOut ? '#ea580c' : '#16a34a';
+
+                let statusBadgeHTML = '';
+                if (budget > 0) {
+                    const sisa = budget - used;
+                    if (isOut) {
+                        if (sisa < 0) {
+                            statusBadgeHTML = `<span class="cat-status-pill" style="background:#fee2e2; color:#b91c1c;">⚠️ Overbudget ${window.formatRupiah(Math.abs(sisa))}</span>`;
+                        } else {
+                            statusBadgeHTML = `<span class="cat-status-pill" style="background:#f0fdf4; color:#15803d;">✓ Sisa ${window.formatRupiah(sisa)} (≈ ${window.formatRupiah(dailyCat)}/hr)</span>`;
+                        }
+                    } else {
+                        statusBadgeHTML = sisa <= 0
+                            ? `<span class="cat-status-pill" style="background:#dcfce7; color:#15803d;">🎉 Target Tercapai!</span>`
+                            : `<span class="cat-status-pill" style="background:#e0f2f1; color:#0f766e;">🎯 Kurang ${window.formatRupiah(sisa)}</span>`;
+                    }
+                } else {
+                    statusBadgeHTML = `<span class="cat-status-pill" style="background:#f1f5f9; color:#64748b;">∞ Tanpa Batas Anggaran</span>`;
+                }
+
+                return `
+                    <div class="cat-pro-card">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:11px; min-width:0;">
+                                <div style="width:42px; height:42px; border-radius:13px; background:${iconBg}; color:${iconColor}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <span class="material-icons-round" style="font-size:21px;">${c.icon || 'category'}</span>
+                                </div>
+                                <div style="min-width:0;">
+                                    <div style="font-size:14.5px; font-weight:800; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(cleanName)}</div>
+                                    <div style="font-size:11px; font-weight:700; color:#64748b;">${trxCount} transaksi bulan ini</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:4px; flex-shrink:0;">
+                                <button class="btn-icon" onclick="window.openModalCatPro('${c.id}')"><span class="material-icons-round" style="font-size:18px;">edit</span></button>
+                                <button class="btn-icon delete" onclick="window.hapusKategoriPro('${c.id}')"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+                            <div>
+                                <span style="font-size:16px; font-weight:800; color:${isOut ? '#b91c1c' : '#15803d'};">${window.formatRupiah(used)}</span>
+                                ${budget > 0 ? `<span style="font-size:11.5px; font-weight:700; color:#64748b;"> / ${window.formatRupiah(budget)}</span>` : `<span style="font-size:11px; font-weight:600; color:#64748b;"> bulan ini</span>`}
+                            </div>
+                            ${budget > 0 ? `<span style="font-size:12px; font-weight:800; color:${barColor};">${pct}%</span>` : ''}
+                        </div>
+
+                        ${budget > 0 ? `
+                        <div style="width:100%; height:7px; background:#f1f5f9; border-radius:4px; overflow:hidden; margin-bottom:8px;">
+                            <div style="width:${pct}\%; height:100\%; background:${barColor}; border-radius:4px; transition:width 0.3s ease;"></div>
+                        </div>` : ''}
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            ${statusBadgeHTML}
+                            ${budget === 0 && isOut ? `<button type="button" onclick="window.openModalCatPro('${c.id}')" style="background:none; border:none; color:#0f766e; font-size:11px; font-weight:800; cursor:pointer; padding:0; font-family:inherit;">+ Atur Anggaran ➔</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.openModalCatPro = function(catId = null) {
+            document.getElementById('cat-pro-error').style.display = 'none';
+            document.getElementById('cat-pro-id').value = catId || '';
+
+            if (catId) {
+                const c = (window.categories || []).find(item => String(item.id) === String(catId));
+                if (!c) return;
+                document.getElementById('modal-cat-pro-title').innerText = 'Edit Kategori';
+                document.getElementById('cat-pro-name').value = window.unescapeHTML(c.name || '');
+                const bVal = Number(c.budget || 0);
+                document.getElementById('cat-pro-budget').value = bVal > 0 ? window.formatNumberWithDot(String(bVal)) : '';
+                window.selectCatTypePro(c.type || 'out');
+                window.renderIconPickerGrid(c.icon || 'category');
+            } else {
+                document.getElementById('modal-cat-pro-title').innerText = 'Tambah Kategori Baru';
+                document.getElementById('cat-pro-name').value = '';
+                document.getElementById('cat-pro-budget').value = '';
+                window.selectCatTypePro(window.currentCatTab);
+                window.renderIconPickerGrid(window.currentCatTab === 'out' ? 'restaurant' : 'payments');
+            }
+
+            window.updateCatDailyPreview();
+            document.getElementById('modal-cat-pro').classList.add('show');
+        };
+
+        window.simpanKategoriPro = async function() {
+            const errEl = document.getElementById('cat-pro-error');
+            const id = document.getElementById('cat-pro-id').value;
+            const rawName = document.getElementById('cat-pro-name').value.trim();
+            const name = window.escapeHTML(rawName);
+            const type = document.getElementById('cat-pro-type').value || 'out';
+            const icon = document.getElementById('cat-pro-icon').value || 'category';
+            const budget = window.parseRupiah(document.getElementById('cat-pro-budget').value || '0');
+
+            if (!rawName) {
+                errEl.innerText = 'Nama kategori tidak boleh kosong!';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (id) {
+                const idx = window.categories.findIndex(c => String(c.id) === String(id));
+                if (idx !== -1) {
+                    window.categories[idx].name = name;
+                    window.categories[idx].type = type;
+                    window.categories[idx].icon = icon;
+                    window.categories[idx].budget = budget;
+
+                    // Sinkronkan nama kategori di transaksi yang terkait di memori
+                    (window.transactions || []).forEach(trx => {
+                        if (String(trx.categoryId) === String(id)) {
+                            trx.categoryName = name;
+                        }
+                    });
+                }
+            } else {
+                window.categories.push({
+                    id: window.generateUUID ? window.generateUUID() : ('cat-' + Date.now()),
+                    name,
+                    type,
+                    icon,
+                    budget
+                });
+            }
+
+            window.currentCatTab = type;
+            document.getElementById('tab-cat-out').classList.toggle('active', type === 'out');
+            document.getElementById('tab-cat-in').classList.toggle('active', type === 'in');
+
+            window.closeModal('modal-cat-pro');
+            window.renderCategoryProPage();
+
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
+        };
+
+        window.hapusKategoriPro = function(catId) {
+            const c = (window.categories || []).find(item => String(item.id) === String(catId));
+            if (!c) return;
+            const validSameType = (window.categories || []).filter(item => item.type === c.type && item.type !== 'sys' && String(item.id) !== '999');
+            if (validSameType.length <= 1) {
+                return window.customAlert("Tidak Bisa Dihapus", "Minimal harus tersisa 1 kategori aktif pada jenis ini.", "warning");
+            }
+
+            window.customConfirm("Hapus Kategori?", `Hapus kategori "${window.unescapeHTML(c.name)}"? Riwayat transaksimu yang lama tetap aman dan tidak ikut terhapus.`, async () => {
+                window.categories = (window.categories || []).filter(item => String(item.id) !== String(catId));
+                window.renderCategoryProPage();
+                if (window.currentUserId && window.isUserDataLoaded) {
+                    try {
+                        await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                    } catch (e) {}
+                }
+            });
+        };
+
+        // Override pemanggil bawaan dari core.js / fitur-kelola.js
+        window.renderCategories = window.renderCategoryProPage;
+
+        const readyTimer = setInterval(() => {
+            if (window.isUserDataLoaded) {
+                clearInterval(readyTimer);
+                window.renderCategoryProPage();
+            }
+        }, 120);
+    </script>
 </body>
 </html>

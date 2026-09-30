@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MoCatat - Keuangan Pribadi</title>
-    <meta name="theme-color" content="#249a95">
+    <meta name="theme-color" content="#166e6a">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="1789744450301.png">
     <link rel="icon" type="image/png" href="1789744567730.png">
@@ -37,51 +37,92 @@
             </div>
         </div>
 
-        <!-- HALAMAN DASHBOARD / BERANDA -->
+        <!-- HALAMAN DASHBOARD / BERANDA (REDESIGNED FINTECH HERO) -->
         <div id="page-dashboard" class="page">
-            <header class="header-bg">
-                <div class="greeting"><span>Halo, <span id="user-name">Pengguna</span>! 👋</span>
-                    <div style="position: relative; display: inline-block;">
+            <header class="header-bg" style="padding: 22px 20px 26px 20px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
+                <!-- BARIS 1: PROFIL AVATAR & NOTIFIKASI -->
+                <div class="greeting" style="margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                        <div id="hero-avatar-initial" onclick="window.switchTab('page-akun', 3)" style="width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.35); display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #ffffff; cursor: pointer; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            M
+                        </div>
+                        <div style="min-width: 0;">
+                            <div id="greeting-time-text" style="font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85); line-height: 1.2; margin-bottom: 2px;">Selamat Pagi 👋</div>
+                            <div id="user-name" style="font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Pengguna</div>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; display: inline-block; flex-shrink: 0;">
                         <span class="material-icons-round" onclick="window.bukaNotifikasi()" style="cursor: pointer;">notifications</span>
-                        <span id="notif-badge" style="position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background: #ef5350; border-radius: 50%; border: 2px solid #249a95; display: none;"></span>
+                        <span id="notif-badge" style="position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; background: #ef4444; border-radius: 50%; border: 2px solid #187773; display: none;"></span>
                     </div>
                 </div>
                 
-                <!-- TOTAL KEKAYAAN & RINCIAN ASET -->
-                <div class="total-label">Total Kekayaan Bersih</div>
-                <div class="total-amount" id="net-worth">Rp 0</div>
-                
-                <div style="background: rgba(255,255,255,0.15); padding: 10px 14px; border-radius: 14px; display: inline-flex; flex-direction: column; gap: 4px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                    <div style="font-size: 12px; display: flex; justify-content: space-between; gap: 15px; opacity: 0.95;">
-                        <span>Uang Cair (Dompet):</span> <strong id="total-balance">Rp 0</strong>
+                <!-- BARIS 2: TOTAL KEKAYAAN BERSIH -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.82); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 5px;">
+                        <span class="material-icons-round" style="font-size: 14px; opacity: 0.9;">verified_user</span> TOTAL KEKAYAAN BERSIH
                     </div>
-                    <div style="font-size: 12px; display: flex; justify-content: space-between; gap: 15px; opacity: 0.95;">
-                        <span>Aset (Target & Investasi):</span> <strong id="total-asset">Rp 0</strong>
+                    <div class="total-amount" id="net-worth" style="font-size: 33px; margin-top: 3px;">Rp 0</div>
+                </div>
+                
+                <!-- BARIS 3: BENTO GLASS 2 KOLOM SIMETRIS (100% FULL WIDTH) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+                    <div onclick="window.location.href='dompet.html'" style="background: rgba(255,255,255,0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.22); border-radius: 16px; padding: 11px 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 0;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(167, 243, 208, 0.22); color: #a7f3d0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span class="material-icons-round" style="font-size: 18px;">account_balance_wallet</span>
+                        </div>
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Uang Cair</div>
+                            <div id="total-balance" style="font-size: 13.5px; font-weight: 800; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">Rp 0</div>
+                        </div>
+                    </div>
+
+                    <div onclick="window.location.href='target.html'" style="background: rgba(255,255,255,0.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.22); border-radius: 16px; padding: 11px 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 0;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(253, 224, 71, 0.22); color: #fde047; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span class="material-icons-round" style="font-size: 18px;">savings</span>
+                        </div>
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Aset & Target</div>
+                            <div id="total-asset" style="font-size: 13.5px; font-weight: 800; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">Rp 0</div>
+                        </div>
                     </div>
                 </div>
             </header>
-            <div class="wallet-slider" id="wallet-container"></div>
-            
-            <div class="main-services-card">
+
+            <!-- TOMBOL AKSI CEPAT (PEMASUKAN, PENGELUARAN, TRANSFER) -->
+            <div class="main-services-card" style="margin: 16px 20px 18px 20px;">
                 <div class="service-item" onclick="window.openModalTrans('in')"><div class="service-icon teal-theme"><span class="material-icons-round">south_west</span></div><span>Pemasukan</span></div>
                 <div class="service-item" onclick="window.openModalTrans('out')"><div class="service-icon orange-theme"><span class="material-icons-round">north_east</span></div><span>Pengeluaran</span></div>
                 <div class="service-item" onclick="window.openModalTransfer()"><div class="service-icon blue-theme"><span class="material-icons-round">sync_alt</span></div><span>Transfer</span></div>
             </div>
 
+            <!-- SEKSI SLIDE DOMPET AKTIF (MINI FINTECH BANK CARDS) -->
+            <div style="padding: 0 20px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13.5px; font-weight: 800; color: #0f172a; letter-spacing: -0.2px;">Dompet Aktif</span>
+                <a href="dompet.html" style="font-size: 12px; font-weight: 800; color: #0f766e; display: inline-flex; align-items: center; gap: 3px;">Kelola <span class="material-icons-round" style="font-size: 14px;">arrow_forward</span></a>
+            </div>
+            <div class="wallet-slider" id="wallet-container" style="margin-top: 0; padding: 2px 20px 18px 20px;"></div>
+
             <!-- SMART ALOKASI WIDGET -->
-            <div id="smart-allocation-card" style="display: none; margin: 0 20px 25px 20px; background: linear-gradient(135deg, #fffde7 0%, #fff9c4 100%); border-radius: 20px; padding: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.02); border: 1px solid #ffee58;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;"><div style="width: 36px; height: 36px; background: #fff59d; color: #f57f17; border-radius: 12px; display: flex; justify-content: center; align-items: center;"><span class="material-icons-round" style="font-size: 20px;">lightbulb</span></div><div style="font-size: 14px; font-weight: 800; color: #f57f17;" id="judul-saran-alokasi">Saran Alokasi Sisa Uang</div></div>
-                <p id="teks-saran-alokasi" style="font-size: 13px; color: #666; margin-bottom: 14px; font-weight: 500; line-height: 1.5;"></p>
+            <div id="smart-allocation-card" style="display: none; margin: 0 20px 22px 20px; background: linear-gradient(135deg, #fffde7 0%, #fff9c4 100%); border-radius: 22px; padding: 16px; box-shadow: 0 6px 16px rgba(15,23,42,0.04); border: 1.5px solid #ffee58;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div style="width: 36px; height: 36px; background: #fff59d; color: #f57f17; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">
+                        <span class="material-icons-round" style="font-size: 20px;">lightbulb</span>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 800; color: #f57f17;" id="judul-saran-alokasi">Saran Alokasi Sisa Uang</div>
+                </div>
+                <div id="teks-saran-alokasi" style="font-size: 12.5px; color: #334155; margin-bottom: 14px; font-weight: 600; line-height: 1.5;"></div>
                 <div style="display: flex; gap: 8px;">
-                    <button id="btn-masuk-target" style="flex: 1; background: white; border: 1.5px solid #fbc02d; color: #f57f17; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer;">Masuk Target</button>
-                    <button id="btn-self-reward" style="flex: 1; border: none; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 800; cursor: pointer;">Self Reward</button>
+                    <button id="btn-masuk-target" style="flex: 1; background: white; border: 1.5px solid #fbc02d; color: #d97706; padding: 11px; border-radius: 13px; font-size: 12px; font-weight: 800; cursor: pointer;">Masuk Target</button>
+                    <button id="btn-self-reward" style="flex: 1; border: none; padding: 11px; border-radius: 13px; font-size: 12px; font-weight: 800; cursor: pointer;">Self Reward</button>
                 </div>
             </div>
 
-            <!-- MONITOR KENDARAAN -->
+            <!-- MONITOR KENDARAAN (ANCHOR UNTUK TRIO SLIDER) -->
             <div style="margin: 0 20px 14px 20px;" onclick="window.location.href='kendaraan.html'">
                 <div style="background: white; border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0,0.02); cursor: pointer; border: 1px solid rgba(0,0,0,0.02);">
-                    <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 44px; height: 44px; background: #e0f2f1; color: #249a95; border-radius: 14px; display: flex; justify-content: center; align-items: center;"><span class="material-icons-round" style="font-size: 22px;">two_wheeler</span></div><div><div style="font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px;">Monitor Kendaraan</div><div style="font-size: 11px; color: #777; font-weight: 600;">Pantau KM dan jadwal ganti oli</div></div></div>
+                    <div style="display: flex; align-items: center; gap: 14px;"><div style="width: 44px; height: 44px; background: #e0f2f1; color: #249a95; border-radius: 14px; display: flex; justify-content: center; align-items: center;"><span class="material-icons-round" style="font-size: 22px;">two_wheeler</span></div><div><div style="font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px;">Monitor Kendaraan</div><div style="font-size: 11px; color: #475569; font-weight: 600;">Pantau KM dan jadwal ganti oli</div></div></div>
                     <div style="background: #f8fafc; padding: 6px; border-radius: 10px; display: flex; color:#94a3b8;"><span class="material-icons-round" style="font-size: 18px;">chevron_right</span></div>
                 </div>
             </div>
@@ -95,7 +136,7 @@
                         </div>
                         <div>
                             <div style="font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 3px;">Lokasi & Strategi Mangkal</div>
-                            <div style="font-size: 11px; color: #777; font-weight: 600;" id="info-daerah-beranda">Kelola daerah & cek titik gacor per jam</div>
+                            <div style="font-size: 11px; color: #475569; font-weight: 600;" id="info-daerah-beranda">Kelola daerah & cek titik gacor per jam</div>
                         </div>
                     </div>
                     <div style="background: #f8fafc; padding: 6px; border-radius: 10px; display: flex; color:#94a3b8;">
@@ -105,7 +146,7 @@
             </div>
 
             <div class="history-wrapper">
-                <div class="history-header"><h3>Transaksi Terakhir</h3><a href="riwayat.html" style="font-size: 12px; color: #249a95; font-weight: 700;">Lihat Semua</a></div>
+                <div class="history-header"><h3>Transaksi Terakhir</h3><a href="riwayat.html" style="font-size: 12.5px; color: #0f766e; font-weight: 800;">Lihat Semua ➔</a></div>
                 <div id="transaction-container"></div>
             </div>
         </div>
@@ -149,24 +190,28 @@
                 
                 <div class="settings-item" onclick="window.logoutApp()">
                     <div class="settings-icon bg-red"><span class="material-icons-round">logout</span></div>
-                    <div class="settings-text text-red">Keluar Akun</div>
+                    <div class="settings-text text-red" style="color:#dc2626; font-weight:800;">Keluar Akun</div>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL TRANSAKSI BERANDA -->
+        <!-- MODAL TRANSAKSI BERANDA (ERGONOMIC ONE-HANDED LAYOUT) -->
         <div id="modal-input" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
                 <div class="modal-header"><h3 id="modal-title">Catat Transaksi</h3><button class="btn-close" onclick="window.closeModal('modal-input')"><span class="material-icons-round">close</span></button></div>
                 <div id="error-msg" class="error-msg"></div>
                 <input type="hidden" id="input-type"><input type="hidden" id="input-trx-id">
-                
-                <div class="form-group"><label class="form-label">Pilih Dompet</label><div class="chip-group" id="input-wallet-chips"></div><input type="hidden" id="input-wallet"></div>
-                <div class="form-group" id="category-group-container"><label class="form-label">Kategori</label><div class="chip-group" id="input-category-chips"></div><input type="hidden" id="input-category"></div>
-                
+
+                <!-- 1. HERO NOMINAL -->
+                <div class="form-group">
+                    <label class="form-label">Nominal Transaksi (Rp)</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="input-amount" class="form-input format-rupiah" placeholder="0" required>
+                </div>
+
+                <!-- 2. LAYANAN GRAB -->
                 <div class="form-group" id="grab-service-group" style="display: none;">
-                    <label class="form-label">Layanan Grab (Opsional)</label>
+                    <label class="form-label">Layanan Grab (Klik untuk isi otomatis)</label>
                     <div class="chip-group">
                         <div class="chip grab-chip" onclick="window.selectGrabService('GrabBike', this)">🏍️ GrabBike</div>
                         <div class="chip grab-chip" onclick="window.selectGrabService('GrabBike Hemat', this)">🛵 GrabBike Hemat</div>
@@ -178,26 +223,32 @@
                     <input type="hidden" id="input-grab-service">
                 </div>
 
-                <!-- INPUT LOKASI DENGAN DATALIST & TOMBOL CEPAT -->
+                <!-- 3. INPUT LOKASI PINTAR -->
                 <div class="form-group" id="location-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label class="form-label" style="margin-bottom: 0;">Area / Lokasi (Opsional)</label>
-                        <a href="lokasi.html" style="font-size: 11px; font-weight: 700; color: #249a95;">+ Kelola Lokasi</a>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px;">
+                        <label class="form-label" style="margin-bottom: 0;">Area / Lokasi Jemput (Opsional)</label>
+                        <a href="lokasi.html" style="font-size: 11.5px; font-weight: 800; color: #0f766e;">+ Kelola Lokasi</a>
                     </div>
-                    <input type="text" id="input-location" class="form-input" placeholder="Misal: Pematangsiantar" list="location-suggestions" autocomplete="off">
-                    <datalist id="location-suggestions"></datalist>
-                    <div class="chip-group" id="location-quick-chips" style="margin-top: 8px; display: none;"></div>
+                    <input type="text" id="input-location" class="form-input" placeholder="Ketik misal: Jl. Batalion" autocomplete="off" autocorrect="off" spellcheck="false">
                 </div>
-                
+
+                <!-- 4. KETERANGAN -->
+                <div class="form-group">
+                    <label class="form-label">Keterangan</label>
+                    <input type="text" id="input-note" class="form-input" placeholder="Misal: GrabBike / Beli Bensin" required>
+                </div>
+
+                <!-- 5. PILIH DOMPET & KATEGORI -->
+                <div class="form-group"><label class="form-label">Pilih Dompet</label><div class="chip-group" id="input-wallet-chips"></div><input type="hidden" id="input-wallet"></div>
+                <div class="form-group" id="category-group-container"><label class="form-label">Kategori</label><div class="chip-group" id="input-category-chips"></div><input type="hidden" id="input-category"></div>
                 <div class="form-group" id="target-wallet-group" style="display: none;"><label class="form-label">Dompet Tujuan</label><div class="chip-group" id="input-target-wallet-chips"></div><input type="hidden" id="input-target-wallet"></div>
                 
-                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <!-- 6. TANGGAL & WAKTU -->
+                <div style="display: flex; gap: 12px; margin-bottom: 14px;">
                     <div style="flex: 1;"><label class="form-label">Tanggal</label><input type="date" id="input-date" class="form-input" required></div>
                     <div style="flex: 1;"><label class="form-label">Waktu</label><input type="time" id="input-time" class="form-input" required></div>
                 </div>
 
-                <div class="form-group"><label class="form-label">Nominal (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="input-amount" class="form-input format-rupiah" placeholder="0" required></div>
-                <div class="form-group"><label class="form-label">Keterangan</label><input type="text" id="input-note" class="form-input" placeholder="Misal: Beli Kopi" required></div>
                 <button class="btn-submit" onclick="window.simpanTransaksi()">Simpan Transaksi</button>
             </div>
         </div>

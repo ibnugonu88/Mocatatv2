@@ -1,6 +1,6 @@
 // ============================================================
 // MOCATAT - CORE MODULE (core.js)
-// Tahap 1: 100% Murni Cloud Server Firestore (Tanpa Cache Lokal)
+// 100% Cloud Server Firestore + Instant Session Cache (Aman Tanpa Kedip Saldo 0)
 // ============================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -44,6 +44,7 @@ try {
 // ==========================================
 window.currentUserId = null;
 window.isUserDataLoaded = false;
+window.isTransactionsLoaded = false;
 window.dataRecoveredV1 = false;
 window.wallets = []; 
 window.categories = []; 
@@ -59,8 +60,71 @@ window.vehicleSettings = { accumulatedKmForOil: 0, activeTrip: null };
 window.zones = [];
 window.activeKatTab = 'out';
 
+const SESSION_CACHE_KEY = 'mocatat_instant_session_v1';
+
 // ==========================================
-// 2. GLOBAL UTILITIES
+// 2. INSTANT SESSION CACHE (HANYA DISIMPAN SAAT TRANSAKSI LENGKAP)
+// ==========================================
+window.saveSessionSnapshot = function() {
+    if (!window.currentUserId || !window.isUserDataLoaded || !window.isTransactionsLoaded) return;
+    try {
+        const snap = {
+            uid: window.currentUserId,
+            wallets: window.wallets || [],
+            categories: window.categories || [],
+            transactions: window.transactions || [],
+            targets: window.targets || [],
+            notifications: window.notifications || [],
+            seenBroadcastIds: window.seenBroadcastIds || [],
+            pushedBroadcastIds: window.pushedBroadcastIds || [],
+            calcPortfolio: window.calcPortfolio || [],
+            calcHistory: window.calcHistory || [],
+            kmRecords: window.kmRecords || [],
+            vehicleSettings: window.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null },
+            zones: window.zones || [],
+            dataRecoveredV1: !!window.dataRecoveredV1,
+            ts: Date.now()
+        };
+        sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(snap));
+    } catch (e) {}
+};
+
+window.loadSessionSnapshot = function(expectedUid) {
+    try {
+        const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
+        if (!raw) return false;
+        const snap = JSON.parse(raw);
+        if (!snap || (expectedUid && snap.uid !== expectedUid)) return false;
+
+        window.currentUserId = snap.uid;
+        window.wallets = Array.isArray(snap.wallets) ? snap.wallets : [];
+        window.categories = Array.isArray(snap.categories) ? snap.categories : [];
+        window.transactions = Array.isArray(snap.transactions) ? snap.transactions : [];
+        window.targets = Array.isArray(snap.targets) ? snap.targets : [];
+        window.notifications = Array.isArray(snap.notifications) ? snap.notifications : [];
+        window.seenBroadcastIds = Array.isArray(snap.seenBroadcastIds) ? snap.seenBroadcastIds : [];
+        window.pushedBroadcastIds = Array.isArray(snap.pushedBroadcastIds) ? snap.pushedBroadcastIds : [];
+        window.calcPortfolio = Array.isArray(snap.calcPortfolio) ? snap.calcPortfolio : [];
+        window.calcHistory = Array.isArray(snap.calcHistory) ? snap.calcHistory : [];
+        window.kmRecords = Array.isArray(snap.kmRecords) ? snap.kmRecords : [];
+        window.vehicleSettings = snap.vehicleSettings || { accumulatedKmForOil: 0, activeTrip: null };
+        window.zones = Array.isArray(snap.zones) ? snap.zones : [];
+        window.dataRecoveredV1 = !!snap.dataRecoveredV1;
+        window.isUserDataLoaded = true;
+        window.isTransactionsLoaded = true;
+        window.recalculateBalances();
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+window.clearSessionSnapshot = function() {
+    try { sessionStorage.removeItem(SESSION_CACHE_KEY); } catch (e) {}
+};
+
+// ==========================================
+// 3. GLOBAL UTILITIES
 // ==========================================
 window.generateUUID = () => { return crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9); };
 window.escapeHTML = (str) => { return str === null || str === undefined ? '' : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); };
@@ -80,7 +144,7 @@ window.sembunyikanLoading = () => { const loading = document.getElementById('loa
 window.closeModal = (modalId) => { const el = document.getElementById(modalId); if(el) el.classList.remove('show'); };
 
 // ==========================================
-// 3. DIALOGS & ALERTS
+// 4. DIALOGS & ALERTS
 // ==========================================
 window.customAlert = function(title, msg, type = 'info') {
     const overlay = document.getElementById('custom-dialog');
@@ -120,7 +184,7 @@ window.customConfirm = function(title, msg, onConfirm) {
 };
 
 // ==========================================
-// 4. AUTHENTICATION LOGIC
+// 5. AUTHENTICATION LOGIC
 // ==========================================
 window.isLoginMode = true;
 window.toggleAuthMode = function() {
@@ -157,13 +221,17 @@ window.prosesAuth = async function() {
 };
 
 window.logoutApp = function() { 
-    window.customConfirm("Keluar Akun", "Yakin ingin keluar dari akun ini?", () => { signOut(auth); }); 
+    window.customConfirm("Keluar Akun", "Yakin ingin keluar dari akun ini?", () => { 
+        window.clearSessionSnapshot();
+        signOut(auth); 
+    }); 
 };
 
 // ==========================================
-// 5. DATABASE LOAD, SAVE & AUTO-RECOVERY (MURNI CLOUD)
+// 6. DATABASE LOAD, SAVE & AUTO-RECOVERY (CLOUD UTAMA)
 // ==========================================
 window.getUserDocPayload = function() {
+    window.saveSessionSnapshot();
     const rawPayload = {
         wallets: window.wallets || [],
         categories: window.categories || [],
@@ -334,6 +402,7 @@ window.recoverDataFromTransactions = function() {
 };
 
 window.saveDataToFirestore = async function() { 
+    window.saveSessionSnapshot();
     window.callPageRender(); 
     if (!window.currentUserId || !window.isUserDataLoaded) return; 
     try { 
@@ -345,6 +414,7 @@ window.saveDataToFirestore = async function() {
 };
 
 window.saveDataToFirestoreSilently = async function() { 
+    window.saveSessionSnapshot();
     if (!window.currentUserId || !window.isUserDataLoaded) return; 
     try { 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true }); 
@@ -353,24 +423,37 @@ window.saveDataToFirestoreSilently = async function() {
 
 window.saveTransactionToDB = async function(trxData) {
     if(!window.currentUserId) throw new Error("No user ID");
+    window.saveSessionSnapshot();
     const cleanTrx = JSON.parse(JSON.stringify(trxData));
     await setDoc(doc(db, "users", window.currentUserId, "transactions", cleanTrx.id.toString()), cleanTrx);
 };
 
 window.deleteTransactionFromDB = async function(trxId) {
     if(!window.currentUserId) throw new Error("No user ID");
+    window.saveSessionSnapshot();
     await deleteDoc(doc(db, "users", window.currentUserId, "transactions", trxId.toString()));
 };
 
 export function initAuthListener() {
     window.injectImportButtonUI();
     window.updateNotifStatusUI();
+
+    // Buka halaman secara instan jika sudah ada memori sesi di tab ini
+    if (window.loadSessionSnapshot(null)) {
+        const navBottomInit = document.getElementById('bottom-navigation');
+        if (navBottomInit) navBottomInit.classList.add('show');
+        const urlParamsInit = new URLSearchParams(window.location.search);
+        if (urlParamsInit.get('tab') === 'akun' && window.switchTab) window.switchTab('page-akun', 3);
+        else if (window.switchTab && document.getElementById('page-dashboard')) window.switchTab('page-dashboard', 0);
+        window.callPageRender();
+    }
+
     if (!auth) return;
     onAuthStateChanged(auth, async (user) => {
         const navBottom = document.getElementById('bottom-navigation');
         if (user) {
+            const hasInstantCache = window.loadSessionSnapshot(user.uid);
             window.currentUserId = user.uid; 
-            window.isUserDataLoaded = false;
 
             const displayName = window.escapeHTML(user.displayName || "Pengguna");
             if(document.getElementById('user-name')) document.getElementById('user-name').innerText = displayName; 
@@ -382,6 +465,10 @@ export function initAuthListener() {
             const activeTab = urlParams.get('tab');
             if (activeTab === 'akun' && window.switchTab) window.switchTab('page-akun', 3);
             else if (window.switchTab && document.getElementById('page-dashboard')) window.switchTab('page-dashboard', 0);
+
+            if (hasInstantCache) {
+                window.callPageRender();
+            }
             
             try { 
                 const docRef = doc(db, "users", window.currentUserId); 
@@ -405,12 +492,23 @@ export function initAuthListener() {
                     window.dataRecoveredV1 = !!data.dataRecoveredV1;
                 } 
                 
-                // Buka kunci izin simpan SEGERA setelah dokumen profil selesai diambil dari Server
                 window.isUserDataLoaded = true;
+                // Hanya hitung ulang saldo di sini jika transaksi sudah ada di memori sesi
+                if (window.isTransactionsLoaded) {
+                    window.recalculateBalances();
+                    window.saveSessionSnapshot();
+                }
                 window.callPageRender(); 
                 
-                if (urlParams.get('action') === 'baru' && window.openTargetModal) { setTimeout(window.openTargetModal, 400); }
-                else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) { setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 400); }
+                if (!window.actionModalAutoOpened) {
+                    if (urlParams.get('action') === 'baru' && window.openTargetModal) {
+                        window.actionModalAutoOpened = true;
+                        setTimeout(window.openTargetModal, 350);
+                    } else if (urlParams.get('action') === 'setor' && urlParams.get('id') && window.openActionModal) {
+                        window.actionModalAutoOpened = true;
+                        setTimeout(() => window.openActionModal(urlParams.get('id'), 'setor'), 350);
+                    }
+                }
 
                 getDocs(collection(db, "users", window.currentUserId, "transactions"))
                     .then(async (trxSnapshot) => {
@@ -418,6 +516,7 @@ export function initAuthListener() {
                         trxSnapshot.forEach((docTrx) => {
                             window.transactions.push(docTrx.data());
                         });
+                        window.isTransactionsLoaded = true;
 
                         const recovered = window.recoverDataFromTransactions();
                         let needInitialSave = recovered || isNewUser;
@@ -436,6 +535,7 @@ export function initAuthListener() {
                         }
 
                         window.recalculateBalances(); 
+                        window.saveSessionSnapshot();
 
                         if (needInitialSave) {
                             await window.saveDataToFirestore();
@@ -448,11 +548,15 @@ export function initAuthListener() {
             } catch (error) { 
                 console.error("Data load failed:", error); 
                 window.sembunyikanLoading(); 
-                window.customAlert("Error", "Gagal memuat data dari server", "error");
+                if (!hasInstantCache) {
+                    window.customAlert("Error", "Gagal memuat data dari server", "error");
+                }
             }
         } else {
+            window.clearSessionSnapshot();
             window.currentUserId = null; 
             window.isUserDataLoaded = false;
+            window.isTransactionsLoaded = false;
             window.wallets = []; window.categories = []; window.transactions = []; window.targets = []; window.notifications = []; window.zones = [];
             window.seenBroadcastIds = []; window.pushedBroadcastIds = []; window.calcPortfolio = []; window.calcHistory = [];
             if(navBottom) navBottom.classList.remove('show'); 
@@ -464,7 +568,7 @@ export function initAuthListener() {
 }
 
 // ==========================================
-// 6. REGISTRASI SERVICE WORKER & NOTIFIKASI FIREBASE
+// 7. REGISTRASI SERVICE WORKER & NOTIFIKASI FIREBASE
 // ==========================================
 window.swRegistration = null;
 
@@ -553,7 +657,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// 7. FITUR EKSPOR & IMPOR DATA JSON BACKUP
+// 8. FITUR EKSPOR & IMPOR DATA JSON BACKUP
 // ==========================================
 window.injectImportButtonUI = function() {
     const exportItem = document.querySelector('.settings-item[onclick*="exportDataJSON"]');
@@ -698,6 +802,8 @@ window.prosesRestoreDataJSON = async function(parsed) {
         window.recoverDataFromTransactions();
         window.recalculateBalances();
         window.isUserDataLoaded = true;
+        window.isTransactionsLoaded = true;
+        window.saveSessionSnapshot();
 
         await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload());
 

@@ -1,6 +1,6 @@
 // ============================================================
 // MOCATAT - FITUR BERANDA & DASHBOARD (fitur-beranda.js)
-// Tahap 2: 100% Online Cloud Firestore (Tanpa LocalStorage)
+// Figma Pro UI Edition + 100% Online Cloud Firestore
 // ============================================================
 
 import { db, doc, setDoc } from "./core.js";
@@ -125,7 +125,7 @@ window.renderNotifications = function() {
 
     let html = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 2px;">
-            <span style="font-size: 12px; font-weight: 700; color: #64748b;">${sorted.length} Pesan Notifikasi</span>
+            <span style="font-size: 12px; font-weight: 700; color: #475569;">${sorted.length} Pesan Notifikasi</span>
             <button onclick="window.hapusSemuaNotifikasiUser()" style="background: #fee2e2; color: #dc2626; border: none; padding: 6px 11px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-family: inherit;">
                 <span class="material-icons-round" style="font-size: 14px;">delete_sweep</span> Bersihkan Semua
             </button>
@@ -136,15 +136,15 @@ window.renderNotifications = function() {
         const bg = notif.read ? 'white' : '#e0f2f1';
         const safeId = window.escapeHTML(String(notif.id || '')).replace(/'/g, "\\'");
         html += `
-        <div style="background: ${bg}; padding: 15px 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.025); border: 1px solid #f1f5f9;">
+        <div style="background: ${bg}; padding: 15px 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.025); border: 1px solid #e2e8f0;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px;">
-                <div style="font-size: 14px; font-weight: 800; color: #1a1a1a; line-height: 1.35;">${window.escapeHTML(notif.title)}</div>
+                <div style="font-size: 14px; font-weight: 800; color: #0f172a; line-height: 1.35;">${window.escapeHTML(notif.title)}</div>
                 <button onclick="window.hapusNotifikasiUser('${safeId}', ${idx})" title="Hapus Pesan" style="background: #fff1f2; color: #e11d48; border: none; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
                     <span class="material-icons-round" style="font-size: 16px;">delete_outline</span>
                 </button>
             </div>
-            <div style="font-size: 12.5px; color: #475569; margin-bottom: 8px; line-height: 1.5;">${window.escapeHTML(notif.body)}</div>
-            <div style="font-size: 10.5px; color: #94a3b8; font-weight: 700;">🗓️ ${window.escapeHTML(notif.date)}</div>
+            <div style="font-size: 12.5px; color: #334155; margin-bottom: 8px; line-height: 1.5; font-weight: 500;">${window.escapeHTML(notif.body)}</div>
+            <div style="font-size: 10.5px; color: #64748b; font-weight: 700;">🗓️ ${window.escapeHTML(notif.date)}</div>
         </div>`;
     });
 
@@ -153,13 +153,100 @@ window.renderNotifications = function() {
 };
 
 // ==========================================
-// 2. SLIDE 3 FITUR (MONITOR OLI, RADAR, EDUKASI)
+// 2. KOMPONEN DESain FIGMA (DOMPET MINI CARD & TRIO SLIDER)
 // ==========================================
 window.ensureRedesignStyles = function() {
     if (!document.getElementById('beranda-redesign-styles')) {
         const st = document.createElement('style');
         st.id = 'beranda-redesign-styles';
         st.innerHTML = `
+            /* MINI FINTECH WALLET CARDS */
+            .fintech-wallet-card {
+                min-width: 158px;
+                max-width: 175px;
+                background: #ffffff;
+                padding: 13px 14px;
+                border-radius: 18px;
+                border: 1.5px solid #e2e8f0;
+                box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.05);
+                scroll-snap-align: start;
+                flex-shrink: 0;
+                position: relative;
+                overflow: hidden;
+                cursor: pointer;
+                transition: transform 0.15s ease, border-color 0.15s ease;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .fintech-wallet-card:active {
+                transform: scale(0.96);
+            }
+            .fintech-wallet-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 6px;
+            }
+            .fintech-wallet-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .fintech-wallet-badge {
+                font-size: 9px;
+                font-weight: 800;
+                padding: 2px 6px;
+                border-radius: 6px;
+                letter-spacing: 0.4px;
+                text-transform: uppercase;
+            }
+            .fintech-wallet-title {
+                font-size: 12px;
+                font-weight: 700;
+                color: #475569;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 2px;
+            }
+            .fintech-wallet-balance {
+                font-size: 15px;
+                font-weight: 800;
+                color: #0f172a;
+                letter-spacing: -0.4px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .fintech-wallet-add {
+                min-width: 115px;
+                background: #f8fafc;
+                border: 1.5px dashed #cbd5e1;
+                border-radius: 18px;
+                padding: 13px;
+                scroll-snap-align: start;
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                color: #0f766e;
+                cursor: pointer;
+                transition: transform 0.15s ease, background 0.15s ease;
+            }
+            .fintech-wallet-add:active {
+                transform: scale(0.96);
+                background: #f0fdfa;
+            }
+
+            /* TRIO SLIDER (OLI, RADAR, EDUKASI) */
             .trio-slider-track {
                 display: flex;
                 gap: 12px;
@@ -218,7 +305,7 @@ window.ensureRedesignStyles = function() {
             .trio-title {
                 font-size: 13.5px;
                 font-weight: 800;
-                color: #1a1a1a;
+                color: #0f172a;
                 margin-bottom: 2px;
                 white-space: nowrap;
                 overflow: hidden;
@@ -227,7 +314,7 @@ window.ensureRedesignStyles = function() {
             .trio-desc {
                 font-size: 11.5px;
                 font-weight: 600;
-                color: #64748b;
+                color: #475569;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -251,6 +338,62 @@ window.ensureRedesignStyles = function() {
                 width: 18px;
                 border-radius: 4px;
                 background: #249a95;
+            }
+            .daily-target-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 10px;
+            }
+            .daily-target-item {
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid rgba(0, 0, 0, 0.07);
+                border-radius: 14px;
+                padding: 10px 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .daily-target-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+            }
+            .daily-target-name {
+                font-size: 12.5px;
+                font-weight: 800;
+                color: #0f172a;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                min-width: 0;
+            }
+            .daily-target-btn {
+                background: #249a95;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 8px;
+                font-size: 11px;
+                font-weight: 800;
+                cursor: pointer;
+                white-space: nowrap;
+                flex-shrink: 0;
+                font-family: inherit;
+            }
+            .daily-target-btn:active {
+                transform: scale(0.96);
+            }
+            .daily-target-done-badge {
+                background: #dcfce7;
+                color: #15803d;
+                padding: 4px 8px;
+                border-radius: 8px;
+                font-size: 10.5px;
+                font-weight: 800;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
         `;
         document.head.appendChild(st);
@@ -399,9 +542,107 @@ window.setupRedesignedBerandaLayout = function() {
 };
 
 // ==========================================
-// 3. RENDER UTAMA BERANDA (DASHBOARD)
+// 3. HELPER SAPAAN WAKTU & KALKULASI TARGET HARIAN
+// ==========================================
+window.updateHeroGreetingProfile = function() {
+    const hour = new Date().getHours();
+    let greetText = 'Selamat Malam 🌙';
+    if (hour >= 4 && hour < 11) greetText = 'Selamat Pagi ☀️';
+    else if (hour >= 11 && hour < 15) greetText = 'Selamat Siang 🌤️';
+    else if (hour >= 15 && hour < 19) greetText = 'Selamat Sore 🌇';
+
+    const greetEl = document.getElementById('greeting-time-text');
+    if (greetEl) greetEl.innerText = greetText;
+
+    const nameEl = document.getElementById('user-name');
+    const avatarEl = document.getElementById('hero-avatar-initial');
+    if (nameEl && avatarEl) {
+        const rawName = (nameEl.innerText || 'Pengguna').trim();
+        // Ambil inisial huruf pertama yang bersih
+        const cleanForInitial = rawName.replace(/^halo\s*/i, '').trim() || rawName;
+        avatarEl.innerText = cleanForInitial.charAt(0).toUpperCase() || 'M';
+    }
+};
+
+window.hitungRincianTargetHarian = function() {
+    const todayStr = window.getLocalDateString();
+    const todayObj = new Date();
+    todayObj.setHours(0, 0, 0, 0);
+
+    // Hanya ambil target yang berstatus Aktif DAN memiliki nominal target (> 0)
+    const candidateTargets = (window.targets || []).filter(t => t.isActive !== false && Number(t.targetAmount || 0) > 0);
+    const results = [];
+
+    candidateTargets.forEach(t => {
+        let setorHariIni = 0;
+        (window.transactions || []).forEach(trx => {
+            if (trx.date === todayStr && String(trx.targetId) === String(t.id) && String(trx.categoryId) === '999') {
+                if (trx.type === 'out') setorHariIni += Number(trx.amount || 0);
+                else if (trx.type === 'in') setorHariIni -= Number(trx.amount || 0);
+            }
+        });
+        if (setorHariIni < 0) setorHariIni = 0;
+
+        const isInvest = t.tipe === 'investasi';
+        const terkumpulSekarang = isInvest
+            ? Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount || 0))
+            : Number(t.currentAmount || 0);
+        const targetAmt = Number(t.targetAmount || 0);
+
+        const terkumpulAwalHari = Math.max(0, terkumpulSekarang - setorHariIni);
+        if (terkumpulAwalHari >= targetAmt && setorHariIni === 0) {
+            return;
+        }
+
+        const sisaUangSekarang = Math.max(0, targetAmt - terkumpulSekarang);
+        const sisaUangAwalHari = Math.max(0, targetAmt - terkumpulAwalHari);
+
+        let targetHarian = 0;
+        let infoWaktu = '';
+
+        if (t.deadline) {
+            const deadlineDate = new Date(t.deadline);
+            deadlineDate.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((deadlineDate - todayObj) / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                targetHarian = Math.ceil(sisaUangAwalHari / diffDays);
+                infoWaktu = `Sisa ${diffDays} hr`;
+            } else {
+                targetHarian = sisaUangAwalHari;
+                infoWaktu = diffDays === 0 ? 'Hari terakhir' : `Terlambat ${Math.abs(diffDays)} hr`;
+            }
+        } else {
+            targetHarian = Math.ceil(sisaUangAwalHari / 30);
+            infoWaktu = 'Rutin harian';
+        }
+
+        const kurangHariIni = Math.max(0, targetHarian - setorHariIni);
+        const sudahSelesaiHariIni = (targetHarian > 0 && setorHariIni >= targetHarian) || (sisaUangSekarang <= 0);
+        const pctHariIni = targetHarian > 0 ? Math.min(100, Math.round((setorHariIni / targetHarian) * 100)) : 100;
+
+        results.push({
+            id: t.id,
+            name: t.name,
+            tipe: t.tipe || 'biasa',
+            targetHarian,
+            setorHariIni,
+            kurangHariIni,
+            sudahSelesaiHariIni,
+            pctHariIni,
+            infoWaktu
+        });
+    });
+
+    return results;
+};
+
+// ==========================================
+// 4. RENDER UTAMA BERANDA (DASHBOARD)
 // ==========================================
 window.renderDashboard = function() {
+    window.ensureRedesignStyles();
+    window.updateHeroGreetingProfile();
+
     const walletContainer = document.getElementById('wallet-container'); 
     if (!walletContainer) return;
     window.renderNotifications(); 
@@ -412,9 +653,50 @@ window.renderDashboard = function() {
     
     const dompetAktif = window.wallets.filter(w => !w.isArchived);
     dompetAktif.forEach(wallet => { 
-        totalSaldo += Number(wallet.balance||0);
-        wHTML += `<div class="wallet-card"><div class="wallet-name"><span class="material-icons-round ${wallet.colorClass}">${wallet.icon}</span> ${window.escapeHTML(wallet.name)}</div><div class="wallet-saldo">${window.formatRupiah(wallet.balance)}</div></div>`; 
+        totalSaldo += Number(wallet.balance || 0);
+
+        const wType = wallet.type || 'cash';
+        let accentColor = '#ea580c';
+        let softBg = '#ffedd5';
+        let badgeLabel = 'TUNAI';
+
+        if (wType === 'ewallet') {
+            accentColor = '#1d4ed8';
+            softBg = '#dbeafe';
+            badgeLabel = 'E-WALLET';
+        } else if (wType === 'bank') {
+            accentColor = '#0f766e';
+            softBg = '#ccfbf1';
+            badgeLabel = 'BANK';
+        }
+
+        const cleanWName = typeof window.unescapeHTML === 'function' ? window.unescapeHTML(wallet.name) : wallet.name;
+
+        wHTML += `
+        <div class="fintech-wallet-card" onclick="window.location.href='dompet.html'">
+            <div style="position:absolute; top:0; left:0; right:0; height:3.5px; background:${accentColor};"></div>
+            <div class="fintech-wallet-top">
+                <div class="fintech-wallet-icon" style="background:${softBg}; color:${accentColor};">
+                    <span class="material-icons-round" style="font-size:18px;">${wallet.icon || 'account_balance_wallet'}</span>
+                </div>
+                <span class="fintech-wallet-badge" style="background:${softBg}; color:${accentColor};">${badgeLabel}</span>
+            </div>
+            <div style="min-width:0;">
+                <div class="fintech-wallet-title">${window.escapeHTML(cleanWName)}</div>
+                <div class="fintech-wallet-balance">${window.formatRupiah(wallet.balance)}</div>
+            </div>
+        </div>`; 
     });
+
+    // Tambahkan kartu pintasan "+ Dompet" di ujung kanan slider
+    wHTML += `
+    <div class="fintech-wallet-add" onclick="window.location.href='dompet.html'">
+        <div style="width:32px; height:32px; border-radius:50%; background:#e0f2f1; color:#0f766e; display:flex; align-items:center; justify-content:center;">
+            <span class="material-icons-round" style="font-size:18px;">add</span>
+        </div>
+        <span style="font-size:11px; font-weight:800;">+ Dompet</span>
+    </div>`;
+
     walletContainer.innerHTML = wHTML; 
     
     let totalAset = 0;
@@ -429,76 +711,150 @@ window.renderDashboard = function() {
     if (document.getElementById('total-balance')) document.getElementById('total-balance').innerText = window.formatRupiah(totalSaldo);
     if (document.getElementById('total-asset')) document.getElementById('total-asset').innerText = window.formatRupiah(totalAset);
 
+    // =========================================================
+    // WIDGET PENGINGAT & ALOKASI SETIAP TARGET HARIAN AKTIF
+    // =========================================================
     const allocationCard = document.getElementById('smart-allocation-card');
     if (allocationCard) {
-        if (totalSaldo > 50000) { 
-            allocationCard.style.display = 'block'; 
-            const todayStr = window.getLocalDateString();
-            const sudahNabung = window.transactions.some(t => t.date === todayStr && String(t.categoryId) === '999' && t.type === 'out' && t.categoryName === 'Alokasi Target');
-            const btnTarget = document.getElementById('btn-masuk-target'); 
-            const btnReward = document.getElementById('btn-self-reward'); 
-            const teksSaran = document.getElementById('teks-saran-alokasi'); 
-            const judulSaran = document.getElementById('judul-saran-alokasi');
-            if (sudahNabung) {
-                judulSaran.innerText = "Target Harian Selesai! 🎉"; 
-                judulSaran.style.color = "#2e7d32"; 
-                allocationCard.style.background = "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"; 
-                allocationCard.style.border = "1px solid #86efac"; 
-                allocationCard.querySelector('.material-icons-round').parentNode.style.background = "#bbf7d0"; 
-                allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#16a34a"; 
-                allocationCard.querySelector('.material-icons-round').innerText = "task_alt";
-                teksSaran.innerHTML = `Kewajiban nabung hari ini sudah beres. Sisa uang cair <strong style="color: #16a34a;">${window.formatRupiah(totalSaldo)}</strong> bebas kamu pakai buat jajan!`;
-                if (btnTarget) btnTarget.style.display = 'none'; 
-                if (btnReward) { 
-                    btnReward.style.background = '#16a34a'; 
-                    btnReward.style.color = 'white'; 
-                    btnReward.innerText = "Nikmati Self-Reward ☕"; 
-                    btnReward.onclick = () => window.customAlert('Enjoy! 🎉', 'Silakan pakai uang sisanya buat santai hari ini!'); 
+        const rincianTarget = window.hitungRincianTargetHarian();
+        const btnTarget = document.getElementById('btn-masuk-target'); 
+        const btnReward = document.getElementById('btn-self-reward'); 
+        const teksSaran = document.getElementById('teks-saran-alokasi'); 
+        const judulSaran = document.getElementById('judul-saran-alokasi');
+        const iconEl = allocationCard.querySelector('.material-icons-round');
+        const iconWrap = iconEl ? iconEl.parentNode : null;
+
+        if (rincianTarget.length > 0) {
+            allocationCard.style.display = 'block';
+
+            const semuaSelesai = rincianTarget.every(item => item.sudahSelesaiHariIni);
+            const totalTargetHariIni = rincianTarget.reduce((acc, item) => acc + item.targetHarian, 0);
+            const totalSetorHariIni = rincianTarget.reduce((acc, item) => acc + item.setorHariIni, 0);
+            const totalKurangHariIni = rincianTarget.reduce((acc, item) => acc + item.kurangHariIni, 0);
+            const jmlBelumSelesai = rincianTarget.filter(item => !item.sudahSelesaiHariIni).length;
+
+            let listTargetHTML = `<div class="daily-target-list">`;
+            rincianTarget.forEach(item => {
+                const iconTipe = item.tipe === 'investasi' ? 'trending_up' : 'savings';
+                const colorTipe = item.tipe === 'investasi' ? '#4338ca' : '#249a95';
+                const barColor = item.sudahSelesaiHariIni ? '#16a34a' : (item.setorHariIni > 0 ? '#f59e0b' : '#cbd5e1');
+                const cleanName = typeof window.unescapeHTML === 'function' ? window.unescapeHTML(item.name) : item.name;
+
+                let statusNominalHTML = '';
+                if (item.sudahSelesaiHariIni) {
+                    statusNominalHTML = `<span style="color:#15803d; font-weight:800;">Terkumpul: ${window.formatRupiah(item.setorHariIni)} / ${window.formatRupiah(item.targetHarian)}</span>`;
+                } else if (item.setorHariIni > 0) {
+                    statusNominalHTML = `<span>Masuk: <strong style="color:#d97706;">${window.formatRupiah(item.setorHariIni)}</strong> / ${window.formatRupiah(item.targetHarian)}</span> <span style="color:#dc2626; font-weight:800;">Kurang ${window.formatRupiah(item.kurangHariIni)}</span>`;
+                } else {
+                    statusNominalHTML = `<span>Target hari ini: <strong style="color:#0f172a;">${window.formatRupiah(item.targetHarian)}</strong></span> <span style="color:#64748b;">(${window.escapeHTML(item.infoWaktu)})</span>`;
+                }
+
+                const actionButtonHTML = item.sudahSelesaiHariIni
+                    ? `<span class="daily-target-done-badge">✓ Lunas Hari Ini</span>`
+                    : `<button class="daily-target-btn" onclick="window.location.href='target.html?action=setor&id=${encodeURIComponent(item.id)}&nominal=${item.kurangHariIni}'">+ Setor ${window.formatRupiah(item.kurangHariIni)}</button>`;
+
+                listTargetHTML += `
+                    <div class="daily-target-item">
+                        <div class="daily-target-top">
+                            <div class="daily-target-name">
+                                <span class="material-icons-round" style="font-size:16px; color:${colorTipe}; flex-shrink:0;">${iconTipe}</span>
+                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(cleanName)}</span>
+                            </div>
+                            ${actionButtonHTML}
+                        </div>
+                        <div style="width:100%; height:5px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                            <div style="width:${item.pctHariIni}%; height:100%; background:${barColor}; border-radius:4px;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#475569; font-weight:600; flex-wrap:wrap; gap:4px;">
+                            ${statusNominalHTML}
+                        </div>
+                    </div>
+                `;
+            });
+            listTargetHTML += `</div>`;
+
+            if (semuaSelesai) {
+                judulSaran.innerText = "Target Harian Selesai! 🎉";
+                judulSaran.style.color = "#15803d";
+                allocationCard.style.background = "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
+                allocationCard.style.border = "1.5px solid #86efac";
+                if (iconWrap) { iconWrap.style.background = "#bbf7d0"; iconWrap.style.color = "#16a34a"; }
+                if (iconEl) iconEl.innerText = "task_alt";
+
+                teksSaran.innerHTML = `Mantap! Seluruh target harianmu hari ini (<strong style="color:#15803d;">${window.formatRupiah(totalSetorHariIni)}</strong>) sudah terpenuhi sesuai nominal. Sisa uang cair <strong style="color:#16a34a;">${window.formatRupiah(totalSaldo)}</strong> bebas kamu pakai!${listTargetHTML}`;
+
+                if (btnTarget) btnTarget.style.display = 'none';
+                if (btnReward) {
+                    btnReward.style.background = '#16a34a';
+                    btnReward.style.color = 'white';
+                    btnReward.innerText = "Nikmati Self-Reward ☕";
+                    btnReward.onclick = () => window.customAlert('Enjoy! 🎉', 'Semua target harian sudah lunas sesuai nominal. Silakan nikmati hasil kerjamu hari ini!');
                 }
             } else {
-                judulSaran.innerText = "Saran Alokasi Sisa Uang"; 
-                judulSaran.style.color = "#f57f17"; 
-                allocationCard.style.background = "linear-gradient(135deg, #fffde7 0%, #fff9c4 100%)"; 
-                allocationCard.style.border = "1px solid #ffee58"; 
-                allocationCard.querySelector('.material-icons-round').parentNode.style.background = "#fff59d"; 
-                allocationCard.querySelector('.material-icons-round').parentNode.style.color = "#f57f17"; 
-                allocationCard.querySelector('.material-icons-round').innerText = "lightbulb";
-                const saranNominal = Math.floor(totalSaldo * 0.2); 
-                
-                let activeTargets = window.targets.filter(t => {
-                    if (t.isActive === false) return false;
-                    const terkumpul = t.tipe === 'investasi' ? Number(t.nilaiTerkini || t.currentAmount || 0) : Number(t.currentAmount || 0);
-                    return Number(t.targetAmount || 0) === 0 || terkumpul < Number(t.targetAmount || 0);
-                }); 
-                activeTargets.sort((a, b) => new Date(a.deadline||'2099-01-01') - new Date(a.deadline||'2099-01-01'));
-                
-                let saranTargetText = "";
-                if (activeTargets.length > 0) { 
-                    saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) ke target <strong>${window.escapeHTML(activeTargets[0].name)}</strong>!`; 
-                    if (btnTarget) btnTarget.innerText = "Setor Tabungan"; 
-                } else { 
-                    saranTargetText = `Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) buat target impianmu!`; 
-                    if (btnTarget) btnTarget.innerText = "Buat Target Baru"; 
+                judulSaran.innerText = `Pengingat Target Harian (${jmlBelumSelesai} Belum Lunas)`;
+                judulSaran.style.color = "#d97706";
+                allocationCard.style.background = "linear-gradient(135deg, #fffde7 0%, #fef9c3 100%)";
+                allocationCard.style.border = "1.5px solid #fde047";
+                if (iconWrap) { iconWrap.style.background = "#fef08a"; iconWrap.style.color = "#d97706"; }
+                if (iconEl) iconEl.innerText = "lightbulb";
+
+                const infoProgresAtas = totalSetorHariIni > 0
+                    ? `Hari ini baru terkumpul <strong>${window.formatRupiah(totalSetorHariIni)}</strong> dari total kewajiban <strong>${window.formatRupiah(totalTargetHariIni)}/hari</strong> (kurang <strong style="color:#dc2626;">${window.formatRupiah(totalKurangHariIni)}</strong> lagi).`
+                    : `Total alokasi hari ini <strong>${window.formatRupiah(totalTargetHariIni)}</strong> untuk <strong>${rincianTarget.length} target aktif</strong>. Saldo cairmu: <strong style="color:#0f172a;">${window.formatRupiah(totalSaldo)}</strong>.`;
+
+                teksSaran.innerHTML = `${infoProgresAtas}${listTargetHTML}`;
+
+                const firstUnfinished = rincianTarget.find(item => !item.sudahSelesaiHariIni) || rincianTarget[0];
+                if (btnTarget) {
+                    btnTarget.style.display = 'block';
+                    btnTarget.style.background = 'white';
+                    btnTarget.style.border = '1.5px solid #f59e0b';
+                    btnTarget.style.color = '#d97706';
+                    btnTarget.innerText = "Buka Semua Target";
+                    btnTarget.onclick = function() {
+                        window.location.href = `target.html?action=setor&id=${encodeURIComponent(firstUnfinished.id)}&nominal=${firstUnfinished.kurangHariIni}`;
+                    };
                 }
-                teksSaran.innerHTML = `Kamu punya saldo cair <strong style="color: #1a1a1a;">${window.formatRupiah(totalSaldo)}</strong>. ${saranTargetText}`;
-                if (btnTarget) { 
-                    btnTarget.style.display = 'block'; 
-                    btnTarget.style.background = 'white'; 
-                    btnTarget.style.border = '1.5px solid #fbc02d'; 
-                    btnTarget.style.color = '#f57f17'; 
-                    btnTarget.onclick = function() { 
-                        if (activeTargets.length > 0) { window.location.href = `target.html?action=setor&id=${activeTargets[0].id}`; } 
-                        else { window.location.href = `target.html?action=baru`; } 
-                    }; 
-                }
-                if (btnReward) { 
-                    btnReward.style.background = '#ffe0b2'; 
-                    btnReward.style.color = '#ef6c00'; 
-                    btnReward.innerText = "Self Reward"; 
-                    btnReward.onclick = () => window.customAlert('Akses Ditolak!', 'Nabung dulu sebelum jajan! 🛑', 'warning'); 
+                if (btnReward) {
+                    btnReward.style.background = '#ffedd5';
+                    btnReward.style.color = '#c2410c';
+                    btnReward.innerText = "Self Reward";
+                    btnReward.onclick = () => window.customAlert(
+                        'Target Belum Penuh! 🛑',
+                        `Setoran target harianmu hari ini masih kurang ${window.formatRupiah(totalKurangHariIni)} lagi dari target seharusnya (${window.formatRupiah(totalTargetHariIni)}/hari). Yuk lunasi dulu sebelum jajan!`,
+                        'warning'
+                    );
                 }
             }
-        } else { allocationCard.style.display = 'none'; }
+        } else if (totalSaldo > 50000) {
+            allocationCard.style.display = 'block';
+            judulSaran.innerText = "Saran Alokasi Sisa Uang";
+            judulSaran.style.color = "#d97706";
+            allocationCard.style.background = "linear-gradient(135deg, #fffde7 0%, #fef9c3 100%)";
+            allocationCard.style.border = "1.5px solid #fde047";
+            if (iconWrap) { iconWrap.style.background = "#fef08a"; iconWrap.style.color = "#d97706"; }
+            if (iconEl) iconEl.innerText = "lightbulb";
+
+            const saranNominal = Math.floor(totalSaldo * 0.2);
+            teksSaran.innerHTML = `Kamu punya saldo cair <strong style="color: #0f172a;">${window.formatRupiah(totalSaldo)}</strong>. Amankan 20% (<strong>${window.formatRupiah(saranNominal)}</strong>) buat target impianmu!`;
+
+            if (btnTarget) {
+                btnTarget.style.display = 'block';
+                btnTarget.style.background = 'white';
+                btnTarget.style.border = '1.5px solid #f59e0b';
+                btnTarget.style.color = '#d97706';
+                btnTarget.innerText = "Buat Target Baru";
+                btnTarget.onclick = function() { window.location.href = `target.html?action=baru`; };
+            }
+            if (btnReward) {
+                btnReward.style.background = '#ffedd5';
+                btnReward.style.color = '#c2410c';
+                btnReward.innerText = "Self Reward";
+                btnReward.onclick = () => window.customAlert('Akses Ditolak!', 'Buat dan isi target tabungan dulu sebelum jajan! 🛑', 'warning');
+            }
+        } else {
+            allocationCard.style.display = 'none';
+        }
     }
 
     const historyContainer = document.getElementById('transaction-container');

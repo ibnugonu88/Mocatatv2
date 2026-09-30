@@ -3,17 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Target & Investasi - MoCatat</title>
-    <meta name="theme-color" content="#249a95">
+    <title>Target Keuangan - MoCatat</title>
+    <meta name="theme-color" content="#166e6a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="1789744450301.png">
+    <link rel="icon" type="image/png" href="1789744567730.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
-    <!-- PANGGIL FILE CSS SENTRAL -->
+
     <link rel="stylesheet" href="style.css">
+    <style>
+        .app-container {
+            padding-bottom: calc(165px + env(safe-area-inset-bottom));
+        }
+        .target-hero-card {
+            background: linear-gradient(145deg, #166e6a 0%, #249a95 60%, #2bb0aa 100%);
+            margin: 16px 20px 16px 20px;
+            padding: 22px 20px;
+            border-radius: 24px;
+            color: white;
+            box-shadow: 0 12px 28px -4px rgba(22, 110, 106, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .target-pro-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+            margin-bottom: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: opacity 0.2s ease, background 0.2s ease;
+        }
+        .target-pro-card.inactive-card {
+            opacity: 0.72;
+            background: #f8fafc;
+        }
+        .target-badge-pill {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
+
+        /* SAKELAR GESER ON/OFF ALA FIGMA / iOS */
+        .target-switch-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 3px 8px 3px 4px;
+            border-radius: 20px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .target-switch-wrap:active {
+            transform: scale(0.95);
+        }
+        .target-switch-wrap.on {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        .target-switch-track {
+            width: 32px;
+            height: 18px;
+            background: #94a3b8;
+            border-radius: 20px;
+            position: relative;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+        }
+        .target-switch-wrap.on .target-switch-track {
+            background: #16a34a;
+        }
+        .target-switch-knob {
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+        .target-switch-wrap.on .target-switch-knob {
+            transform: translateX(14px);
+        }
+        .target-switch-label {
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #64748b;
+            line-height: 1;
+        }
+        .target-switch-wrap.on .target-switch-label {
+            color: #15803d;
+        }
+
+        .target-action-grid {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #e2e8f0;
+        }
+        .btn-target-act {
+            flex: 1;
+            border: none;
+            padding: 10px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-family: inherit;
+            transition: transform 0.12s ease;
+        }
+        .btn-target-act:active {
+            transform: scale(0.96);
+        }
+        .hero-money-input {
+            font-size: 22px !important;
+            font-weight: 800 !important;
+            color: #0f766e !important;
+            background: #f0fdfa !important;
+            border: 2px solid #99f6e4 !important;
+            text-align: left;
+        }
+        .fab-above-nav {
+            bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        }
+        .type-switch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .type-switch-btn {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 11px 10px;
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #475569;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+        .type-switch-btn.active {
+            background: #e0f2f1;
+            border-color: #249a95;
+            color: #0f766e;
+        }
+    </style>
 </head>
 <body>
-
     <div class="app-container">
+
         <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
 
         <header class="header-simple">
@@ -21,56 +190,840 @@
             <span>Target & Investasi</span>
         </header>
 
-        <div class="list-wrapper" id="target-container" style="padding-bottom: 80px;"></div>
+        <!-- HERO PORTFOLIO SUMMARY CARD -->
+        <div class="target-hero-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <div style="font-size: 11px; font-weight: 800; opacity: 0.92; text-transform: uppercase; letter-spacing: 0.8px;">Total Aset & Tabungan</div>
+                <div id="hero-target-count-badge" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;">0 Target Aktif</div>
+            </div>
+            <div id="hero-total-asset" style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; text-shadow: 0 4px 10px rgba(0,0,0,0.12);">Rp 0</div>
+            <div id="hero-daily-obligation" style="font-size: 11.5px; opacity: 0.92; font-weight: 600; margin-bottom: 14px;">Alokasi harian: Rp 0/hari</div>
 
-        <button class="fab-tambah" onclick="window.openTargetModal()">
-            <span class="material-icons-round">add</span> Tambah Target Baru
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                <div style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 13px; padding: 10px 12px;">
+                    <div style="font-size: 10.5px; font-weight: 700; opacity: 0.9; margin-bottom: 3px;">🐷 Tabungan Target</div>
+                    <div id="hero-tabungan-val" style="font-size: 14px; font-weight: 800; color: #ffffff;">Rp 0</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 13px; padding: 10px 12px;">
+                    <div style="font-size: 10.5px; font-weight: 700; opacity: 0.9; margin-bottom: 3px;">📈 Nilai Investasi</div>
+                    <div id="hero-invest-val" style="font-size: 14px; font-weight: 800; color: #fde047;">Rp 0</div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 5px; opacity: 0.95;">
+                    <span>Progres Seluruh Target</span>
+                    <span id="hero-overall-pct">0%</span>
+                </div>
+                <div style="height: 8px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.22);">
+                    <div id="hero-overall-bar" style="width: 0%; height: 100%; background: #fde047; border-radius: 4px; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER TAB STATUS TARGET -->
+        <div class="modern-tabs" style="margin-bottom: 12px;">
+            <div class="modern-tab active" id="tab-target-active" onclick="window.switchTargetFilter('active')">🔥 Aktif Dikejar</div>
+            <div class="modern-tab" id="tab-target-all" onclick="window.switchTargetFilter('all')">📚 Semua Target</div>
+        </div>
+
+        <!-- DAFTAR KARTU TARGET -->
+        <div class="list-wrapper" style="padding-top: 4px;" id="target-page-container"></div>
+
+        <button class="fab-tambah fab-above-nav" onclick="window.openModalTargetPro()">
+            <span class="material-icons-round">add_task</span> Buat Target Baru
         </button>
 
-        <div id="modal-target" class="modal-overlay">
+        <!-- MODAL 1: TAMBAH / EDIT TARGET -->
+        <div id="modal-target-pro" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
-                <div class="modal-header"><h3 id="target-modal-title">Buat Baru</h3><button class="btn-close" onclick="window.closeModal('modal-target')"><span class="material-icons-round">close</span></button></div>
-                <div id="target-error-msg" class="error-msg"></div>
-                <input type="hidden" id="target-id">
-                
-                <div class="form-group"><label class="form-label">Jenis</label><div class="segmented-control" id="target-type-segment"><div class="segmented-btn active" onclick="window.selectTargetType('biasa')">Tabungan Biasa</div><div class="segmented-btn" onclick="window.selectTargetType('investasi')">Investasi</div></div><input type="hidden" id="target-type" value="biasa"></div>
-                <div class="form-group"><label class="form-label" id="label-name">Nama Tabungan / Tujuan</label><input type="text" id="target-name" class="form-input" placeholder="Misal: Beli Motor, Dana Darurat" required></div>
-                <div class="form-group"><label class="form-label" id="label-amount">Target Uang (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="target-amount" class="form-input format-rupiah" placeholder="Isi 0 jika tanpa target mutlak"></div>
-                <div class="form-group" id="group-current-amount"><label class="form-label" id="label-current-amount">Saldo Tabungan Saat Ini (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="target-current-amount" class="form-input format-rupiah" placeholder="0"></div>
-                <div class="form-group" id="group-deadline"><label class="form-label">Tenggat Waktu (Opsional)</label><input type="date" id="target-deadline" class="form-input"></div>
-                <button class="btn-submit" onclick="window.simpanTarget()">Simpan</button>
+                <div class="modal-header">
+                    <h3 id="modal-target-pro-title">Buat Target Baru</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-target-pro')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="target-pro-error" class="error-msg"></div>
+                <input type="hidden" id="target-pro-id">
+                <input type="hidden" id="target-pro-type" value="biasa">
+
+                <label class="form-label">Jenis Target</label>
+                <div class="type-switch-grid">
+                    <button type="button" class="type-switch-btn active" id="btn-type-biasa" onclick="window.selectTargetTypePro('biasa')">
+                        <span class="material-icons-round" style="font-size:18px;">savings</span> Tabungan Biasa
+                    </button>
+                    <button type="button" class="type-switch-btn" id="btn-type-investasi" onclick="window.selectTargetTypePro('investasi')">
+                        <span class="material-icons-round" style="font-size:18px;">trending_up</span> Aset Investasi
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nama Target Impian / Kewajiban</label>
+                    <input type="text" id="target-pro-name" class="form-input" placeholder="Contoh: Kosan / Dana Darurat / Beli Ban" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nominal Target yang Ingin Dicapai (Rp)</label>
+                    <input type="text" inputmode="numeric" id="target-pro-amount" class="form-input hero-money-input" placeholder="0" oninput="window.formatRupiahInputLive(this); window.updateTargetModalPreview();">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tenggat Waktu / Deadline (Opsional)</label>
+                    <input type="date" id="target-pro-deadline" class="form-input" onchange="window.updateTargetModalPreview()">
+                </div>
+
+                <div id="target-pro-calc-preview" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; font-weight: 700; color: #166534; display: none;">
+                </div>
+
+                <button class="btn-submit" id="btn-save-target-pro" onclick="window.simpanTargetPro()">Simpan Target</button>
             </div>
         </div>
 
-        <div id="modal-action" class="modal-overlay">
+        <!-- MODAL 2: SETOR DANA KE TARGET -->
+        <div id="modal-setor-pro" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
-                <div class="modal-header"><h3 id="action-modal-title">Aksi</h3><button class="btn-close" onclick="window.closeModal('modal-action')"><span class="material-icons-round">close</span></button></div>
-                <div id="action-error-msg" class="error-msg"></div>
-                
-                <input type="hidden" id="action-target-id"><input type="hidden" id="action-type"> 
+                <div class="modal-header">
+                    <h3 id="modal-setor-pro-title">Setor ke Target 🎯</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-setor-pro')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="setor-pro-error" class="error-msg"></div>
+                <input type="hidden" id="setor-pro-target-id">
+                <input type="hidden" id="setor-pro-wallet-id">
 
-                <div id="area-update-nilai" style="display:none;">
-                    <div class="form-group">
-                        <label class="form-label">Nilai Pasar Terkini (Rp)</label>
-                        <p style="font-size:12.5px; color:#64748b; margin-top:-6px; margin-bottom:12px; line-height: 1.4;">Masukkan nilai total portofolio Reksadana/Saham Anda saat ini secara keseluruhan.</p>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" id="update-amount" class="form-input format-rupiah" placeholder="0">
-                    </div>
+                <div id="setor-pro-info-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; font-size: 12px; color: #475569; font-weight: 600;"></div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="form-label">Nominal Setoran (Rp)</label>
+                    <input type="text" inputmode="numeric" id="setor-pro-amount" class="form-input hero-money-input" placeholder="0" oninput="window.formatRupiahInputLive(this)">
                 </div>
 
-                <div id="area-transaksi" style="display:block;">
-                    <div class="form-group"><label class="form-label" id="action-wallet-label">Sumber Dana (Dompet)</label><div class="chip-group" id="action-wallet-chips"></div><input type="hidden" id="action-wallet"></div>
-                    <div class="form-group"><label class="form-label">Nominal (Rp)</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="action-amount" class="form-input format-rupiah" placeholder="0"></div>
+                <div id="setor-quick-chips" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Ambil Dana dari Dompet</label>
+                    <div class="chips-container" id="setor-pro-wallet-chips"></div>
                 </div>
-                <button class="btn-submit" id="btn-action-submit" onclick="window.prosesAksiTarget()">Simpan</button>
+
+                <button class="btn-submit" id="btn-save-setor-pro" onclick="window.simpanSetorTargetPro()">Konfirmasi Setoran</button>
             </div>
         </div>
 
-        <div id="custom-dialog" class="custom-dialog-overlay"><div class="custom-dialog-box"><div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div><h3 class="custom-dialog-title" id="dialog-title">Informasi</h3><p class="custom-dialog-msg" id="dialog-msg"></p><div class="custom-dialog-actions" id="dialog-actions"></div></div></div>
+        <!-- MODAL 3: TARIK / CAIRKAN DANA TARGET -->
+        <div id="modal-tarik-pro" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3>Cairkan / Tarik Target 💸</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-tarik-pro')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="tarik-pro-error" class="error-msg"></div>
+                <input type="hidden" id="tarik-pro-target-id">
+                <input type="hidden" id="tarik-pro-wallet-id">
+
+                <div id="tarik-pro-info-box" style="background: #fffbeb; border: 1.5px solid #fde047; border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; font-size: 12px; color: #92400e; font-weight: 600;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Nominal yang Dicairkan (Rp)</label>
+                    <input type="text" inputmode="numeric" id="tarik-pro-amount" class="form-input hero-money-input" placeholder="0" oninput="window.formatRupiahInputLive(this)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Masukkan ke Dompet</label>
+                    <div class="chips-container" id="tarik-pro-wallet-chips"></div>
+                </div>
+
+                <button class="btn-submit" id="btn-save-tarik-pro" onclick="window.simpanTarikTargetPro()">Cairkan ke Dompet</button>
+            </div>
+        </div>
+
+        <!-- MODAL 4: UPDATE NILAI PASAR INVESTASI -->
+        <div id="modal-invest-pro" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3>Update Nilai Pasar 📈</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-invest-pro')"><span class="material-icons-round">close</span></button>
+                </div>
+                <div id="invest-pro-error" class="error-msg"></div>
+                <input type="hidden" id="invest-pro-target-id">
+
+                <div id="invest-pro-info-box" style="background: #eef2ff; border: 1.5px solid #c7d2fe; border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; font-size: 12px; color: #3730a3; font-weight: 600;"></div>
+
+                <div class="form-group">
+                    <label class="form-label">Nilai Portofolio Terkini di Aplikasi Investasi (Rp)</label>
+                    <input type="text" inputmode="numeric" id="invest-pro-val" class="form-input hero-money-input" placeholder="0" oninput="window.formatRupiahInputLive(this)">
+                </div>
+
+                <button class="btn-submit" onclick="window.simpanUpdateInvestPro()">Simpan Nilai Terkini</button>
+            </div>
+        </div>
+
+        <!-- CUSTOM DIALOG -->
+        <div id="custom-dialog" class="custom-dialog-overlay">
+            <div class="custom-dialog-box">
+                <div class="custom-dialog-icon" id="dialog-icon"><span class="material-icons-round">info</span></div>
+                <h3 class="custom-dialog-title" id="dialog-title">Informasi</h3>
+                <p class="custom-dialog-msg" id="dialog-msg"></p>
+                <div class="custom-dialog-actions" id="dialog-actions"></div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" style="display:flex;">
+            <div class="nav-item" onclick="window.location.href='index.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">home</span></div><span>Beranda</span></div>
+            <div class="nav-item" onclick="window.location.href='riwayat.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">history</span></div><span>Riwayat</span></div>
+            <div class="nav-item" onclick="window.location.href='analitik.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">bar_chart</span></div><span>Analitik</span></div>
+            <div class="nav-item" onclick="window.location.href='index.html?tab=akun'"><div class="nav-icon-wrapper"><span class="material-icons-round">person</span></div><span>Akun</span></div>
+        </nav>
     </div>
 
-    <!-- PANGGIL FILE JS SENTRAL -->
     <script type="module" src="app.js"></script>
+    <script type="module">
+        import { db, doc, setDoc, writeBatch } from "./core.js";
+
+        window.currentTargetTabFilter = 'active';
+        window.hasHandledTargetURLAction = false;
+
+        window.formatRupiahInputLive = function(el) {
+            if (!el) return;
+            const raw = el.value.replace(/[^0-9]/g, '');
+            el.value = raw ? window.formatNumberWithDot(raw) : '';
+        };
+
+        window.switchTargetFilter = function(mode) {
+            window.currentTargetTabFilter = mode;
+            document.getElementById('tab-target-active').classList.toggle('active', mode === 'active');
+            document.getElementById('tab-target-all').classList.toggle('active', mode === 'all');
+            window.renderTargetProPage();
+        };
+
+        window.getDailyTargetStatus = function(t) {
+            const todayStr = window.getLocalDateString();
+            const todayObj = new Date();
+            todayObj.setHours(0, 0, 0, 0);
+
+            let setorHariIni = 0;
+            (window.transactions || []).forEach(trx => {
+                if (trx.date === todayStr && String(trx.targetId) === String(t.id) && String(trx.categoryId) === '999') {
+                    if (trx.type === 'out') setorHariIni += Number(trx.amount || 0);
+                    else if (trx.type === 'in') setorHariIni -= Number(trx.amount || 0);
+                }
+            });
+            if (setorHariIni < 0) setorHariIni = 0;
+
+            const isInvest = t.tipe === 'investasi';
+            const currentVal = isInvest
+                ? Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount || 0))
+                : Number(t.currentAmount || 0);
+            const targetAmt = Number(t.targetAmount || 0);
+            const sisaSekarang = Math.max(0, targetAmt - currentVal);
+            const terkumpulAwalHari = Math.max(0, currentVal - setorHariIni);
+            const sisaAwalHari = Math.max(0, targetAmt - terkumpulAwalHari);
+
+            let targetHarian = 0;
+            let deadlineLabel = 'Rutin harian';
+
+            if (t.deadline) {
+                const dDate = new Date(t.deadline);
+                dDate.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((dDate - todayObj) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0) {
+                    targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / diffDays) : 0;
+                    deadlineLabel = `Sisa ${diffDays} hari (${t.deadline})`;
+                } else {
+                    targetHarian = sisaAwalHari;
+                    deadlineLabel = diffDays === 0 ? 'Hari terakhir!' : `Lewat ${Math.abs(diffDays)} hari`;
+                }
+            } else {
+                targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / 30) : 0;
+            }
+
+            const kurangHariIni = Math.max(0, targetHarian - setorHariIni);
+            const isDoneToday = (targetHarian > 0 && setorHariIni >= targetHarian) || sisaSekarang <= 0;
+
+            return {
+                setorHariIni,
+                targetHarian,
+                kurangHariIni,
+                isDoneToday,
+                sisaSekarang,
+                deadlineLabel,
+                currentVal
+            };
+        };
+
+        window.renderTargetProPage = function() {
+            const container = document.getElementById('target-page-container');
+            if (!container) return;
+
+            if (!Array.isArray(window.targets)) window.targets = [];
+
+            let totalTabungan = 0;
+            let totalInvestVal = 0;
+            let totalInvestModal = 0;
+            let sumTargetGoal = 0;
+            let sumCurrentAll = 0;
+            let totalDailyObligation = 0;
+            let activeCount = 0;
+
+            window.targets.forEach(t => {
+                const isInvest = t.tipe === 'investasi';
+                const modal = Number(t.currentAmount || 0);
+                const val = isInvest ? Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : modal) : modal;
+                const goal = Number(t.targetAmount || 0);
+
+                if (isInvest) {
+                    totalInvestVal += val;
+                    totalInvestModal += modal;
+                } else {
+                    totalTabungan += val;
+                }
+
+                sumTargetGoal += goal;
+                sumCurrentAll += Math.min(goal > 0 ? goal : val, val);
+
+                if (t.isActive !== false) {
+                    activeCount++;
+                    const st = window.getDailyTargetStatus(t);
+                    if (st.sisaSekarang > 0) totalDailyObligation += st.kurangHariIni;
+                }
+            });
+
+            const totalAset = totalTabungan + totalInvestVal;
+            const overallPct = sumTargetGoal > 0 ? Math.min(100, Math.round((sumCurrentAll / sumTargetGoal) * 100)) : 0;
+
+            document.getElementById('hero-total-asset').innerText = window.formatRupiah(totalAset);
+            document.getElementById('hero-target-count-badge').innerText = `${activeCount} Target Aktif`;
+            document.getElementById('hero-daily-obligation').innerText = totalDailyObligation > 0
+                ? `Sisa kewajiban setor hari ini: ${window.formatRupiah(totalDailyObligation)}`
+                : `Semua kewajiban setor hari ini sudah lunas! 🎉`;
+            document.getElementById('hero-tabungan-val').innerText = window.formatRupiah(totalTabungan);
+
+            const profitInvest = totalInvestVal - totalInvestModal;
+            const profitStr = totalInvestModal > 0 && profitInvest !== 0
+                ? ` (${profitInvest > 0 ? '+' : ''}${window.formatRupiah(profitInvest)})`
+                : '';
+            document.getElementById('hero-invest-val').innerText = window.formatRupiah(totalInvestVal) + profitStr;
+            document.getElementById('hero-overall-pct').innerText = `${overallPct}%`;
+            document.getElementById('hero-overall-bar').style.width = `${overallPct}%`;
+
+            const filteredTargets = window.currentTargetTabFilter === 'active'
+                ? window.targets.filter(t => t.isActive !== false)
+                : [...window.targets];
+
+            if (filteredTargets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">savings</span></div>
+                        <h4>Belum Ada Target ${window.currentTargetTabFilter === 'active' ? 'Aktif' : ''}</h4>
+                        <p>Buat target tabungan (seperti Kosan, Servis Besar, atau Dana Darurat) agar MoCatat menghitung saran sisihan harianmu otomatis.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filteredTargets.map(t => {
+                const isInvest = t.tipe === 'investasi';
+                const isActive = t.isActive !== false;
+                const st = window.getDailyTargetStatus(t);
+                const goal = Number(t.targetAmount || 0);
+                const modal = Number(t.currentAmount || 0);
+                const pct = goal > 0 ? Math.min(100, Math.round((st.currentVal / goal) * 100)) : 100;
+                const isGoalReached = goal > 0 && st.currentVal >= goal;
+
+                const cleanName = typeof window.unescapeHTML === 'function' ? window.unescapeHTML(t.name) : t.name;
+                const accentColor = isGoalReached ? '#16a34a' : (isInvest ? '#4338ca' : '#249a95');
+
+                let dailyBadgeHTML = '';
+                if (isGoalReached) {
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#dcfce7; color:#15803d;">🎉 TARGET TERCAPAI</span>`;
+                } else if (!isActive) {
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#f1f5f9; color:#64748b;">⏸ TARGET DIJEDA</span>`;
+                } else if (st.isDoneToday) {
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#dcfce7; color:#15803d;">✓ LUNAS HARI INI (${window.formatRupiah(st.setorHariIni)})</span>`;
+                } else {
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#fef9c3; color:#b45309;">⚡ KURANG ${window.formatRupiah(st.kurangHariIni)} HARI INI</span>`;
+                }
+
+                let investReturnHTML = '';
+                if (isInvest) {
+                    const diff = st.currentVal - modal;
+                    const diffColor = diff >= 0 ? '#15803d' : '#dc2626';
+                    const diffSign = diff >= 0 ? '+' : '';
+                    investReturnHTML = `
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#475569; background:#f8fafc; padding:6px 10px; border-radius:9px; margin-top:8px;">
+                            <span>Modal Pokok: <strong>${window.formatRupiah(modal)}</strong></span>
+                            <span style="color:${diffColor}; font-weight:800;">Return: ${diffSign}${window.formatRupiah(diff)}</span>
+                        </div>`;
+                }
+
+                const suggestedSetor = st.kurangHariIni > 0 ? st.kurangHariIni : (st.targetHarian > 0 ? st.targetHarian : 20000);
+
+                return `
+                    <div class="target-pro-card ${!isActive ? 'inactive-card' : ''}">
+                        <div style="position:absolute; top:0; left:0; right:0; height:4px; background:${accentColor};"></div>
+                        
+                        <!-- BARIS 1: JUDUL TARGET & TOMBOL EDIT/HAPUS -->
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+                                <div style="width:40px; height:40px; border-radius:12px; background:${isInvest ? '#ede9fe' : '#e0f2f1'}; color:${accentColor}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <span class="material-icons-round" style="font-size:21px;">${isInvest ? 'trending_up' : 'savings'}</span>
+                                </div>
+                                <div style="min-width:0; flex:1;">
+                                    <div style="font-size:15px; font-weight:800; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(cleanName)}</div>
+                                    <div style="font-size:11px; font-weight:700; color:#64748b;">🗓️️ ${window.escapeHTML(st.deadlineLabel)}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:5px; flex-shrink:0;">
+                                <button class="btn-icon" onclick="window.openModalTargetPro('${t.id}')" title="Edit Target"><span class="material-icons-round" style="font-size:18px;">edit</span></button>
+                                <button class="btn-icon delete" onclick="window.hapusTargetPro('${t.id}')" title="Hapus Target"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
+                            </div>
+                        </div>
+
+                        <!-- BARIS 2: LENCANA STATUS HARI INI & SAKELAR GESER ON/OFF -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
+                            <div style="min-width:0;">${dailyBadgeHTML}</div>
+                            <div class="target-switch-wrap ${isActive ? 'on' : ''}" onclick="window.toggleTargetActivePro('${t.id}')" title="${isActive ? 'Klik untuk menjeda target' : 'Klik untuk mengaktifkan target'}">
+                                <div class="target-switch-track">
+                                    <div class="target-switch-knob"></div>
+                                </div>
+                                <span class="target-switch-label">${isActive ? 'Aktif' : 'Off'}</span>
+                            </div>
+                        </div>
+
+                        <!-- BARIS 3: NOMINAL & BAR PROGRES -->
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+                            <div>
+                                <span style="font-size:18px; font-weight:800; color:#0f172a;">${window.formatRupiah(st.currentVal)}</span>
+                                <span style="font-size:11.5px; font-weight:700; color:#64748b;"> / ${window.formatRupiah(goal)}</span>
+                            </div>
+                            <span style="font-size:12.5px; font-weight:800; color:${accentColor};">${pct}%</span>
+                        </div>
+
+                        <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                            <div style="width:${pct}%; height:100%; background:${accentColor}; border-radius:4px; transition:width 0.3s ease;"></div>
+                        </div>
+
+                        ${investReturnHTML}
+
+                        <div class="target-action-grid">
+                            <button class="btn-target-act" style="background:#249a95; color:white;" onclick="window.openModalSetorPro('${t.id}', ${suggestedSetor})">
+                                <span class="material-icons-round" style="font-size:16px;">add_circle</span> + Setor
+                            </button>
+                            ${isInvest ? `
+                            <button class="btn-target-act" style="background:#ede9fe; color:#4338ca;" onclick="window.openModalInvestPro('${t.id}')">
+                                <span class="material-icons-round" style="font-size:16px;">query_stats</span> Nilai Pasar
+                            </button>` : ''}
+                            <button class="btn-target-act" style="background:#f1f5f9; color:#334155;" onclick="window.openModalTarikPro('${t.id}')">
+                                <span class="material-icons-round" style="font-size:16px;">outbox</span> Cairkan
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.selectTargetTypePro = function(tipe) {
+            document.getElementById('target-pro-type').value = tipe;
+            document.getElementById('btn-type-biasa').classList.toggle('active', tipe === 'biasa');
+            document.getElementById('btn-type-investasi').classList.toggle('active', tipe === 'investasi');
+        };
+
+        window.updateTargetModalPreview = function() {
+            const previewEl = document.getElementById('target-pro-calc-preview');
+            if (!previewEl) return;
+            const amt = window.parseRupiah(document.getElementById('target-pro-amount').value || '0');
+            const deadline = document.getElementById('target-pro-deadline').value;
+            if (amt <= 0) {
+                previewEl.style.display = 'none';
+                return;
+            }
+            const todayObj = new Date();
+            todayObj.setHours(0, 0, 0, 0);
+            let perDay = Math.ceil(amt / 30);
+            let info = 'estimasi 30 hari';
+            if (deadline) {
+                const dDate = new Date(deadline);
+                dDate.setHours(0, 0, 0, 0);
+                const diff = Math.max(1, Math.ceil((dDate - todayObj) / (1000 * 60 * 60 * 24)));
+                perDay = Math.ceil(amt / diff);
+                info = `${diff} hari menuju tenggat`;
+            }
+            previewEl.style.display = 'block';
+            previewEl.innerHTML = `💡 Saran sisihan harian: <strong>${window.formatRupiah(perDay)} / hari</strong> (${info})`;
+        };
+
+        window.openModalTargetPro = function(targetId = null) {
+            document.getElementById('target-pro-error').style.display = 'none';
+            document.getElementById('target-pro-id').value = targetId || '';
+
+            if (targetId) {
+                const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+                if (!t) return;
+                document.getElementById('modal-target-pro-title').innerText = 'Edit Target Keuangan';
+                document.getElementById('target-pro-name').value = window.unescapeHTML(t.name || '');
+                document.getElementById('target-pro-amount').value = window.formatNumberWithDot(String(t.targetAmount || 0));
+                document.getElementById('target-pro-deadline').value = t.deadline || '';
+                window.selectTargetTypePro(t.tipe || 'biasa');
+            } else {
+                document.getElementById('modal-target-pro-title').innerText = 'Buat Target Baru';
+                document.getElementById('target-pro-name').value = '';
+                document.getElementById('target-pro-amount').value = '';
+                document.getElementById('target-pro-deadline').value = '';
+                window.selectTargetTypePro('biasa');
+            }
+            window.updateTargetModalPreview();
+            document.getElementById('modal-target-pro').classList.add('show');
+        };
+
+        window.simpanTargetPro = async function() {
+            const errEl = document.getElementById('target-pro-error');
+            const id = document.getElementById('target-pro-id').value;
+            const name = window.escapeHTML(document.getElementById('target-pro-name').value.trim());
+            const targetAmount = window.parseRupiah(document.getElementById('target-pro-amount').value);
+            const deadline = document.getElementById('target-pro-deadline').value || null;
+            const tipe = document.getElementById('target-pro-type').value || 'biasa';
+
+            if (!name || targetAmount <= 0) {
+                errEl.innerText = 'Nama target dan nominal harus diisi dengan benar!';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (id) {
+                const idx = window.targets.findIndex(t => String(t.id) === String(id));
+                if (idx !== -1) {
+                    window.targets[idx].name = name;
+                    window.targets[idx].targetAmount = targetAmount;
+                    window.targets[idx].deadline = deadline;
+                    window.targets[idx].tipe = tipe;
+                }
+            } else {
+                window.targets.push({
+                    id: window.generateUUID ? window.generateUUID() : ('tgt-' + Date.now()),
+                    name,
+                    targetAmount,
+                    currentAmount: 0,
+                    nilaiTerkini: 0,
+                    tipe,
+                    deadline,
+                    isActive: true
+                });
+            }
+
+            window.closeModal('modal-target-pro');
+            window.renderTargetProPage();
+
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
+        };
+
+        window.toggleTargetActivePro = async function(targetId) {
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            if (!t) return;
+            t.isActive = t.isActive === false ? true : false;
+            window.renderTargetProPage();
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
+        };
+
+        window.hapusTargetPro = function(targetId) {
+            window.customConfirm("Hapus Target?", "Yakin ingin menghapus target ini dari daftar?", async () => {
+                window.targets = (window.targets || []).filter(t => String(t.id) !== String(targetId));
+                window.renderTargetProPage();
+                if (window.currentUserId && window.isUserDataLoaded) {
+                    try {
+                        await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                    } catch (e) {}
+                }
+            });
+        };
+
+        window.openModalSetorPro = function(targetId, suggestedNominal = 0) {
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            if (!t) return;
+
+            const dompetAktif = (window.wallets || []).filter(w => !w.isArchived);
+            if (dompetAktif.length === 0) {
+                return window.customAlert("Perhatian", "Belum ada dompet aktif.", "warning");
+            }
+
+            document.getElementById('setor-pro-error').style.display = 'none';
+            document.getElementById('setor-pro-target-id').value = t.id;
+            const st = window.getDailyTargetStatus(t);
+            const cleanName = window.unescapeHTML(t.name || 'Target');
+
+            document.getElementById('modal-setor-pro-title').innerText = `Setor: ${cleanName}`;
+            document.getElementById('setor-pro-info-box').innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span>Terkumpul Saat Ini:</span>
+                    <strong style="color:#0f172a;">${window.formatRupiah(st.currentVal)} / ${window.formatRupiah(t.targetAmount)}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; color:#0f766e;">
+                    <span>Kewajiban Hari Ini:</span>
+                    <strong>${st.kurangHariIni > 0 ? window.formatRupiah(st.kurangHariIni) : 'Lunas 🎉'}</strong>
+                </div>
+            `;
+
+            const fillAmt = suggestedNominal > 0 ? suggestedNominal : (st.kurangHariIni > 0 ? st.kurangHariIni : '');
+            document.getElementById('setor-pro-amount').value = fillAmt ? window.formatNumberWithDot(String(fillAmt)) : '';
+
+            const presetSet = new Set();
+            if (st.kurangHariIni > 0) presetSet.add(st.kurangHariIni);
+            if (st.targetHarian > 0) presetSet.add(st.targetHarian);
+            [10000, 20000, 33000, 50000].forEach(n => presetSet.add(n));
+
+            document.getElementById('setor-quick-chips').innerHTML = Array.from(presetSet).slice(0, 4).map(nom => `
+                <button type="button" onclick="document.getElementById('setor-pro-amount').value='${window.formatNumberWithDot(String(nom))}';" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; padding:5px 10px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:inherit;">
+                    ${window.formatRupiah(nom)}
+                </button>
+            `).join('');
+
+            const defWalletId = dompetAktif[0].id;
+            document.getElementById('setor-pro-wallet-id').value = defWalletId;
+            document.getElementById('setor-pro-wallet-chips').innerHTML = dompetAktif.map(w => `
+                <div class="chip ${String(w.id) === String(defWalletId) ? 'active' : ''}" onclick="document.getElementById('setor-pro-wallet-id').value='${w.id}'; document.querySelectorAll('#setor-pro-wallet-chips .chip').forEach(c=>c.classList.remove('active')); this.classList.add('active');">
+                    <span class="material-icons-round" style="font-size:16px">${w.icon || 'account_balance_wallet'}</span>
+                    ${window.escapeHTML(window.unescapeHTML(w.name))} (${window.formatRupiah(w.balance)})
+                </div>
+            `).join('');
+
+            document.getElementById('modal-setor-pro').classList.add('show');
+        };
+
+        window.simpanSetorTargetPro = async function() {
+            const btn = document.getElementById('btn-save-setor-pro');
+            if (btn && btn.disabled) return;
+
+            const errEl = document.getElementById('setor-pro-error');
+            const targetId = document.getElementById('setor-pro-target-id').value;
+            const walletId = document.getElementById('setor-pro-wallet-id').value;
+            const amount = window.parseRupiah(document.getElementById('setor-pro-amount').value);
+
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            const w = (window.wallets || []).find(item => String(item.id) === String(walletId));
+
+            if (!t || !w || amount <= 0) {
+                errEl.innerText = 'Masukkan nominal setoran yang valid.';
+                errEl.style.display = 'block';
+                return;
+            }
+            if (amount > Number(w.balance || 0)) {
+                errEl.innerText = `Saldo ${window.unescapeHTML(w.name)} tidak cukup! (Sisa: ${window.formatRupiah(w.balance)})`;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.innerText = 'Menyimpan...'; }
+
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const trxId = window.generateUUID ? window.generateUUID() : ('trx-' + Date.now());
+
+            t.currentAmount = Number(t.currentAmount || 0) + amount;
+            if (t.tipe === 'investasi') {
+                t.nilaiTerkini = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount - amount)) + amount;
+            } else {
+                t.nilaiTerkini = t.currentAmount;
+            }
+
+            const newTrx = {
+                id: trxId,
+                type: 'out',
+                amount: amount,
+                note: `Setor Target: ${window.unescapeHTML(t.name)}`,
+                walletId: w.id,
+                walletName: w.name,
+                categoryId: '999',
+                categoryName: 'Alokasi Target',
+                targetId: t.id,
+                date: window.getLocalDateString(),
+                time: timeStr
+            };
+
+            window.transactions.push(newTrx);
+            window.recalculateBalances();
+
+            try {
+                if (window.currentUserId) {
+                    const batch = writeBatch(db);
+                    batch.set(doc(db, "users", window.currentUserId, "transactions", trxId), newTrx);
+                    batch.set(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                    await batch.commit();
+                }
+                window.closeModal('modal-setor-pro');
+                window.renderTargetProPage();
+            } catch (e) {
+                window.customAlert("Error", "Gagal menyimpan setoran ke server.", "error");
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = 'Konfirmasi Setoran'; }
+            }
+        };
+
+        window.openModalTarikPro = function(targetId) {
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            if (!t) return;
+            const st = window.getDailyTargetStatus(t);
+            if (st.currentVal <= 0) {
+                return window.customAlert("Saldo Kosong", "Belum ada dana terkumpul di target ini untuk dicairkan.", "warning");
+            }
+
+            const dompetAktif = (window.wallets || []).filter(w => !w.isArchived);
+            document.getElementById('tarik-pro-error').style.display = 'none';
+            document.getElementById('tarik-pro-target-id').value = t.id;
+            document.getElementById('tarik-pro-amount').value = '';
+
+            document.getElementById('tarik-pro-info-box').innerHTML = `
+                <div>Saldo Tersedia di <strong>${window.escapeHTML(window.unescapeHTML(t.name))}</strong>: <strong style="font-size:13.5px;">${window.formatRupiah(st.currentVal)}</strong></div>
+            `;
+
+            const defWalletId = dompetAktif[0]?.id || '';
+            document.getElementById('tarik-pro-wallet-id').value = defWalletId;
+            document.getElementById('tarik-pro-wallet-chips').innerHTML = dompetAktif.map(w => `
+                <div class="chip ${String(w.id) === String(defWalletId) ? 'active' : ''}" onclick="document.getElementById('tarik-pro-wallet-id').value='${w.id}'; document.querySelectorAll('#tarik-pro-wallet-chips .chip').forEach(c=>c.classList.remove('active')); this.classList.add('active');">
+                    <span class="material-icons-round" style="font-size:16px">${w.icon || 'account_balance_wallet'}</span>
+                    ${window.escapeHTML(window.unescapeHTML(w.name))}
+                </div>
+            `).join('');
+
+            document.getElementById('modal-tarik-pro').classList.add('show');
+        };
+
+        window.simpanTarikTargetPro = async function() {
+            const btn = document.getElementById('btn-save-tarik-pro');
+            if (btn && btn.disabled) return;
+
+            const errEl = document.getElementById('tarik-pro-error');
+            const targetId = document.getElementById('tarik-pro-target-id').value;
+            const walletId = document.getElementById('tarik-pro-wallet-id').value;
+            const amount = window.parseRupiah(document.getElementById('tarik-pro-amount').value);
+
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            const w = (window.wallets || []).find(item => String(item.id) === String(walletId));
+            if (!t || !w || amount <= 0) {
+                errEl.innerText = 'Masukkan nominal pencairan yang valid.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            const st = window.getDailyTargetStatus(t);
+            if (amount > st.currentVal) {
+                errEl.innerText = `Nominal melebihi saldo target (${window.formatRupiah(st.currentVal)})!`;
+                errEl.style.display = 'block';
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.innerText = 'Memproses...'; }
+
+            let modalDeducted = amount;
+            if (t.tipe === 'investasi' && st.currentVal > 0) {
+                const ratio = amount / st.currentVal;
+                modalDeducted = Math.round(Number(t.currentAmount || 0) * ratio);
+                t.nilaiTerkini = Math.max(0, st.currentVal - amount);
+                t.currentAmount = Math.max(0, Number(t.currentAmount || 0) - modalDeducted);
+            } else {
+                t.currentAmount = Math.max(0, Number(t.currentAmount || 0) - amount);
+                t.nilaiTerkini = t.currentAmount;
+            }
+
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const trxId = window.generateUUID ? window.generateUUID() : ('trx-' + Date.now());
+
+            const newTrx = {
+                id: trxId,
+                type: 'in',
+                amount: amount,
+                note: `Cairkan Target: ${window.unescapeHTML(t.name)}`,
+                walletId: w.id,
+                walletName: w.name,
+                categoryId: '999',
+                categoryName: t.tipe === 'investasi' ? 'Pencairan Investasi' : 'Pencairan Tabungan',
+                targetId: t.id,
+                modalDeducted: modalDeducted,
+                date: window.getLocalDateString(),
+                time: timeStr
+            };
+
+            window.transactions.push(newTrx);
+            window.recalculateBalances();
+
+            try {
+                if (window.currentUserId) {
+                    const batch = writeBatch(db);
+                    batch.set(doc(db, "users", window.currentUserId, "transactions", trxId), newTrx);
+                    batch.set(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                    await batch.commit();
+                }
+                window.closeModal('modal-tarik-pro');
+                window.renderTargetProPage();
+            } catch (e) {
+                window.customAlert("Error", "Gagal mencairkan target.", "error");
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = 'Cairkan ke Dompet'; }
+            }
+        };
+
+        window.openModalInvestPro = function(targetId) {
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            if (!t) return;
+            document.getElementById('invest-pro-error').style.display = 'none';
+            document.getElementById('invest-pro-target-id').value = t.id;
+            const curVal = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount || 0));
+            document.getElementById('invest-pro-val').value = window.formatNumberWithDot(String(curVal));
+            document.getElementById('invest-pro-info-box').innerHTML = `
+                <div>Modal Pokok Disetor: <strong>${window.formatRupiah(t.currentAmount || 0)}</strong></div>
+            `;
+            document.getElementById('modal-invest-pro').classList.add('show');
+        };
+
+        window.simpanUpdateInvestPro = async function() {
+            const targetId = document.getElementById('invest-pro-target-id').value;
+            const val = window.parseRupiah(document.getElementById('invest-pro-val').value);
+            const t = (window.targets || []).find(item => String(item.id) === String(targetId));
+            if (!t) return;
+
+            t.nilaiTerkini = val;
+            window.closeModal('modal-invest-pro');
+            window.renderTargetProPage();
+
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
+        };
+
+        window.checkTargetURLParams = function() {
+            if (window.hasHandledTargetURLAction) return;
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
+            if (!action) return;
+
+            window.hasHandledTargetURLAction = true;
+            if (action === 'setor') {
+                const id = params.get('id');
+                const nom = parseInt(params.get('nominal') || '0', 10);
+                if (id) setTimeout(() => window.openModalSetorPro(id, nom), 150);
+            } else if (action === 'baru') {
+                setTimeout(() => window.openModalTargetPro(), 150);
+            }
+        };
+
+        window.renderTargets = window.renderTargetProPage;
+
+        const readyTimer = setInterval(() => {
+            if (window.isUserDataLoaded) {
+                clearInterval(readyTimer);
+                window.renderTargetProPage();
+                window.checkTargetURLParams();
+            }
+        }, 120);
+    </script>
 </body>
 </html>

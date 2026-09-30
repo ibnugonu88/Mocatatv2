@@ -514,6 +514,58 @@ window.toggleStatusTarget = async function(id) {
     await window.saveDataToFirestore();
 };
 
+// Helper: Hitung setoran yang sudah masuk hari ini & sisa kewajiban harian per target
+window.getInfoHarianPerTarget = function(t) {
+    const todayStr = window.getLocalDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let setorHariIni = 0;
+    (window.transactions || []).forEach(trx => {
+        if (trx.date === todayStr && String(trx.targetId) === String(t.id) && String(trx.categoryId) === '999') {
+            if (trx.type === 'out') setorHariIni += Number(trx.amount || 0);
+            else if (trx.type === 'in') setorHariIni -= Number(trx.amount || 0);
+        }
+    });
+    if (setorHariIni < 0) setorHariIni = 0;
+
+    const isInvest = t.tipe === 'investasi';
+    const targetAmt = Number(t.targetAmount || 0);
+    const currAmt = Number(t.currentAmount || 0);
+    const valTerkini = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : currAmt);
+    const uangDihitung = isInvest ? valTerkini : currAmt;
+
+    const terkumpulAwalHari = Math.max(0, uangDihitung - setorHariIni);
+    const sisaUangAwalHari = targetAmt > 0 ? Math.max(0, targetAmt - terkumpulAwalHari) : 0;
+
+    let saranHarian = 0;
+    let diffDays = null;
+
+    if (targetAmt > 0 && t.deadline) {
+        const deadlineDate = new Date(t.deadline);
+        deadlineDate.setHours(0, 0, 0, 0);
+        diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+        if (diffDays > 0) {
+            saranHarian = Math.ceil(sisaUangAwalHari / diffDays);
+        } else {
+            saranHarian = sisaUangAwalHari;
+        }
+    } else if (targetAmt > 0) {
+        saranHarian = Math.ceil(sisaUangAwalHari / 30);
+    }
+
+    const kurangHariIni = Math.max(0, saranHarian - setorHariIni);
+    const lunasHariIni = saranHarian > 0 && setorHariIni >= saranHarian;
+
+    return {
+        setorHariIni,
+        saranHarian,
+        kurangHariIni,
+        lunasHariIni,
+        diffDays
+    };
+};
+
 window.renderTargetPage = function() {
     const container = document.getElementById('target-container'); 
     if(!container) return;
@@ -540,6 +592,7 @@ window.renderTargetPage = function() {
         let targetAmt = Number(t.targetAmount||0);
         let currAmt = Number(t.currentAmount||0);
         let valTerkini = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : currAmt);
+        const infoHarian = window.getInfoHarianPerTarget(t);
 
         if (targetAmt > 0) {
             let uangDihitung = isInvest ? valTerkini : currAmt; 
@@ -550,34 +603,44 @@ window.renderTargetPage = function() {
 
             if (!isActive) {
                 saranHtml = `<div class="pill-box" style="border-color: #e2e8f0; background: #f8fafc; justify-content: center;"><div style="font-size: 12.5px; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">pause_circle_outline</span> Target Dijeda (Tidak masuk beban harian)</div></div>`;
-            } else if (t.deadline) {
-                const today = new Date(); today.setHours(0, 0, 0, 0); 
-                const deadlineDate = new Date(t.deadline); deadlineDate.setHours(0, 0, 0, 0);
-                if (sisaUang <= 0) { 
-                    saranHtml = `<div class="pill-box" style="border-color: #bbf7d0; background: #f0fdf4; justify-content: center;"><div style="font-size: 13.5px; color: #16a34a; font-weight: 800; display: flex; align-items: center; gap: 8px;"><span class="material-icons-round" style="font-size: 20px;">task_alt</span> Target Tercapai! 🎉</div></div>`; 
-                } else {
-                    const diffTime = deadlineDate - today; 
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays > 0) { 
-                        const saranHarian = Math.ceil(sisaUang / diffDays); 
-                        saranHtml = `<div class="pill-box"><div class="pill-left"><span class="material-icons-round" style="font-size: 18px;">calendar_today</span> Sisa ${diffDays} Hari</div><div class="pill-right">Nabung: <span>${window.formatRupiah(saranHarian)}</span> <span style="font-size: 11px;">/hari</span></div></div>`; 
-                    } else { 
-                        saranHtml = `<div class="pill-box" style="border-color: #fecaca; background: #fff1f2;"><div class="pill-left" style="color: #e11d48;"><span class="material-icons-round" style="font-size: 18px;">error_outline</span> Terlambat ${Math.abs(diffDays)} Hari</div><div class="pill-right" style="color: #e11d48;">Kurang: <span>${window.formatRupiah(sisaUang)}</span></div></div>`; 
+            } else if (sisaUang <= 0) {
+                saranHtml = `<div class="pill-box" style="border-color: #bbf7d0; background: #f0fdf4; justify-content: center;"><div style="font-size: 13.5px; color: #16a34a; font-weight: 800; display: flex; align-items: center; gap: 8px;"><span class="material-icons-round" style="font-size: 20px;">task_alt</span> Target Tercapai Penuh! 🎉</div></div>`; 
+            } else {
+                // Baris status setoran hari ini
+                let barisStatusHariIni = '';
+                if (infoHarian.lunasHariIni) {
+                    barisStatusHariIni = `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #bbf7d0; font-size:11.5px; font-weight:800; color:#15803d; display:flex; justify-content:space-between; align-items:center;"><span>✅ Setoran Hari Ini Selesai!</span><span>Masuk: ${window.formatRupiah(infoHarian.setorHariIni)}</span></div>`;
+                } else if (infoHarian.setorHariIni > 0) {
+                    barisStatusHariIni = `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #fde68a; font-size:11.5px; font-weight:700; color:#b45309; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;"><span>⏳ Hari ini baru masuk: <strong>${window.formatRupiah(infoHarian.setorHariIni)}</strong></span><span style="color:#dc2626; font-weight:800;">Kurang: ${window.formatRupiah(infoHarian.kurangHariIni)}</span></div>`;
+                } else if (infoHarian.saranHarian > 0) {
+                    barisStatusHariIni = `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e2e8f0; font-size:11px; font-weight:700; color:#64748b; display:flex; justify-content:space-between; align-items:center;"><span>📌 Status hari ini:</span><span style="color:#d97706; font-weight:800;">Belum setor (${window.formatRupiah(infoHarian.saranHarian)})</span></div>`;
+                }
+
+                if (t.deadline && infoHarian.diffDays !== null) {
+                    if (infoHarian.diffDays > 0) {
+                        const boxBg = infoHarian.lunasHariIni ? 'border-color:#bbf7d0; background:#f0fdf4;' : (infoHarian.setorHariIni > 0 ? 'border-color:#fde68a; background:#fffbeb;' : '');
+                        saranHtml = `<div class="pill-box" style="flex-direction:column; align-items:stretch; ${boxBg}"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="pill-left"><span class="material-icons-round" style="font-size: 18px;">calendar_today</span> Sisa ${infoHarian.diffDays} Hari</div><div class="pill-right">Nabung: <span>${window.formatRupiah(infoHarian.saranHarian)}</span> <span style="font-size: 11px;">/hari</span></div></div>${barisStatusHariIni}</div>`;
+                    } else {
+                        saranHtml = `<div class="pill-box" style="flex-direction:column; align-items:stretch; border-color: #fecaca; background: #fff1f2;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="pill-left" style="color: #e11d48;"><span class="material-icons-round" style="font-size: 18px;">error_outline</span> ${infoHarian.diffDays === 0 ? 'Hari Terakhir!' : 'Terlambat ' + Math.abs(infoHarian.diffDays) + ' Hari'}</div><div class="pill-right" style="color: #e11d48;">Kurang: <span>${window.formatRupiah(sisaUang)}</span></div></div>${barisStatusHariIni}</div>`;
                     }
+                } else {
+                    saranHtml = `<div class="pill-box" style="flex-direction:column; align-items:stretch;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="pill-left"><span class="material-icons-round" style="font-size: 18px;">event_repeat</span> Estimasi 30 Hari</div><div class="pill-right">Nabung: <span>${window.formatRupiah(infoHarian.saranHarian)}</span> <span style="font-size: 11px;">/hari</span></div></div>${barisStatusHariIni}</div>`;
                 }
             }
         } else if (!isActive) {
             saranHtml = `<div class="pill-box" style="border-color: #e2e8f0; background: #f8fafc; justify-content: center;"><div style="font-size: 12.5px; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 6px;"><span class="material-icons-round" style="font-size: 18px;">pause_circle_outline</span> Status Nonaktif (Dijeda)</div></div>`;
         }
 
+        const prefillNominalSetor = infoHarian.kurangHariIni > 0 ? infoHarian.kurangHariIni : 0;
+
         let cardContent = '';
         if (isInvest) {
             let retur = valTerkini - currAmt;
             let returnColor = retur > 0 ? '#10b981' : (retur < 0 ? '#e11d48' : '#64748b'); 
             let returnText = retur > 0 ? '+ ' + window.formatRupiah(retur) : (retur < 0 ? '- ' + window.formatRupiah(Math.abs(retur)) : window.formatRupiah(0));
-            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #4338ca; font-size: 14px;">${window.formatRupiah(valTerkini)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:14px; margin-top:18px; border:1px solid #e2e8f0;"><div style="font-size:12.5px; color:#64748b; font-weight:700;">Modal: <span style="color:#1a1a1a; font-weight:800; font-size: 13.5px;">${window.formatRupiah(currAmt)}</span></div><div style="font-size:12.5px; color:#64748b; font-weight:700;">Return: <span style="color:${returnColor}; font-weight:800; font-size: 13.5px;">${returnText}</span></div></div><div class="btn-grid two"><button class="btn-action btn-setor-invest" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">add</span> Top Up</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Jual/Tarik</button></div><button class="btn-action btn-update" style="margin-top:12px; width:100%;" onclick="window.openActionModal('${t.id}', 'update')"><span class="material-icons-round" style="font-size:18px;">sync</span> Update Nilai Terkini</button>`;
+            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #4338ca; font-size: 14px;">${window.formatRupiah(valTerkini)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 16px; border-radius:14px; margin-top:18px; border:1px solid #e2e8f0;"><div style="font-size:12.5px; color:#64748b; font-weight:700;">Modal: <span style="color:#1a1a1a; font-weight:800; font-size: 13.5px;">${window.formatRupiah(currAmt)}</span></div><div style="font-size:12.5px; color:#64748b; font-weight:700;">Return: <span style="color:${returnColor}; font-weight:800; font-size: 13.5px;">${returnText}</span></div></div><div class="btn-grid two"><button class="btn-action btn-setor-invest" onclick="window.openActionModal('${t.id}', 'setor', ${prefillNominalSetor})"><span class="material-icons-round" style="font-size:18px;">add</span> Top Up</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Jual/Tarik</button></div><button class="btn-action btn-update" style="margin-top:12px; width:100%;" onclick="window.openActionModal('${t.id}', 'update')"><span class="material-icons-round" style="font-size:18px;">sync</span> Update Nilai Terkini</button>`;
         } else {
-            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid two"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor')"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Tarik</button></div>`;
+            cardContent = `<div class="stat-row" style="margin-bottom: 14px;"><div>Terkumpul: <span style="color: #249a95; font-size: 14px;">${window.formatRupiah(currAmt)}</span></div><div>Target: <span style="color: #1a1a1a; font-size: 14px;">${targetAmt > 0 ? window.formatRupiah(targetAmt) : 'Tanpa Batas'}</span></div></div><div class="progress-bg"><div class="progress-fill ${fillClass}" style="width: ${pct}%; ${customBarStyle}"></div></div><div class="stat-row"><div>Progress: <span style="color: #1a1a1a;">${pct.toFixed(0)}%</span></div><div>Kekurangan: <span style="color: #d97706;">${targetAmt > 0 ? sisaUangText : 'Rp 0'}</span></div></div>${saranHtml}<div class="btn-grid two"><button class="btn-action btn-setor" onclick="window.openActionModal('${t.id}', 'setor', ${prefillNominalSetor})"><span class="material-icons-round" style="font-size:18px;">savings</span> Setor</button><button class="btn-action btn-tarik" onclick="window.openActionModal('${t.id}', 'tarik')"><span class="material-icons-round" style="font-size:18px;">remove</span> Tarik</button></div>`;
         }
 
         const toggleIcon = isActive ? 'pause' : 'play_arrow';
@@ -718,13 +781,27 @@ window.selectActionWallet = function(id, el) {
     el.classList.add('active'); 
 };
 
-window.openActionModal = function(id, type) {
+window.openActionModal = function(id, type, prefillNominal = null) {
     const t = window.targets.find(x => String(x.id) === String(id)); 
     if(!t) return;
     document.getElementById('action-error-msg').style.display = 'none'; 
     document.getElementById('action-target-id').value = t.id; 
     document.getElementById('action-type').value = type; 
-    document.getElementById('action-amount').value = ''; 
+
+    // Cek apakah ada nominal otomatis dari parameter tombol atau URL Beranda
+    let nominalAwal = prefillNominal ? Number(prefillNominal) : 0;
+    if (!nominalAwal && type === 'setor') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlNominal = parseInt(urlParams.get('nominal') || '0', 10);
+        if (urlNominal > 0 && String(urlParams.get('id')) === String(id)) {
+            nominalAwal = urlNominal;
+        } else {
+            const infoHarian = window.getInfoHarianPerTarget(t);
+            if (infoHarian.kurangHariIni > 0) nominalAwal = infoHarian.kurangHariIni;
+        }
+    }
+
+    document.getElementById('action-amount').value = nominalAwal > 0 ? window.formatNumberWithDot(nominalAwal.toString()) : ''; 
     let valTerkini = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : t.currentAmount||0);
     document.getElementById('update-amount').value = valTerkini > 0 ? window.formatNumberWithDot(valTerkini.toString()) : '';
     
@@ -744,7 +821,7 @@ window.openActionModal = function(id, type) {
         areaTrx.style.display = 'block'; 
         areaUpdate.style.display = 'none';
         if(type === 'setor') { 
-            title.innerText = t.tipe === 'investasi' ? `Top Up` : `Setor Tabungan`; 
+            title.innerText = t.tipe === 'investasi' ? `Top Up: ${t.name}` : `Setor: ${t.name}`; 
             walletLabel.innerText = "Sumber Dana (Dari dompet mana?)"; 
             btnSubmit.innerText = "Simpan Setoran"; 
             btnSubmit.style.background = "linear-gradient(135deg, #249a95 0%, #1e8580 100%)"; 

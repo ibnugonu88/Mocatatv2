@@ -3,286 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lokasi & Strategi Mangkal - MoCatat</title>
-    <meta name="theme-color" content="#249a95">
+    <title>Lokasi & Radar Mangkal - MoCatat</title>
+    <meta name="theme-color" content="#166e6a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="1789744450301.png">
+    <link rel="icon" type="image/png" href="1789744567730.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
+
     <!-- PANGGIL FILE CSS SENTRAL -->
     <link rel="stylesheet" href="style.css">
     <style>
-        .unassigned-card {
-            background: white;
-            padding: 14px 16px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        .app-container {
+            padding-bottom: calc(165px + env(safe-area-inset-bottom));
+        }
+        .radar-hero-card {
+            background: linear-gradient(145deg, #166e6a 0%, #249a95 60%, #2bb0aa 100%);
+            margin: 16px 20px 14px 20px;
+            padding: 20px;
+            border-radius: 24px;
+            color: white;
+            box-shadow: 0 12px 28px -4px rgba(22, 110, 106, 0.28);
+            position: relative;
+            overflow: hidden;
+        }
+        .radar-Filter-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 0 20px 14px 20px;
+        }
+        .radar-zone-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+            margin-bottom: 12px;
+        }
+        .radar-rank-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12.5px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .time-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            padding: 3px 8px;
+            border-radius: 7px;
+            font-size: 10.5px;
+            font-weight: 800;
+        }
+        .spot-sub-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .unassigned-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-width: 0;
-            flex: 1;
-        }
-        .unassigned-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: #fff3e0;
-            color: #ef6c00;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        .unassigned-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        .assign-select {
-            padding: 8px 24px 8px 10px;
-            border: 1.5px solid #e2e8f0;
+            padding: 7px 10px;
+            background: #f8fafc;
             border-radius: 10px;
             font-size: 11.5px;
             font-weight: 700;
             color: #334155;
-            background-color: #f8fafc;
-            outline: none;
-            max-width: 135px;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px top 50%;
-            background-size: 9px auto;
+            margin-top: 6px;
         }
-        .btn-clear-all {
-            background: #ffebee;
-            color: #c62828;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 800;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .zone-card {
-            background: white;
-            border-radius: 18px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            margin-bottom: 14px;
-            border: 1px solid #f1f5f9;
-        }
-        .zone-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 8px;
-        }
-        .zone-title-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex: 1;
-        }
-        .zone-badge-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: #e0f2f1;
-            color: #249a95;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        .street-tag-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #e2e8f0;
-        }
-        .street-tag {
-            background: #f1f5f9;
-            color: #475569;
-            font-size: 11.5px;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 8px;
+        .zone-spot-chip {
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 11.5px;
+            font-weight: 700;
         }
-        .street-tag .edit-street {
-            color: #64748b;
-            font-size: 13.5px;
-            cursor: pointer;
-            margin-left: 2px;
-        }
-        .street-tag .edit-street:hover {
-            color: #249a95;
-        }
-        .street-tag .remove-street {
-            color: #94a3b8;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .street-tag .remove-street:hover {
-            color: #c62828;
-        }
-        .radar-hero {
-            background: linear-gradient(135deg, #249a95 0%, #1e8580 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 20px rgba(36, 154, 149, 0.2);
-        }
-        .rank-badge {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
+        .zone-spot-chip button {
+            background: none;
+            border: none;
+            color: #dc2626;
+            display: inline-flex;
             align-items: center;
-            font-weight: 800;
-            font-size: 13px;
-            flex-shrink: 0;
+            cursor: pointer;
+            padding: 0;
         }
-        .rank-1 { background: #fef08a; color: #854d0e; }
-        .rank-2 { background: #e2e8f0; color: #334155; }
-        .rank-3 { background: #ffedd5; color: #9a3412; }
-        .rank-other { background: #f1f5f9; color: #64748b; }
+        /* Posisi FAB dinaikkan agar tidak menutupi Bottom Navigation */
+        .fab-above-nav {
+            bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        }
     </style>
 </head>
 <body>
-
     <div class="app-container">
+
         <div id="loading-screen" class="loading-screen">Memuat Data...<div class="spinner"></div></div>
 
         <header class="header-simple">
             <a href="index.html" class="btn-back"><span class="material-icons-round">arrow_back_ios_new</span></a>
-            <span>Lokasi & Strategi Mangkal</span>
+            <span>Lokasi & Radar Mangkal</span>
         </header>
 
-        <!-- KARTU RINGKASAN ATAS -->
-        <div class="summary-grid">
-            <div class="summary-box in">
-                <span class="material-icons-round bg-icon" style="color: #2e7d32;">map</span>
-                <div class="summary-label"><span class="material-icons-round" style="font-size:13px;">map</span> TOTAL DAERAH</div>
-                <div class="summary-val" id="tot-daerah">0 Daerah</div>
-            </div>
-            <div class="summary-box out">
-                <span class="material-icons-round bg-icon" style="color: #ef6c00;">place</span>
-                <div class="summary-label"><span class="material-icons-round" style="font-size:13px;">place</span> TITIK TERHUBUNG</div>
-                <div class="summary-val" id="tot-titik">0 Titik</div>
-            </div>
+        <!-- TAB SWITCHER: RADAR GACOR VS KELOLA DAERAH -->
+        <div class="modern-tabs" style="margin-top: 16px;">
+            <div class="modern-tab active" id="tab-btn-radar" onclick="window.switchLokasiView('radar')">📡 Radar Gacor</div>
+            <div class="modern-tab" id="tab-btn-kelola" onclick="window.switchLokasiView('kelola')">🗺️️ Kelola Daerah</div>
         </div>
 
-        <!-- TAB NAVIGASI -->
-        <div class="modern-tabs">
-            <div class="modern-tab" id="tab-radar" onclick="window.switchLokasiTab('radar')">Radar Mangkal</div>
-            <div class="modern-tab active" id="tab-kelola" onclick="window.switchLokasiTab('kelola')">Kelola Daerah</div>
-        </div>
-
-        <!-- PANEL 1: RADAR MANGKAL -->
-        <div class="list-wrapper" id="panel-radar" style="display: none; padding-top: 5px;">
-            <div class="chip-group" id="radar-time-chips" style="margin-bottom: 6px;">
-                <div class="chip active" onclick="window.setFilterJamRadar('all', this)">Semua Jam</div>
-                <div class="chip" onclick="window.setFilterJamRadar('now', this)">⚡ Jam Sekarang</div>
-                <div class="chip" onclick="window.setFilterJamRadar('pagi', this)">🌅 Pagi (05-11)</div>
-                <div class="chip" onclick="window.setFilterJamRadar('siang', this)">☀️ Siang (12-14)</div>
-                <div class="chip" onclick="window.setFilterJamRadar('sore', this)">🌤️ Sore (15-18)</div>
-                <div class="chip" onclick="window.setFilterJamRadar('malam', this)">🌙 Malam (19-04)</div>
-            </div>
-            <div id="radar-container"></div>
-        </div>
-
-        <!-- PANEL 2: KELOLA DAERAH -->
-        <div class="list-wrapper" id="panel-kelola" style="padding-top: 5px; padding-bottom: 90px;">
-            
-            <!-- RIWAYAT BELUM MASUK DAERAH (DENGAN TOMBOL HAPUS) -->
-            <div id="unassigned-section" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 5px 0 10px 4px;">
-                    <div class="section-title" style="margin: 0;">LOKASI RIWAYAT BELUM MASUK DAERAH</div>
-                    <button class="btn-clear-all" onclick="window.hapusSemuaLokasiRiwayat()">
-                        <span class="material-icons-round" style="font-size:14px;">delete_sweep</span> Hapus Semua
-                    </button>
-                </div>
-                <div id="unassigned-container"></div>
+        <!-- VIEW 1: RADAR STRATEGI MANGKAL -->
+        <div id="view-radar-mangkal">
+            <div class="radar-hero-card" id="radar-recommendation-banner">
+                <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.9; margin-bottom: 4px;">⚡ REKOMENDASI JAM INI</div>
+                <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px;" id="radar-rec-title">Memindai Riwayat Order...</div>
+                <div style="font-size: 12px; font-weight: 600; opacity: 0.92; line-height: 1.45;" id="radar-rec-desc">Data dihitung otomatis dari titik jemput order reguler & Double Order GrabFood.</div>
             </div>
 
-            <!-- DAFTAR DAERAH TERSIMPAN -->
-            <div class="section-title" style="margin: 10px 0 10px 4px;">DAFTAR DAERAH & TITIK JALAN</div>
-            <div id="zones-container"></div>
+            <div class="radar-Filter-bar">
+                <select id="radar-filter-period" class="filter-input" onchange="window.renderLokasiPage()">
+                    <option value="all" selected>Semua Waktu</option>
+                    <option value="month">Bulan Ini</option>
+                    <option value="week">Minggu Ini</option>
+                    <option value="today">Hari Ini</option>
+                </select>
+                <select id="radar-filter-shift" class="filter-input" onchange="window.renderLokasiPage()">
+                    <option value="all" selected>Semua Jam</option>
+                    <option value="now">Jam Sekarang</option>
+                    <option value="pagi">Pagi (05:00 - 11:59)</option>
+                    <option value="siang">Siang (12:00 - 14:59)</option>
+                    <option value="sore">Sore (15:00 - 18:59)</option>
+                    <option value="malam">Malam (19:00 - 04:59)</option>
+                </select>
+            </div>
+
+            <div class="list-wrapper" style="padding-top: 4px;" id="radar-list-container"></div>
         </div>
 
-        <!-- TOMBOL FAB TAMBAH MANUAL -->
-        <button class="fab-tambah" onclick="window.openLokasiModal('daerah')">
-            <span class="material-icons-round" style="font-size:20px;">add_location_alt</span> Tambah Lokasi Manual
-        </button>
+        <!-- VIEW 2: KELOLA DAERAH & TITIK JEMPUT -->
+        <div id="view-kelola-daerah" style="display: none;">
+            <div id="unmapped-locations-box" style="display: none; margin: 0 20px 14px 20px; background: #fffbeb; border: 1.5px solid #fde047; border-radius: 18px; padding: 14px 16px;"></div>
 
-        <!-- MODAL TAMBAH / EDIT LOKASI MANUAL -->
-        <div id="modal-lokasi" class="modal-overlay">
+            <div class="list-wrapper" style="padding-top: 4px;" id="zones-list-container"></div>
+
+            <button class="fab-tambah fab-above-nav" onclick="window.openModalZone()">
+                <span class="material-icons-round">add_location_alt</span> Tambah Daerah Baru
+            </button>
+        </div>
+
+        <!-- MODAL TAMBAH / EDIT DAERAH -->
+        <div id="modal-zone" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
                 <div class="modal-header">
-                    <h3 id="lokasi-modal-title">Tambah Lokasi Manual</h3>
-                    <button class="btn-close" onclick="window.closeModal('modal-lokasi')"><span class="material-icons-round">close</span></button>
+                    <h3 id="modal-zone-title">Tambah Daerah Mangkal</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-zone')"><span class="material-icons-round">close</span></button>
                 </div>
-                <div id="lokasi-error-msg" class="error-msg"></div>
+                <div id="zone-error-msg" class="error-msg"></div>
+                <input type="hidden" id="zone-id">
 
-                <div class="form-group" id="lokasi-tab-segment-wrap">
-                    <div class="segmented-control" id="lokasi-tab-segment">
-                        <div class="segmented-btn active" onclick="window.switchModalLokasiMode('daerah')">Buat Daerah</div>
-                        <div class="segmented-btn" onclick="window.switchModalLokasiMode('titik')">Titik Jalan</div>
-                    </div>
-                </div>
-
-                <!-- MODE 1: BUAT / EDIT DAERAH & TITIK LOKASINYA -->
-                <div id="form-mode-daerah">
-                    <input type="hidden" id="edit-zone-id">
-                    <div class="form-group">
-                        <label class="form-label">Nama Daerah / Kawasan</label>
-                        <input type="text" id="input-zone-name" class="form-input" placeholder="Contoh: Area USI / Tanjung Pinggir" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Titik Lokasi / Jalan (Opsional, pisahkan dengan koma)</label>
-                        <input type="text" id="input-zone-streets" class="form-input" placeholder="Cth: Jl. Sisingamangaraja, Gg. Air Bersih" autocomplete="off">
-                        <div style="font-size: 11px; color: #94a3b8; margin-top: 5px; font-weight: 600;">Bisa langsung diisi beberapa titik jalan sekaligus dengan tanda koma (,).</div>
-                    </div>
-                    <button class="btn-submit" id="btn-submit-daerah" onclick="window.simpanDaerahBaru()">Simpan Daerah</button>
+                <div class="form-group">
+                    <label class="form-label">Nama Daerah / Kawasan Utama</label>
+                    <input type="text" id="zone-name" class="form-input" placeholder="Contoh: Bantan / Banjar / Pusat Kota" autocomplete="off">
                 </div>
 
-                <!-- MODE 2: TAMBAH / EDIT TITIK JALAN SATUAN -->
-                <div id="form-mode-titik" style="display: none;">
-                    <input type="hidden" id="edit-street-old-zone-id">
-                    <input type="hidden" id="edit-street-old-name">
-                    <div class="form-group">
-                        <label class="form-label">Pilih Daerah</label>
-                        <select id="select-zone-parent" class="form-input"></select>
+                <div class="form-group">
+                    <label class="form-label">Daftar Titik Jalan / Resto di Daerah Ini</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <input type="text" id="zone-spot-input" class="form-input" placeholder="Contoh: Jl. Handayani / Princes Smoothies" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();window.addSpotToModalList();}">
+                        <button type="button" onclick="window.addSpotToModalList()" style="background: #e0f2f1; color: #0f766e; border: 1.5px solid #99f6e4; border-radius: 14px; padding: 0 16px; font-size: 13px; font-weight: 800; cursor: pointer; flex-shrink: 0;">+ Titik</button>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Jalan / Titik Mangkal</label>
-                        <input type="text" id="input-street-name" class="form-input" placeholder="Contoh: Jl. Merdeka" autocomplete="off">
-                    </div>
-                    <button class="btn-submit" id="btn-submit-titik" onclick="window.simpanTitikJalanBaru()">Simpan Titik Jalan</button>
+                    <div id="modal-zone-spots-wrap" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px;"></div>
                 </div>
+
+                <button class="btn-submit" onclick="window.simpanDaerahMangkal()">Simpan Daerah</button>
+            </div>
+        </div>
+
+        <!-- MODAL PILIH DAERAH UNTUK TITIK BARU -->
+        <div id="modal-assign-spot" class="modal-overlay">
+            <div class="modal-box">
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <h3>Masukkan ke Daerah</h3>
+                    <button class="btn-close" onclick="window.closeModal('modal-assign-spot')"><span class="material-icons-round">close</span></button>
+                </div>
+                <input type="hidden" id="assign-spot-name">
+                <div style="font-size: 13px; color: #475569; font-weight: 600; margin-bottom: 14px;">
+                    Pilih daerah untuk titik <strong id="assign-spot-label" style="color: #0f172a;"></strong>:
+                </div>
+                <div id="assign-zone-options" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;"></div>
             </div>
         </div>
 
@@ -295,602 +215,503 @@
                 <div class="custom-dialog-actions" id="dialog-actions"></div>
             </div>
         </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav" style="display:flex;">
+            <div class="nav-item" onclick="window.location.href='index.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">home</span></div><span>Beranda</span></div>
+            <div class="nav-item" onclick="window.location.href='riwayat.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">history</span></div><span>Riwayat</span></div>
+            <div class="nav-item" onclick="window.location.href='analitik.html'"><div class="nav-icon-wrapper"><span class="material-icons-round">bar_chart</span></div><span>Analitik</span></div>
+            <div class="nav-item" onclick="window.location.href='index.html?tab=akun'"><div class="nav-icon-wrapper"><span class="material-icons-round">person</span></div><span>Akun</span></div>
+        </nav>
     </div>
 
-    <!-- LOGIKA HALAMAN LOKASI & RADAR MANGKAL (100% CLOUD FIRESTORE) -->
-    <script>
-        window.activeLokasiTab = 'kelola';
-        window.activeRadarTime = 'all';
+    <!-- PANGGIL FILE JS SENTRAL -->
+    <script type="module" src="app.js"></script>
+    <script type="module">
+        import { db, doc, setDoc } from "./core.js";
 
-        window.syncZonesData = async function() {
-            if (typeof window.saveDataToFirestore === 'function') {
-                await window.saveDataToFirestore();
-            } else {
-                window.renderLocationPage();
+        window.tempModalSpots = [];
+
+        window.switchLokasiView = function(view) {
+            const isRadar = view === 'radar';
+            document.getElementById('view-radar-mangkal').style.display = isRadar ? 'block' : 'none';
+            document.getElementById('view-kelola-daerah').style.display = isRadar ? 'none' : 'block';
+            document.getElementById('tab-btn-radar').classList.toggle('active', isRadar);
+            document.getElementById('tab-btn-kelola').classList.toggle('active', !isRadar);
+            window.renderLokasiPage();
+        };
+
+        // Helper mencari jam teramai & mengelompokkan jam kembar (misal "12:54 (2x)")
+        window.computePeakHourInfo = function(timesArray) {
+            if (!Array.isArray(timesArray) || timesArray.length === 0) {
+                return { peakRange: '-', groupedTimes: [] };
             }
-        };
+            const hourBuckets = {};
+            const timeFreq = {};
 
-        window.switchLokasiTab = function(tab) {
-            window.activeLokasiTab = tab;
-            document.getElementById('tab-radar').classList.toggle('active', tab === 'radar');
-            document.getElementById('tab-kelola').classList.toggle('active', tab === 'kelola');
-            document.getElementById('panel-radar').style.display = tab === 'radar' ? 'flex' : 'none';
-            document.getElementById('panel-kelola').style.display = tab === 'kelola' ? 'flex' : 'none';
-            window.renderLocationPage();
-        };
-
-        window.setFilterJamRadar = function(period, el) {
-            window.activeRadarTime = period;
-            document.querySelectorAll('#radar-time-chips .chip').forEach(c => c.classList.remove('active'));
-            if (el) el.classList.add('active');
-            window.renderRadarMangkal();
-        };
-
-        window.findZoneForLocation = function(rawLoc) {
-            if (!rawLoc) return null;
-            const clean = rawLoc.trim().toLowerCase();
-            const zones = window.zones || [];
-            for (const z of zones) {
-                if ((z.name || '').trim().toLowerCase() === clean) return z;
-                if (Array.isArray(z.locations)) {
-                    const found = z.locations.some(l => (l || '').trim().toLowerCase() === clean);
-                    if (found) return z;
-                }
-            }
-            return null;
-        };
-
-        window.renderLocationPage = function() {
-            if (!Array.isArray(window.zones)) window.zones = [];
-
-            const totalDaerah = window.zones.length;
-            const totalTitik = window.zones.reduce((acc, z) => acc + (Array.isArray(z.locations) ? z.locations.length : 0), 0);
-
-            if (document.getElementById('tot-daerah')) {
-                document.getElementById('tot-daerah').innerText = `${totalDaerah} Daerah`;
-            }
-            if (document.getElementById('tot-titik')) {
-                document.getElementById('tot-titik').innerText = `${totalTitik} Titik`;
-            }
-
-            window.renderKelolaDaerah();
-            window.renderRadarMangkal();
-        };
-
-        window.renderKelolaDaerah = function() {
-            const unassignedSection = document.getElementById('unassigned-section');
-            const unassignedContainer = document.getElementById('unassigned-container');
-            const zonesContainer = document.getElementById('zones-container');
-            if (!zonesContainer) return;
-
-            const trxLocMap = {};
-            (window.transactions || []).forEach(t => {
-                if (t.location && t.location.trim() !== '') {
-                    const raw = t.location.trim();
-                    const key = raw.toLowerCase();
-                    if (!window.findZoneForLocation(raw)) {
-                        if (!trxLocMap[key]) trxLocMap[key] = raw;
-                    }
+            timesArray.forEach(t => {
+                if (!t) return;
+                const cleanT = t.trim().slice(0, 5);
+                timeFreq[cleanT] = (timeFreq[cleanT] || 0) + 1;
+                const hr = parseInt(cleanT.split(':')[0], 10);
+                if (!isNaN(hr)) {
+                    hourBuckets[hr] = (hourBuckets[hr] || 0) + 1;
                 }
             });
 
-            const unassignedList = Object.values(trxLocMap);
-            if (unassignedList.length > 0) {
-                unassignedSection.style.display = 'block';
-                let uHTML = '';
-                unassignedList.forEach(locName => {
-                    const safeLoc = window.escapeHTML(locName);
-                    const jsSafeLoc = safeLoc.replace(/'/g, "\\'");
-                    let optionsHTML = `<option value="">+ Pilih Daerah</option>`;
-                    optionsHTML += `<option value="__NEW__">➕ Jadikan Daerah Baru</option>`;
-                    window.zones.forEach(z => {
-                        optionsHTML += `<option value="${window.escapeHTML(z.id)}">📍 ${window.escapeHTML(z.name)}</option>`;
-                    });
+            let bestHour = null;
+            let maxCount = 0;
+            Object.entries(hourBuckets).forEach(([hr, cnt]) => {
+                if (cnt > maxCount) {
+                    maxCount = cnt;
+                    bestHour = parseInt(hr, 10);
+                }
+            });
 
-                    uHTML += `
-                    <div class="unassigned-card">
-                        <div class="unassigned-left">
-                            <div class="unassigned-icon"><span class="material-icons-round">help_outline</span></div>
-                            <div style="min-width:0;">
-                                <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeLoc}</div>
-                                <div class="list-desc">Dari riwayat transaksi</div>
+            const pad2 = n => String(n).padStart(2, '0');
+            const peakRange = bestHour !== null
+                ? `${pad2(bestHour)}:00 - ${pad2((bestHour + 1) % 24)}:00`
+                : '-';
+
+            const groupedTimes = Object.keys(timeFreq).sort().map(timeKey => {
+                const cnt = timeFreq[timeKey];
+                return cnt > 1 ? `${timeKey} (${cnt}x)` : timeKey;
+            });
+
+            return { peakRange, groupedTimes };
+        };
+
+        // Ekstrak titik order dari transaksi (mengabaikan kategori sistem & Tip Pelanggan mandiri)
+        window.extractLocationEntriesFromTrx = function(trx) {
+            if (!trx || trx.type !== 'in' || String(trx.categoryId) === '999') return [];
+            const isStandaloneTipCat = (trx.categoryName || '').toLowerCase().includes('tip');
+            if (isStandaloneTipCat) return [];
+
+            const amt = Number(trx.amount || 0);
+            const isDoubleFood = trx.grabService === 'GrabFood' && Number(trx.orderCount) === 2;
+            const rawLoc1 = (trx.location || '').trim();
+            const rawLoc2 = isDoubleFood ? (trx.location2 || '').trim() : '';
+
+            const cleanSpot1 = rawLoc1
+                ? (typeof window.resolveCanonicalLocation === 'function' ? window.resolveCanonicalLocation(rawLoc1) : rawLoc1)
+                : '';
+            const cleanSpot2 = rawLoc2
+                ? (typeof window.resolveCanonicalLocation === 'function' ? window.resolveCanonicalLocation(rawLoc2) : rawLoc2)
+                : '';
+
+            const entries = [];
+            if (isDoubleFood && cleanSpot1 && cleanSpot2) {
+                const half1 = Math.floor(amt / 2);
+                const half2 = amt - half1;
+                entries.push({ spot: cleanSpot1, orders: 1, amount: half1, time: trx.time || '12:00', date: trx.date, service: trx.grabService || 'GrabFood' });
+                entries.push({ spot: cleanSpot2, orders: 1, amount: half2, time: trx.time || '12:00', date: trx.date, service: trx.grabService || 'GrabFood' });
+            } else if (cleanSpot1) {
+                const ordCount = isDoubleFood ? 2 : 1;
+                entries.push({ spot: cleanSpot1, orders: ordCount, amount: amt, time: trx.time || '12:00', date: trx.date, service: trx.grabService || 'Order' });
+            } else if (cleanSpot2) {
+                entries.push({ spot: cleanSpot2, orders: 2, amount: amt, time: trx.time || '12:00', date: trx.date, service: trx.grabService || 'GrabFood' });
+            }
+            return entries;
+        };
+
+        window.renderRadarSection = function() {
+            const listContainer = document.getElementById('radar-list-container');
+            const recTitle = document.getElementById('radar-rec-title');
+            const recDesc = document.getElementById('radar-rec-desc');
+            if (!listContainer) return;
+
+            const period = document.getElementById('radar-filter-period')?.value || 'all';
+            const shift = document.getElementById('radar-filter-shift')?.value || 'all';
+            const now = new Date();
+            const currentHour = now.getHours();
+            const todayStr = window.getLocalDateString();
+            const currentMonthStr = window.getLocalMonthString();
+
+            const hariKeMingguIni = now.getDay() === 0 ? 7 : now.getDay();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - (hariKeMingguIni - 1));
+            startOfWeek.setHours(0, 0, 0, 0);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            const zoneStats = {};
+            const nowShiftStats = {};
+
+            const getShiftByHour = (hr) => {
+                if (hr >= 5 && hr <= 11) return 'pagi';
+                if (hr >= 12 && hr <= 14) return 'siang';
+                if (hr >= 15 && hr <= 18) return 'sore';
+                return 'malam';
+            };
+            const currentShiftName = getShiftByHour(currentHour);
+
+            (window.transactions || []).forEach(trx => {
+                const entries = window.extractLocationEntriesFromTrx(trx);
+                if (entries.length === 0) return;
+
+                let matchPeriod = true;
+                if (period === 'today') matchPeriod = trx.date === todayStr;
+                else if (period === 'month') matchPeriod = trx.date && trx.date.startsWith(currentMonthStr);
+                else if (period === 'week') {
+                    if (!trx.date) matchPeriod = false;
+                    else {
+                        const tDate = new Date(trx.date + 'T12:00:00');
+                        matchPeriod = tDate >= startOfWeek && tDate <= endOfWeek;
+                    }
+                }
+
+                entries.forEach(item => {
+                    const hr = parseInt((item.time || '12:00').split(':')[0], 10);
+                    const itemShift = getShiftByHour(isNaN(hr) ? 12 : hr);
+
+                    const mappedZone = typeof window.getZoneNameByLocation === 'function'
+                        ? window.getZoneNameByLocation(item.spot)
+                        : null;
+                    const groupKey = mappedZone || item.spot;
+
+                    if (itemShift === currentShiftName) {
+                        if (!nowShiftStats[groupKey]) nowShiftStats[groupKey] = { orders: 0, amount: 0 };
+                        nowShiftStats[groupKey].orders += item.orders;
+                        nowShiftStats[groupKey].amount += item.amount;
+                    }
+
+                    if (!matchPeriod) return;
+                    if (shift === 'now' && hr !== currentHour) return;
+                    if (shift !== 'all' && shift !== 'now' && itemShift !== shift) return;
+
+                    if (!zoneStats[groupKey]) {
+                        zoneStats[groupKey] = {
+                            name: groupKey,
+                            isMappedZone: Boolean(mappedZone),
+                            orders: 0,
+                            amount: 0,
+                            times: [],
+                            spots: {}
+                        };
+                    }
+                    zoneStats[groupKey].orders += item.orders;
+                    zoneStats[groupKey].amount += item.amount;
+                    for (let i = 0; i < item.orders; i++) {
+                        zoneStats[groupKey].times.push(item.time);
+                    }
+
+                    if (!zoneStats[groupKey].spots[item.spot]) {
+                        zoneStats[groupKey].spots[item.spot] = { orders: 0, amount: 0 };
+                    }
+                    zoneStats[groupKey].spots[item.spot].orders += item.orders;
+                    zoneStats[groupKey].spots[item.spot].amount += item.amount;
+                });
+            });
+
+            const sortedNow = Object.entries(nowShiftStats).sort((a, b) => b[1].orders - a[1].orders || b[1].amount - a[1].amount);
+            const shiftLabelMap = { pagi: 'Pagi (05:00-11:59)', siang: 'Siang (12:00-14:59)', sore: 'Sore (15:00-18:59)', malam: 'Malam (19:00-04:59)' };
+            if (sortedNow.length > 0) {
+                const [bestZone, bestData] = sortedNow[0];
+                recTitle.innerText = `📍 ${bestZone}`;
+                recDesc.innerHTML = `Paling gacor di sesi <strong>${shiftLabelMap[currentShiftName]}</strong> dengan riwayat <strong>${bestData.orders} order</strong> (${window.formatRupiah(bestData.amount)}).`;
+            } else {
+                recTitle.innerText = `Belum Ada Riwayat di Sesi ${shiftLabelMap[currentShiftName]}`;
+                recDesc.innerText = `Catat lokasi jemput saat input order (termasuk Lokasi 1 & 2 pada Double Order GrabFood) agar radar membaca pola jam ramai.`;
+            }
+
+            const sortedZones = Object.values(zoneStats).sort((a, b) => b.orders - a.orders || b.amount - a.amount);
+            if (sortedZones.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">radar</span></div>
+                        <h4>Belum Ada Data Lokasi</h4>
+                        <p>Tidak ditemukan catatan lokasi order pada filter waktu ini.</p>
+                    </div>`;
+                return;
+            }
+
+            listContainer.innerHTML = sortedZones.map((z, idx) => {
+                const { peakRange, groupedTimes } = window.computePeakHourInfo(z.times);
+                const rankBg = idx === 0 ? '#fef08a' : (idx === 1 ? '#e2e8f0' : (idx === 2 ? '#ffedd5' : '#f1f5f9'));
+                const rankColor = idx === 0 ? '#b45309' : (idx === 1 ? '#334155' : (idx === 2 ? '#c2410c' : '#64748b'));
+
+                const spotsEntries = Object.entries(z.spots).sort((a, b) => b[1].orders - a[1].orders || b[1].amount - a[1].amount);
+                let spotsBreakdownHTML = '';
+                if (spotsEntries.length > 1 || (spotsEntries.length === 1 && spotsEntries[0][0] !== z.name)) {
+                    spotsBreakdownHTML = `
+                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                            <div style="font-size: 10.5px; font-weight: 800; color: #64748b; margin-bottom: 4px;">TITIK JEMPUT DI DAERAH INI:</div>
+                            ${spotsEntries.map(([spName, spData]) => `
+                                <div class="spot-sub-item">
+                                    <span>📍 ${window.escapeHTML(spName)}</span>
+                                    <span style="color:#0f766e; font-weight:800;">${spData.orders}x • ${window.formatRupiah(spData.amount)}</span>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                }
+
+                const displayTimes = groupedTimes.slice(0, 8).map(t => `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:5px; font-size:10px; font-weight:700;">${window.escapeHTML(t)}</span>`).join('');
+                const moreTimes = groupedTimes.length > 8 ? `<span style="font-size:10px; color:#64748b; font-weight:700;">+${groupedTimes.length - 8} lagi</span>` : '';
+
+                return `
+                    <div class="radar-zone-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                                <div class="radar-rank-badge" style="background:${rankBg}; color:${rankColor};">#${idx + 1}</div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 14.5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${window.escapeHTML(z.name)}</div>
+                                    <div style="font-size: 11.5px; font-weight: 700; color: #0f766e;">${z.orders} Order Selesai</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0;">
+                                <div style="font-size: 14.5px; font-weight: 800; color: #15803d;">${window.formatRupiah(z.amount)}</div>
+                                <div style="font-size: 10px; font-weight: 700; color: #64748b;">Rata-rata ${window.formatRupiah(Math.floor(z.amount / Math.max(1, z.orders)))}/order</div>
                             </div>
                         </div>
-                        <div class="unassigned-actions">
-                            <select class="assign-select" onchange="window.assignRiwayatKeDaerah('${jsSafeLoc}', this.value)">
-                                ${optionsHTML}
-                            </select>
-                            <button class="btn-icon delete" onclick="window.hapusLokasiRiwayat('${jsSafeLoc}')" title="Hapus lokasi riwayat ini">
-                                <span class="material-icons-round" style="font-size:18px;">delete</span>
-                            </button>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                            <span class="time-pill"><span class="material-icons-round" style="font-size:13px;">schedule</span> Jam Teramai: ${peakRange}</span>
                         </div>
-                    </div>`;
+
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                            <span style="font-size: 10px; font-weight: 800; color: #64748b; margin-right: 2px;">Jam Order:</span>
+                            ${displayTimes} ${moreTimes}
+                        </div>
+
+                        ${spotsBreakdownHTML}
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.renderKelolaZonesSection = function() {
+            const zonesContainer = document.getElementById('zones-list-container');
+            const unmappedBox = document.getElementById('unmapped-locations-box');
+            if (!zonesContainer) return;
+
+            if (!Array.isArray(window.zones)) window.zones = [];
+
+            const unmappedMap = {};
+            (window.transactions || []).forEach(trx => {
+                const entries = window.extractLocationEntriesFromTrx(trx);
+                entries.forEach(item => {
+                    const mapped = typeof window.getZoneNameByLocation === 'function' ? window.getZoneNameByLocation(item.spot) : null;
+                    if (!mapped && item.spot) {
+                        unmappedMap[item.spot] = (unmappedMap[item.spot] || 0) + item.orders;
+                    }
                 });
-                unassignedContainer.innerHTML = uHTML;
+            });
+
+            const unmappedList = Object.entries(unmappedMap);
+            if (unmappedList.length > 0 && window.zones.length > 0) {
+                unmappedBox.style.display = 'block';
+                unmappedBox.innerHTML = `
+                    <div style="font-size: 12.5px; font-weight: 800; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span class="material-icons-round" style="font-size: 17px;">not_listed_location</span>
+                        Titik Lokasi Belum Masuk Daerah (${unmappedList.length})
+                    </div>
+                    <div style="font-size: 11.5px; color: #78350f; font-weight: 600; margin-bottom: 10px;">Klik titik di bawah untuk memasukkannya ke dalam Daerah yang sudah ada:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${unmappedList.map(([sp, cnt]) => {
+                            const safeSp = window.escapeHTML(sp);
+                            const jsSafe = safeSp.replace(/'/g, "\\'");
+                            return `<button type="button" onclick="window.openAssignSpotModal('${jsSafe}')" style="background:white; border:1.5px solid #f59e0b; color:#b45309; padding:6px 10px; border-radius:10px; font-size:11.5px; font-weight:800; cursor:pointer; font-family:inherit;">+ ${safeSp} (${cnt}x)</button>`;
+                        }).join('')}
+                    </div>
+                `;
             } else {
-                unassignedSection.style.display = 'none';
-                unassignedContainer.innerHTML = '';
+                unmappedBox.style.display = 'none';
             }
 
             if (window.zones.length === 0) {
                 zonesContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="icon-wrapper"><span class="material-icons-round">map</span></div>
-                    <h4>Belum Ada Daerah Mangkal</h4>
-                    <p>Tekan tombol <b>"Tambah Lokasi Manual"</b> di bawah untuk mulai membuat daerah dan titik jalan mangkal Anda.</p>
-                </div>`;
+                    <div class="empty-state">
+                        <div class="icon-wrapper"><span class="material-icons-round">map</span></div>
+                        <h4>Belum Ada Daerah Mangkal</h4>
+                        <p>Kelompokkan beberapa titik jalan/resto ke dalam satu Daerah (contoh: Daerah Bantan, Daerah Banjar) agar statistik lebih rapi.</p>
+                    </div>`;
                 return;
             }
 
-            let zHTML = '';
-            window.zones.forEach(z => {
-                const locs = Array.isArray(z.locations) ? z.locations : [];
-                let tagsHTML = '';
-                if (locs.length > 0) {
-                    tagsHTML = `<div class="street-tag-list">` + locs.map(st => {
-                        const safeSt = window.escapeHTML(st);
-                        const jsSafeSt = safeSt.replace(/'/g, "\\'");
-                        return `<span class="street-tag">
-                            <span class="material-icons-round" style="font-size:13px; color:#249a95;">place</span>
-                            <span style="cursor:pointer;" onclick="window.openEditTitikJalan('${z.id}', '${jsSafeSt}')" title="Klik untuk edit titik jalan">${safeSt}</span>
-                            <span class="material-icons-round edit-street" onclick="window.openEditTitikJalan('${z.id}', '${jsSafeSt}')" title="Edit titik jalan">edit</span>
-                            <span class="material-icons-round remove-street" onclick="window.hapusTitikJalan('${z.id}', '${jsSafeSt}')" title="Hapus titik">close</span>
-                        </span>`;
-                    }).join('') + `</div>`;
-                } else {
-                    tagsHTML = `<div style="font-size:11.5px; color:#94a3b8; margin-top:8px; padding-top:8px; border-top:1px dashed #f1f5f9;">Belum ada titik jalan. Klik <b>+ Titik</b> atau ikon <b>Edit</b> untuk menambahkan jalan ke daerah ini.</div>`;
-                }
+            zonesContainer.innerHTML = window.zones.map(z => {
+                const spots = Array.isArray(z.locations) ? z.locations : [];
+                const spotsHTML = spots.length > 0
+                    ? spots.map(sp => `<span class="zone-spot-chip"><span class="material-icons-round" style="font-size:13px; color:#249a95;">place</span> ${window.escapeHTML(sp)}</span>`).join('')
+                    : `<span style="font-size:11.5px; color:#94a3b8; font-weight:600;">Belum ada titik jalan/resto di daerah ini</span>`;
 
-                zHTML += `
-                <div class="zone-card">
-                    <div class="zone-header">
-                        <div class="zone-title-wrap">
-                            <div class="zone-badge-icon"><span class="material-icons-round">folder_special</span></div>
-                            <div style="min-width:0;">
-                                <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(z.name)}</div>
-                                <div class="list-desc">${locs.length} Titik Jalan terhubung</div>
+                return `
+                    <div class="radar-zone-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 38px; height: 38px; border-radius: 12px; background: #e0f2f1; color: #0f766e; display: flex; align-items: center; justify-content: center;">
+                                    <span class="material-icons-round" style="font-size: 20px;">map</span>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14.5px; font-weight: 800; color: #0f172a;">${window.escapeHTML(z.name)}</div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #64748b;">${spots.length} Titik Lokasi</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-icon" onclick="window.openModalZone('${z.id}')"><span class="material-icons-round" style="font-size: 18px;">edit</span></button>
+                                <button class="btn-icon delete" onclick="window.hapusDaerahMangkal('${z.id}')"><span class="material-icons-round" style="font-size: 18px;">delete</span></button>
                             </div>
                         </div>
-                        <div class="list-actions" style="flex-shrink:0;">
-                            <button class="btn-icon" style="color:#249a95; background:#e0f2f1; font-size:11.5px; font-weight:800; padding:6px 10px;" onclick="window.openLokasiModal('titik', '${z.id}')">+ Titik</button>
-                            <button class="btn-icon" onclick="window.openEditDaerah('${z.id}')" title="Edit Daerah & Titik Lokasi"><span class="material-icons-round" style="font-size:18px;">edit</span></button>
-                            <button class="btn-icon delete" onclick="window.hapusDaerah('${z.id}')" title="Hapus Daerah"><span class="material-icons-round" style="font-size:18px;">delete</span></button>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            ${spotsHTML}
                         </div>
                     </div>
-                    ${tagsHTML}
-                </div>`;
-            });
-
-            zonesContainer.innerHTML = zHTML;
+                `;
+            }).join('');
         };
 
-        window.updateTransactionLocations = async function(oldLocName, newLocName) {
-            if (!oldLocName || !newLocName || oldLocName.trim() === newLocName.trim()) return;
-            const targetLower = oldLocName.trim().toLowerCase();
-            const ubahTrx = [];
-            (window.transactions || []).forEach(t => {
-                if (t.location && t.location.trim().toLowerCase() === targetLower) {
-                    t.location = newLocName.trim();
-                    ubahTrx.push(t);
-                }
-            });
-            if (window.currentUserId && typeof window.saveTransactionToDB === 'function' && ubahTrx.length > 0) {
-                try {
-                    await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
-                } catch (e) {
-                    console.error("Gagal sinkronisasi nama lokasi di transaksi:", e);
-                }
-            }
-        };
-
-        window.hapusLokasiRiwayat = function(locName) {
-            window.customConfirm(
-                "Hapus Lokasi Riwayat?",
-                `Hapus lokasi "${locName}" dari daftar riwayat? (Data uang transaksi Anda tetap aman dan tidak ikut terhapus).`,
-                async () => {
-                    const targetLower = locName.trim().toLowerCase();
-                    const ubahTrx = [];
-                    (window.transactions || []).forEach(t => {
-                        if (t.location && t.location.trim().toLowerCase() === targetLower) {
-                            t.location = null;
-                            ubahTrx.push(t);
-                        }
-                    });
-                    window.renderLocationPage();
-                    if (window.currentUserId && typeof window.saveTransactionToDB === 'function') {
-                        try {
-                            await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
-                        } catch (e) {
-                            console.error("Gagal update lokasi transaksi:", e);
-                        }
-                    }
-                }
-            );
-        };
-
-        window.hapusSemuaLokasiRiwayat = function() {
-            window.customConfirm(
-                "Bersihkan Semua Riwayat Lokasi?",
-                "Semua nama lokasi dari riwayat transaksi yang belum masuk daerah akan dibersihkan (saldo dan catatan transaksi tetap aman). Lanjutkan?",
-                async () => {
-                    const ubahTrx = [];
-                    (window.transactions || []).forEach(t => {
-                        if (t.location && t.location.trim() !== '' && !window.findZoneForLocation(t.location)) {
-                            t.location = null;
-                            ubahTrx.push(t);
-                        }
-                    });
-                    window.renderLocationPage();
-                    if (window.currentUserId && typeof window.saveTransactionToDB === 'function') {
-                        try {
-                            await Promise.all(ubahTrx.map(t => window.saveTransactionToDB(t)));
-                        } catch (e) {
-                            console.error("Gagal membersihkan lokasi transaksi:", e);
-                        }
-                    }
-                }
-            );
-        };
-
-        window.renderRadarMangkal = function() {
-            const container = document.getElementById('radar-container');
-            if (!container) return;
-
-            const nowHour = new Date().getHours();
-            let currentPeriodKey = 'malam';
-            let currentPeriodLabel = 'Malam (19:00 - 04:59)';
-            if (nowHour >= 5 && nowHour <= 11) { currentPeriodKey = 'pagi'; currentPeriodLabel = 'Pagi (05:00 - 11:59)'; }
-            else if (nowHour >= 12 && nowHour <= 14) { currentPeriodKey = 'siang'; currentPeriodLabel = 'Siang (12:00 - 14:59)'; }
-            else if (nowHour >= 15 && nowHour <= 18) { currentPeriodKey = 'sore'; currentPeriodLabel = 'Sore (15:00 - 18:59)'; }
-
-            const targetPeriod = window.activeRadarTime === 'now' ? currentPeriodKey : window.activeRadarTime;
-
-            const statsMap = {};
-            (window.zones || []).forEach(z => {
-                statsMap[z.id] = {
-                    id: z.id,
-                    name: z.name,
-                    orders: 0,
-                    income: 0,
-                    timeBreakdown: { pagi: 0, siang: 0, sore: 0, malam: 0 }
-                };
-            });
-
-            (window.transactions || []).forEach(trx => {
-                if (trx.type !== 'in' || String(trx.categoryId) === '999' || !trx.location) return;
-                const matchedZone = window.findZoneForLocation(trx.location);
-                const groupKey = matchedZone ? matchedZone.id : ('raw_' + trx.location.trim().toLowerCase());
-                const groupName = matchedZone ? matchedZone.name : trx.location.trim();
-
-                if (!statsMap[groupKey]) {
-                    statsMap[groupKey] = {
-                        id: groupKey,
-                        name: groupName,
-                        orders: 0,
-                        income: 0,
-                        timeBreakdown: { pagi: 0, siang: 0, sore: 0, malam: 0 }
-                    };
-                }
-
-                let hour = 12;
-                if (trx.time) hour = parseInt(trx.time.split(':')[0], 10);
-                let tSlot = 'malam';
-                if (hour >= 5 && hour <= 11) tSlot = 'pagi';
-                else if (hour >= 12 && hour <= 14) tSlot = 'siang';
-                else if (hour >= 15 && hour <= 18) tSlot = 'sore';
-
-                const amt = Number(trx.amount || 0);
-                statsMap[groupKey].timeBreakdown[tSlot] += amt;
-
-                if (targetPeriod === 'all' || targetPeriod === tSlot) {
-                    statsMap[groupKey].orders += 1;
-                    statsMap[groupKey].income += amt;
-                }
-            });
-
-            const ranked = Object.values(statsMap)
-                .filter(item => item.income > 0)
-                .sort((a, b) => b.income - a.income);
-
-            if (ranked.length === 0) {
-                container.innerHTML = `
-                <div class="empty-state">
-                    <div class="icon-wrapper"><span class="material-icons-round">radar</span></div>
-                    <h4>Belum Ada Data Cuan di Jam Ini</h4>
-                    <p>Catat transaksi Pemasukan beserta lokasinya di Beranda untuk melihat daerah paling gacor.</p>
-                </div>`;
+        window.renderModalSpotChips = function() {
+            const wrap = document.getElementById('modal-zone-spots-wrap');
+            if (!wrap) return;
+            if (window.tempModalSpots.length === 0) {
+                wrap.innerHTML = `<span style="font-size:11.5px; color:#94a3b8; font-weight:600;">Belum ada titik ditambahkan.</span>`;
                 return;
             }
-
-            const topSpot = ranked[0];
-            let html = `
-            <div class="radar-hero">
-                <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; opacity:0.9; margin-bottom:4px;">
-                    🔥 REKOMENDASI TERGACOR (${window.activeRadarTime === 'now' ? 'JAM SEKARANG: ' + currentPeriodLabel : (window.activeRadarTime === 'all' ? 'SEMUA WAKTU' : window.activeRadarTime.toUpperCase())})
-                </div>
-                <div style="font-size:22px; font-weight:800; margin-bottom:6px;">${window.escapeHTML(topSpot.name)}</div>
-                <div style="font-size:13px; opacity:0.95; font-weight:600;">
-                    Total Cuan: <strong>${window.formatRupiah(topSpot.income)}</strong> dari <strong>${topSpot.orders} Order</strong>
-                </div>
-            </div>`;
-
-            const slotNames = { pagi: 'Pagi', siang: 'Siang', sore: 'Sore', malam: 'Malam' };
-
-            ranked.forEach((spot, idx) => {
-                const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : 'rank-other'));
-                const avgOrder = spot.orders > 0 ? Math.floor(spot.income / spot.orders) : 0;
-
-                let bestSlot = 'pagi';
-                let bestVal = -1;
-                for (const [sl, val] of Object.entries(spot.timeBreakdown)) {
-                    if (val > bestVal) { bestVal = val; bestSlot = sl; }
-                }
-
-                html += `
-                <div class="zone-card" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1;">
-                        <div class="rank-badge ${rankClass}">#${idx + 1}</div>
-                        <div style="min-width:0;">
-                            <div class="list-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(spot.name)}</div>
-                            <div class="list-desc">${spot.orders} Order • Rata-rata ${window.formatRupiah(avgOrder)}/order</div>
-                            <div style="font-size:11px; color:#249a95; font-weight:700; margin-top:3px;">⏰ Jam Terbaik: ${slotNames[bestSlot]}</div>
-                        </div>
-                    </div>
-                    <div style="text-align:right; flex-shrink:0;">
-                        <div style="font-size:14px; font-weight:800; color:#2e7d32;">${window.formatRupiah(spot.income)}</div>
-                    </div>
-                </div>`;
-            });
-
-            container.innerHTML = html;
+            wrap.innerHTML = window.tempModalSpots.map((sp, i) => `
+                <span class="zone-spot-chip">
+                    ${window.escapeHTML(sp)}
+                    <button type="button" onclick="window.removeSpotFromModalList(${i})"><span class="material-icons-round" style="font-size:14px;">close</span></button>
+                </span>
+            `).join('');
         };
 
-        window.assignRiwayatKeDaerah = async function(locName, targetZoneId) {
-            if (!targetZoneId) return;
-
-            if (targetZoneId === '__NEW__') {
-                const newZone = {
-                    id: window.generateUUID(),
-                    name: locName,
-                    locations: [locName]
-                };
-                window.zones.push(newZone);
-                await window.syncZonesData();
-                return;
+        window.addSpotToModalList = function() {
+            const inp = document.getElementById('zone-spot-input');
+            if (!inp) return;
+            const cleanVal = typeof window.formatCleanAddress === 'function' ? window.formatCleanAddress(inp.value) : inp.value.trim();
+            if (!cleanVal) return;
+            const normKey = typeof window.normalizeLocationKey === 'function' ? window.normalizeLocationKey(cleanVal) : cleanVal.toLowerCase();
+            const exists = window.tempModalSpots.some(s => (typeof window.normalizeLocationKey === 'function' ? window.normalizeLocationKey(s) : s.toLowerCase()) === normKey);
+            if (!exists) {
+                window.tempModalSpots.push(cleanVal);
+                window.renderModalSpotChips();
             }
-
-            const zone = window.zones.find(z => String(z.id) === String(targetZoneId));
-            if (zone) {
-                if (!Array.isArray(zone.locations)) zone.locations = [];
-                const exists = zone.locations.some(l => l.trim().toLowerCase() === locName.trim().toLowerCase());
-                if (!exists) {
-                    zone.locations.push(locName);
-                    await window.syncZonesData();
-                }
-            }
+            inp.value = '';
+            inp.focus();
         };
 
-        window.openLokasiModal = function(mode = 'daerah', preselectedZoneId = null) {
-            const err = document.getElementById('lokasi-error-msg');
-            if (err) err.style.display = 'none';
-
-            document.getElementById('lokasi-tab-segment-wrap').style.display = 'block';
-            document.getElementById('lokasi-modal-title').innerText = 'Tambah Lokasi Manual';
-            document.getElementById('edit-zone-id').value = '';
-            document.getElementById('input-zone-name').value = '';
-            document.getElementById('input-zone-streets').value = '';
-            document.getElementById('btn-submit-daerah').innerText = 'Simpan Daerah';
-
-            document.getElementById('edit-street-old-zone-id').value = '';
-            document.getElementById('edit-street-old-name').value = '';
-            document.getElementById('input-street-name').value = '';
-            document.getElementById('btn-submit-titik').innerText = 'Simpan Titik Jalan';
-
-            window.switchModalLokasiMode(mode, preselectedZoneId);
-            document.getElementById('modal-lokasi').classList.add('show');
+        window.removeSpotFromModalList = function(idx) {
+            window.tempModalSpots.splice(idx, 1);
+            window.renderModalSpotChips();
         };
 
-        window.openEditDaerah = function(zoneId) {
-            const zone = (window.zones || []).find(z => String(z.id) === String(zoneId));
-            if (!zone) return;
+        window.openModalZone = function(zoneId = null) {
+            document.getElementById('zone-error-msg').style.display = 'none';
+            document.getElementById('zone-id').value = zoneId || '';
+            document.getElementById('zone-spot-input').value = '';
 
-            const err = document.getElementById('lokasi-error-msg');
-            if (err) err.style.display = 'none';
-
-            document.getElementById('lokasi-tab-segment-wrap').style.display = 'none';
-            document.getElementById('lokasi-modal-title').innerText = 'Edit Daerah & Titik Lokasi';
-            document.getElementById('form-mode-daerah').style.display = 'block';
-            document.getElementById('form-mode-titik').style.display = 'none';
-
-            document.getElementById('edit-zone-id').value = zone.id;
-            document.getElementById('input-zone-name').value = zone.name || '';
-            document.getElementById('input-zone-streets').value = Array.isArray(zone.locations) ? zone.locations.join(', ') : '';
-            document.getElementById('btn-submit-daerah').innerText = 'Simpan Perubahan Daerah';
-
-            document.getElementById('modal-lokasi').classList.add('show');
-        };
-
-        window.openEditTitikJalan = function(zoneId, streetName) {
-            const err = document.getElementById('lokasi-error-msg');
-            if (err) err.style.display = 'none';
-
-            document.getElementById('lokasi-tab-segment-wrap').style.display = 'none';
-            document.getElementById('lokasi-modal-title').innerText = 'Edit Titik Lokasi';
-            document.getElementById('form-mode-daerah').style.display = 'none';
-            document.getElementById('form-mode-titik').style.display = 'block';
-
-            document.getElementById('edit-street-old-zone-id').value = zoneId;
-            document.getElementById('edit-street-old-name').value = streetName;
-            document.getElementById('input-street-name').value = streetName;
-            document.getElementById('btn-submit-titik').innerText = 'Simpan Perubahan Titik';
-
-            const selectEl = document.getElementById('select-zone-parent');
-            selectEl.innerHTML = (window.zones || []).map(z => 
-                `<option value="${window.escapeHTML(z.id)}" ${String(z.id) === String(zoneId) ? 'selected' : ''}>${window.escapeHTML(z.name)}</option>`
-            ).join('');
-
-            document.getElementById('modal-lokasi').classList.add('show');
-        };
-
-        window.switchModalLokasiMode = function(mode, preselectedZoneId = null) {
-            const btns = document.querySelectorAll('#lokasi-tab-segment .segmented-btn');
-            if (btns.length >= 2) {
-                btns[0].classList.toggle('active', mode === 'daerah');
-                btns[1].classList.toggle('active', mode === 'titik');
-            }
-
-            const formDaerah = document.getElementById('form-mode-daerah');
-            const formTitik = document.getElementById('form-mode-titik');
-
-            if (mode === 'titik') {
-                if (!window.zones || window.zones.length === 0) {
-                    window.customAlert("Buat Daerah Dulu", "Silakan buat minimal 1 Daerah terlebih dahulu sebelum menambah titik jalan.", "warning");
-                    return window.switchModalLokasiMode('daerah');
-                }
-                formDaerah.style.display = 'none';
-                formTitik.style.display = 'block';
-
-                const selectEl = document.getElementById('select-zone-parent');
-                selectEl.innerHTML = window.zones.map(z => 
-                    `<option value="${window.escapeHTML(z.id)}" ${String(z.id) === String(preselectedZoneId) ? 'selected' : ''}>${window.escapeHTML(z.name)}</option>`
-                ).join('');
+            if (zoneId) {
+                const z = (window.zones || []).find(item => String(item.id) === String(zoneId));
+                document.getElementById('modal-zone-title').innerText = 'Edit Daerah Mangkal';
+                document.getElementById('zone-name').value = z ? window.unescapeHTML(z.name) : '';
+                window.tempModalSpots = z && Array.isArray(z.locations) ? [...z.locations] : [];
             } else {
-                formDaerah.style.display = 'block';
-                formTitik.style.display = 'none';
+                document.getElementById('modal-zone-title').innerText = 'Tambah Daerah Mangkal';
+                document.getElementById('zone-name').value = '';
+                window.tempModalSpots = [];
             }
+            window.renderModalSpotChips();
+            document.getElementById('modal-zone').classList.add('show');
         };
 
-        window.simpanDaerahBaru = async function() {
-            const editId = document.getElementById('edit-zone-id').value;
-            const nameInput = document.getElementById('input-zone-name');
-            const streetsInput = document.getElementById('input-zone-streets');
-            const errBox = document.getElementById('lokasi-error-msg');
-            const name = nameInput.value.trim();
+        window.simpanDaerahMangkal = async function() {
+            const errEl = document.getElementById('zone-error-msg');
+            const zoneId = document.getElementById('zone-id').value;
+            const rawName = document.getElementById('zone-name').value.trim();
+            const cleanName = typeof window.formatCleanAddress === 'function' ? window.formatCleanAddress(rawName) : rawName;
 
-            if (!name) {
-                errBox.innerText = "Nama daerah wajib diisi!";
-                errBox.style.display = 'block';
+            const pendingSpot = document.getElementById('zone-spot-input').value.trim();
+            if (pendingSpot) window.addSpotToModalList();
+
+            if (!cleanName) {
+                errEl.innerText = 'Nama daerah tidak boleh kosong!';
+                errEl.style.display = 'block';
                 return;
             }
 
-            const sudahAda = (window.zones || []).some(z => String(z.id) !== String(editId) && z.name.trim().toLowerCase() === name.toLowerCase());
-            if (sudahAda) {
-                errBox.innerText = "Daerah dengan nama tersebut sudah ada!";
-                errBox.style.display = 'block';
-                return;
-            }
-
-            const rawStreets = streetsInput ? streetsInput.value.split(',') : [];
-            const cleanStreets = [];
-            const seenLower = new Set();
-            rawStreets.forEach(s => {
-                const cl = s.trim();
-                if (cl && !seenLower.has(cl.toLowerCase())) {
-                    seenLower.add(cl.toLowerCase());
-                    cleanStreets.push(cl);
-                }
-            });
-
-            if (editId) {
-                const idx = (window.zones || []).findIndex(z => String(z.id) === String(editId));
+            if (!Array.isArray(window.zones)) window.zones = [];
+            if (zoneId) {
+                const idx = window.zones.findIndex(z => String(z.id) === String(zoneId));
                 if (idx !== -1) {
-                    const oldZoneName = window.zones[idx].name;
-                    window.zones[idx].name = name;
-                    window.zones[idx].locations = cleanStreets;
-                    if (oldZoneName !== name) {
-                        await window.updateTransactionLocations(oldZoneName, name);
-                    }
+                    window.zones[idx].name = cleanName;
+                    window.zones[idx].locations = [...window.tempModalSpots];
                 }
             } else {
                 window.zones.push({
-                    id: window.generateUUID(),
-                    name: name,
-                    locations: cleanStreets
+                    id: window.generateUUID ? window.generateUUID() : ('zone-' + Date.now()),
+                    name: cleanName,
+                    locations: [...window.tempModalSpots]
                 });
             }
 
-            window.closeModal('modal-lokasi');
-            await window.syncZonesData();
+            window.closeModal('modal-zone');
+            window.renderLokasiPage();
+
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
         };
 
-        window.simpanTitikJalanBaru = async function() {
-            const oldZoneId = document.getElementById('edit-street-old-zone-id').value;
-            const oldStreetName = document.getElementById('edit-street-old-name').value;
-            const parentId = document.getElementById('select-zone-parent').value;
-            const streetInput = document.getElementById('input-street-name');
-            const errBox = document.getElementById('lokasi-error-msg');
-            const streetName = streetInput.value.trim();
-
-            if (!parentId || !streetName) {
-                errBox.innerText = "Pilih daerah dan isi nama titik jalan!";
-                errBox.style.display = 'block';
-                return;
-            }
-
-            const targetZone = window.zones.find(z => String(z.id) === String(parentId));
-            if (!targetZone) return;
-            if (!Array.isArray(targetZone.locations)) targetZone.locations = [];
-
-            if (oldZoneId && oldStreetName) {
-                const isSameZone = String(oldZoneId) === String(parentId);
-                const isSameName = oldStreetName.trim().toLowerCase() === streetName.toLowerCase();
-
-                if (!isSameName || !isSameZone) {
-                    const duplicate = targetZone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
-                    if (duplicate && !(isSameZone && isSameName)) {
-                        errBox.innerText = "Titik jalan dengan nama tersebut sudah ada di daerah ini!";
-                        errBox.style.display = 'block';
-                        return;
-                    }
-                }
-
-                if (isSameZone) {
-                    const stIdx = targetZone.locations.findIndex(l => l === oldStreetName);
-                    if (stIdx !== -1) targetZone.locations[stIdx] = streetName;
-                } else {
-                    const sourceZone = window.zones.find(z => String(z.id) === String(oldZoneId));
-                    if (sourceZone && Array.isArray(sourceZone.locations)) {
-                        sourceZone.locations = sourceZone.locations.filter(l => l !== oldStreetName);
-                    }
-                    targetZone.locations.push(streetName);
-                }
-
-                if (oldStreetName !== streetName) {
-                    await window.updateTransactionLocations(oldStreetName, streetName);
-                }
-
-                window.closeModal('modal-lokasi');
-                await window.syncZonesData();
-                return;
-            }
-
-            const exists = targetZone.locations.some(l => l.trim().toLowerCase() === streetName.toLowerCase());
-            if (exists) {
-                errBox.innerText = "Titik jalan ini sudah ada di daerah tersebut!";
-                errBox.style.display = 'block';
-                return;
-            }
-            targetZone.locations.push(streetName);
-            window.closeModal('modal-lokasi');
-            await window.syncZonesData();
-        };
-
-        window.hapusTitikJalan = function(zoneId, streetName) {
-            const zone = window.zones.find(z => String(z.id) === String(zoneId));
-            if (!zone || !Array.isArray(zone.locations)) return;
-            zone.locations = zone.locations.filter(l => l !== streetName);
-            window.syncZonesData();
-        };
-
-        window.hapusDaerah = function(zoneId) {
-            window.customConfirm("Hapus Daerah?", "Yakin ingin menghapus daerah ini beserta daftar titik jalannya? (Riwayat transaksi tidak akan terhapus).", async () => {
+        window.hapusDaerahMangkal = function(zoneId) {
+            window.customConfirm("Hapus Daerah?", "Titik lokasi di dalam daerah ini tidak akan menghapus riwayat transaksimu. Lanjutkan?", async () => {
                 window.zones = (window.zones || []).filter(z => String(z.id) !== String(zoneId));
-                await window.syncZonesData();
+                window.renderLokasiPage();
+                if (window.currentUserId && window.isUserDataLoaded) {
+                    try {
+                        await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                    } catch (e) {}
+                }
             });
         };
-    </script>
 
-    <!-- PANGGIL FILE JS SENTRAL -->
-    <script type="module" src="app.js"></script>
+        window.openAssignSpotModal = function(spotName) {
+            const cleanSpot = window.unescapeHTML(spotName);
+            document.getElementById('assign-spot-name').value = cleanSpot;
+            document.getElementById('assign-spot-label').innerText = cleanSpot;
+            const container = document.getElementById('assign-zone-options');
+            container.innerHTML = (window.zones || []).map(z => `
+                <button type="button" onclick="window.assignSpotToZone('${z.id}')" style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:14px; padding:13px 16px; font-size:13.5px; font-weight:800; color:#0f172a; text-align:left; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-family:inherit;">
+                    <span>🗺️ ${window.escapeHTML(z.name)}</span>
+                    <span class="material-icons-round" style="font-size:18px; color:#249a95;">add_circle</span>
+                </button>
+            `).join('');
+            document.getElementById('modal-assign-spot').classList.add('show');
+        };
+
+        window.assignSpotToZone = async function(zoneId) {
+            const spotName = document.getElementById('assign-spot-name').value;
+            const z = (window.zones || []).find(item => String(item.id) === String(zoneId));
+            if (!z || !spotName) return;
+            if (!Array.isArray(z.locations)) z.locations = [];
+            const normKey = typeof window.normalizeLocationKey === 'function' ? window.normalizeLocationKey(spotName) : spotName.toLowerCase();
+            const exists = z.locations.some(s => (typeof window.normalizeLocationKey === 'function' ? window.normalizeLocationKey(s) : s.toLowerCase()) === normKey);
+            if (!exists) z.locations.push(spotName);
+
+            window.closeModal('modal-assign-spot');
+            window.renderLokasiPage();
+            if (window.currentUserId && window.isUserDataLoaded) {
+                try {
+                    await setDoc(doc(db, "users", window.currentUserId), window.getUserDocPayload(), { merge: true });
+                } catch (e) {}
+            }
+        };
+
+        window.renderLokasiPage = function() {
+            window.renderRadarSection();
+            window.renderKelolaZonesSection();
+        };
+
+        window.renderZones = window.renderLokasiPage;
+        window.renderLokasi = window.renderLokasiPage;
+
+        const checkReadyInterval = setInterval(() => {
+            if (window.isUserDataLoaded) {
+                clearInterval(checkReadyInterval);
+                window.renderLokasiPage();
+            }
+        }, 120);
+    </script>
 </body>
 </html>
