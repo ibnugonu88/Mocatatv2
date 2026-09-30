@@ -41,8 +41,8 @@
             transition: opacity 0.2s ease, background 0.2s ease;
         }
         .target-pro-card.inactive-card {
-            opacity: 0.72;
             background: #f8fafc;
+            border-color: #cbd5e1;
         }
         .target-badge-pill {
             font-size: 10px;
@@ -115,6 +115,17 @@
             color: #15803d;
         }
 
+        .target-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 9px 11px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
         .target-action-grid {
             display: flex;
             gap: 8px;
@@ -141,7 +152,7 @@
             transform: scale(0.96);
         }
         .hero-money-input {
-            font-size: 22px !important;
+            font-size: 20px !important;
             font-weight: 800 !important;
             color: #0f766e !important;
             background: #f0fdfa !important;
@@ -194,7 +205,7 @@
         <div class="target-hero-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <div style="font-size: 11px; font-weight: 800; opacity: 0.92; text-transform: uppercase; letter-spacing: 0.8px;">Total Aset & Tabungan</div>
-                <div id="hero-target-count-badge" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;">0 Target Aktif</div>
+                <div id="hero-target-count-badge" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800;">0 Target</div>
             </div>
             <div id="hero-total-asset" style="font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; text-shadow: 0 4px 10px rgba(0,0,0,0.12);">Rp 0</div>
             <div id="hero-daily-obligation" style="font-size: 11.5px; opacity: 0.92; font-weight: 600; margin-bottom: 14px;">Alokasi harian: Rp 0/hari</div>
@@ -212,7 +223,7 @@
 
             <div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 5px; opacity: 0.95;">
-                    <span>Progres Seluruh Target</span>
+                    <span>Progres Pencapaian Target</span>
                     <span id="hero-overall-pct">0%</span>
                 </div>
                 <div style="height: 8px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.22);">
@@ -221,10 +232,11 @@
             </div>
         </div>
 
-        <!-- FILTER TAB STATUS TARGET -->
+        <!-- FILTER TAB JENIS TARGET (TIDAK MENYEMBUNYIKAN TARGET OFF) -->
         <div class="modern-tabs" style="margin-bottom: 12px;">
-            <div class="modern-tab active" id="tab-target-active" onclick="window.switchTargetFilter('active')">🔥 Aktif Dikejar</div>
-            <div class="modern-tab" id="tab-target-all" onclick="window.switchTargetFilter('all')">📚 Semua Target</div>
+            <div class="modern-tab active" id="tab-target-all" onclick="window.switchTargetFilter('all')">📚 Semua</div>
+            <div class="modern-tab" id="tab-target-biasa" onclick="window.switchTargetFilter('biasa')">🐷 Tabungan</div>
+            <div class="modern-tab" id="tab-target-investasi" onclick="window.switchTargetFilter('investasi')">📈 Investasi</div>
         </div>
 
         <!-- DAFTAR KARTU TARGET -->
@@ -234,7 +246,7 @@
             <span class="material-icons-round">add_task</span> Buat Target Baru
         </button>
 
-        <!-- MODAL 1: TAMBAH / EDIT TARGET -->
+        <!-- MODAL 1: TAMBAH / EDIT TARGET (LENGKAP DENGAN NOMINAL TARGET & NOMINAL SUDAH DIISI) -->
         <div id="modal-target-pro" class="modal-overlay">
             <div class="modal-box">
                 <div class="modal-handle"></div>
@@ -257,13 +269,23 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Nama Target Impian / Kewajiban</label>
-                    <input type="text" id="target-pro-name" class="form-input" placeholder="Contoh: Kosan / Dana Darurat / Beli Ban" autocomplete="off">
+                    <label class="form-label" id="label-target-name">Nama Target Impian / Kewajiban</label>
+                    <input type="text" id="target-pro-name" class="form-input" placeholder="Contoh: Kosan / Dana Darurat / Reksadana" autocomplete="off">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Nominal Target yang Ingin Dicapai (Rp)</label>
+                    <label class="form-label" id="label-target-goal">Nominal Target yang Ingin Dicapai (Rp)</label>
                     <input type="text" inputmode="numeric" id="target-pro-amount" class="form-input hero-money-input" placeholder="0" oninput="window.formatRupiahInputLive(this); window.updateTargetModalPreview();">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" id="label-target-current">Nominal yang Sudah Diisi / Terkumpul Saat Ini (Rp)</label>
+                    <input type="text" inputmode="numeric" id="target-pro-current" class="form-input format-rupiah" style="font-size:16px; font-weight:800; color:#0f172a;" placeholder="0 (Kosongkan jika mulai dari 0)" oninput="window.formatRupiahInputLive(this); window.updateTargetModalPreview();">
+                </div>
+
+                <div class="form-group" id="group-target-market-val" style="display: none;">
+                    <label class="form-label" style="color:#4338ca;">Nilai Portofolio Terkini di Aplikasi Investasi (Rp)</label>
+                    <input type="text" inputmode="numeric" id="target-pro-market" class="form-input format-rupiah" style="font-size:16px; font-weight:800; color:#4338ca; background:#f5f3ff; border-color:#c4b5fd;" placeholder="Otomatis sama dengan modal jika dikosongkan" oninput="window.formatRupiahInputLive(this);">
                 </div>
 
                 <div class="form-group">
@@ -381,7 +403,8 @@
     <script type="module">
         import { db, doc, setDoc, writeBatch } from "./core.js";
 
-        window.currentTargetTabFilter = 'active';
+        // Default tampilkan SEMUA target agar target yang sakelarnya Off tidak pernah hilang
+        window.currentTargetTabFilter = 'all';
         window.hasHandledTargetURLAction = false;
 
         window.formatRupiahInputLive = function(el) {
@@ -392,8 +415,9 @@
 
         window.switchTargetFilter = function(mode) {
             window.currentTargetTabFilter = mode;
-            document.getElementById('tab-target-active').classList.toggle('active', mode === 'active');
             document.getElementById('tab-target-all').classList.toggle('active', mode === 'all');
+            document.getElementById('tab-target-biasa').classList.toggle('active', mode === 'biasa');
+            document.getElementById('tab-target-investasi').classList.toggle('active', mode === 'investasi');
             window.renderTargetProPage();
         };
 
@@ -412,34 +436,37 @@
             if (setorHariIni < 0) setorHariIni = 0;
 
             const isInvest = t.tipe === 'investasi';
+            const modal = Number(t.currentAmount || 0);
             const currentVal = isInvest
-                ? Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount || 0))
-                : Number(t.currentAmount || 0);
+                ? Number(t.nilaiTerkini !== undefined && t.nilaiTerkini !== null ? t.nilaiTerkini : modal)
+                : modal;
             const targetAmt = Number(t.targetAmount || 0);
-            const sisaSekarang = Math.max(0, targetAmt - currentVal);
+            const sisaSekarang = targetAmt > 0 ? Math.max(0, targetAmt - currentVal) : 0;
             const terkumpulAwalHari = Math.max(0, currentVal - setorHariIni);
-            const sisaAwalHari = Math.max(0, targetAmt - terkumpulAwalHari);
+            const sisaAwalHari = targetAmt > 0 ? Math.max(0, targetAmt - terkumpulAwalHari) : 0;
 
             let targetHarian = 0;
-            let deadlineLabel = 'Rutin harian';
+            let deadlineLabel = t.deadline ? `Tenggat: ${t.deadline}` : 'Rutin harian';
 
-            if (t.deadline) {
-                const dDate = new Date(t.deadline);
-                dDate.setHours(0, 0, 0, 0);
-                const diffDays = Math.ceil((dDate - todayObj) / (1000 * 60 * 60 * 24));
-                if (diffDays > 0) {
-                    targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / diffDays) : 0;
-                    deadlineLabel = `Sisa ${diffDays} hari (${t.deadline})`;
+            if (targetAmt > 0) {
+                if (t.deadline) {
+                    const dDate = new Date(t.deadline);
+                    dDate.setHours(0, 0, 0, 0);
+                    const diffDays = Math.ceil((dDate - todayObj) / (1000 * 60 * 60 * 24));
+                    if (diffDays > 0) {
+                        targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / diffDays) : 0;
+                        deadlineLabel = `Sisa ${diffDays} hari (${t.deadline})`;
+                    } else {
+                        targetHarian = sisaAwalHari;
+                        deadlineLabel = diffDays === 0 ? 'Hari terakhir!' : `Lewat ${Math.abs(diffDays)} hari`;
+                    }
                 } else {
-                    targetHarian = sisaAwalHari;
-                    deadlineLabel = diffDays === 0 ? 'Hari terakhir!' : `Lewat ${Math.abs(diffDays)} hari`;
+                    targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / 30) : 0;
                 }
-            } else {
-                targetHarian = sisaAwalHari > 0 ? Math.ceil(sisaAwalHari / 30) : 0;
             }
 
             const kurangHariIni = Math.max(0, targetHarian - setorHariIni);
-            const isDoneToday = (targetHarian > 0 && setorHariIni >= targetHarian) || sisaSekarang <= 0;
+            const isDoneToday = targetAmt > 0 && ((targetHarian > 0 && setorHariIni >= targetHarian) || sisaSekarang <= 0);
 
             return {
                 setorHariIni,
@@ -448,7 +475,9 @@
                 isDoneToday,
                 sisaSekarang,
                 deadlineLabel,
-                currentVal
+                currentVal,
+                modal,
+                targetAmt
             };
         };
 
@@ -462,41 +491,42 @@
             let totalInvestVal = 0;
             let totalInvestModal = 0;
             let sumTargetGoal = 0;
-            let sumCurrentAll = 0;
+            let sumCurrentForGoal = 0;
             let totalDailyObligation = 0;
             let activeCount = 0;
 
             window.targets.forEach(t => {
                 const isInvest = t.tipe === 'investasi';
-                const modal = Number(t.currentAmount || 0);
-                const val = isInvest ? Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : modal) : modal;
-                const goal = Number(t.targetAmount || 0);
+                const st = window.getDailyTargetStatus(t);
 
                 if (isInvest) {
-                    totalInvestVal += val;
-                    totalInvestModal += modal;
+                    totalInvestVal += st.currentVal;
+                    totalInvestModal += st.modal;
                 } else {
-                    totalTabungan += val;
+                    totalTabungan += st.currentVal;
                 }
 
-                sumTargetGoal += goal;
-                sumCurrentAll += Math.min(goal > 0 ? goal : val, val);
+                if (st.targetAmt > 0) {
+                    sumTargetGoal += st.targetAmt;
+                    sumCurrentForGoal += Math.min(st.targetAmt, st.currentVal);
+                }
 
                 if (t.isActive !== false) {
                     activeCount++;
-                    const st = window.getDailyTargetStatus(t);
-                    if (st.sisaSekarang > 0) totalDailyObligation += st.kurangHariIni;
+                    if (st.targetAmt > 0 && st.sisaSekarang > 0) {
+                        totalDailyObligation += st.kurangHariIni;
+                    }
                 }
             });
 
             const totalAset = totalTabungan + totalInvestVal;
-            const overallPct = sumTargetGoal > 0 ? Math.min(100, Math.round((sumCurrentAll / sumTargetGoal) * 100)) : 0;
+            const overallPct = sumTargetGoal > 0 ? Math.min(100, Math.round((sumCurrentForGoal / sumTargetGoal) * 100)) : 0;
 
             document.getElementById('hero-total-asset').innerText = window.formatRupiah(totalAset);
-            document.getElementById('hero-target-count-badge').innerText = `${activeCount} Target Aktif`;
+            document.getElementById('hero-target-count-badge').innerText = `${window.targets.length} Target (${activeCount} Aktif)`;
             document.getElementById('hero-daily-obligation').innerText = totalDailyObligation > 0
                 ? `Sisa kewajiban setor hari ini: ${window.formatRupiah(totalDailyObligation)}`
-                : `Semua kewajiban setor hari ini sudah lunas! 🎉`;
+                : `Semua kewajiban target harian aktif sudah aman! 🎉`;
             document.getElementById('hero-tabungan-val').innerText = window.formatRupiah(totalTabungan);
 
             const profitInvest = totalInvestVal - totalInvestModal;
@@ -507,16 +537,18 @@
             document.getElementById('hero-overall-pct').innerText = `${overallPct}%`;
             document.getElementById('hero-overall-bar').style.width = `${overallPct}%`;
 
-            const filteredTargets = window.currentTargetTabFilter === 'active'
-                ? window.targets.filter(t => t.isActive !== false)
-                : [...window.targets];
+            const filteredTargets = window.targets.filter(t => {
+                if (window.currentTargetTabFilter === 'biasa') return (t.tipe || 'biasa') !== 'investasi';
+                if (window.currentTargetTabFilter === 'investasi') return t.tipe === 'investasi';
+                return true;
+            });
 
             if (filteredTargets.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="icon-wrapper"><span class="material-icons-round">savings</span></div>
-                        <h4>Belum Ada Target ${window.currentTargetTabFilter === 'active' ? 'Aktif' : ''}</h4>
-                        <p>Buat target tabungan (seperti Kosan, Servis Besar, atau Dana Darurat) agar MoCatat menghitung saran sisihan harianmu otomatis.</p>
+                        <h4>Belum Ada Data Target</h4>
+                        <p>Klik tombol Buat Target Baru di bawah untuk menambah Tabungan Target atau Aset Investasi.</p>
                     </div>`;
                 return;
             }
@@ -525,8 +557,8 @@
                 const isInvest = t.tipe === 'investasi';
                 const isActive = t.isActive !== false;
                 const st = window.getDailyTargetStatus(t);
-                const goal = Number(t.targetAmount || 0);
-                const modal = Number(t.currentAmount || 0);
+                const goal = st.targetAmt;
+                const modal = st.modal;
                 const pct = goal > 0 ? Math.min(100, Math.round((st.currentVal / goal) * 100)) : 100;
                 const isGoalReached = goal > 0 && st.currentVal >= goal;
 
@@ -537,22 +569,51 @@
                 if (isGoalReached) {
                     dailyBadgeHTML = `<span class="target-badge-pill" style="background:#dcfce7; color:#15803d;">🎉 TARGET TERCAPAI</span>`;
                 } else if (!isActive) {
-                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#f1f5f9; color:#64748b;">⏸ TARGET DIJEDA</span>`;
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#f1f5f9; color:#64748b;">🔕 PENGINGAT HARIAN OFF</span>`;
+                } else if (goal <= 0) {
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#ede9fe; color:#4338ca;">📈 PORTOFOLIO AKTIF</span>`;
                 } else if (st.isDoneToday) {
                     dailyBadgeHTML = `<span class="target-badge-pill" style="background:#dcfce7; color:#15803d;">✓ LUNAS HARI INI (${window.formatRupiah(st.setorHariIni)})</span>`;
                 } else {
-                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#fef9c3; color:#b45309;">⚡ KURANG ${window.formatRupiah(st.kurangHariIni)} HARI INI</span>`;
+                    dailyBadgeHTML = `<span class="target-badge-pill" style="background:#fef9c3; color:#b45309;">⚡ HARI INI KURANG ${window.formatRupiah(st.kurangHariIni)}</span>`;
                 }
 
-                let investReturnHTML = '';
+                // Kotak rincian Nominal Sudah Diisi, Nominal Target & Return
+                let detailBoxHTML = '';
                 if (isInvest) {
                     const diff = st.currentVal - modal;
                     const diffColor = diff >= 0 ? '#15803d' : '#dc2626';
                     const diffSign = diff >= 0 ? '+' : '';
-                    investReturnHTML = `
-                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#475569; background:#f8fafc; padding:6px 10px; border-radius:9px; margin-top:8px;">
-                            <span>Modal Pokok: <strong>${window.formatRupiah(modal)}</strong></span>
-                            <span style="color:${diffColor}; font-weight:800;">Return: ${diffSign}${window.formatRupiah(diff)}</span>
+                    detailBoxHTML = `
+                        <div class="target-detail-grid">
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Modal Sudah Diisi</div>
+                                <div style="font-weight:800; color:#0f172a; font-size:12px;">${window.formatRupiah(modal)}</div>
+                            </div>
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Imbal Hasil (Return)</div>
+                                <div style="font-weight:800; color:${diffColor}; font-size:12px;">${diffSign}${window.formatRupiah(diff)}</div>
+                            </div>
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Nominal Target</div>
+                                <div style="font-weight:800; color:#4338ca; font-size:12px;">${goal > 0 ? window.formatRupiah(goal) : 'Tanpa Batas'}</div>
+                            </div>
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Kurang ke Target</div>
+                                <div style="font-weight:800; color:#0f172a; font-size:12px;">${goal > 0 ? (st.sisaSekarang > 0 ? window.formatRupiah(st.sisaSekarang) : 'Lunas 🎉') : '-'}</div>
+                            </div>
+                        </div>`;
+                } else {
+                    detailBoxHTML = `
+                        <div class="target-detail-grid">
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Sudah Diisi / Terkumpul</div>
+                                <div style="font-weight:800; color:#15803d; font-size:12px;">${window.formatRupiah(st.currentVal)}</div>
+                            </div>
+                            <div>
+                                <div style="color:#64748b; font-weight:700; margin-bottom:2px;">Kurang ke Target</div>
+                                <div style="font-weight:800; color:#b45309; font-size:12px;">${st.sisaSekarang > 0 ? window.formatRupiah(st.sisaSekarang) : 'Tercapai 🎉'}</div>
+                            </div>
                         </div>`;
                 }
 
@@ -570,7 +631,7 @@
                                 </div>
                                 <div style="min-width:0; flex:1;">
                                     <div style="font-size:15px; font-weight:800; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${window.escapeHTML(cleanName)}</div>
-                                    <div style="font-size:11px; font-weight:700; color:#64748b;">🗓️️ ${window.escapeHTML(st.deadlineLabel)}</div>
+                                    <div style="font-size:11px; font-weight:700; color:#64748b;">🗓 ${window.escapeHTML(st.deadlineLabel)}</div>
                                 </div>
                             </div>
                             <div style="display:flex; gap:5px; flex-shrink:0;">
@@ -582,7 +643,7 @@
                         <!-- BARIS 2: LENCANA STATUS HARI INI & SAKELAR GESER ON/OFF -->
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
                             <div style="min-width:0;">${dailyBadgeHTML}</div>
-                            <div class="target-switch-wrap ${isActive ? 'on' : ''}" onclick="window.toggleTargetActivePro('${t.id}')" title="${isActive ? 'Klik untuk menjeda target' : 'Klik untuk mengaktifkan target'}">
+                            <div class="target-switch-wrap ${isActive ? 'on' : ''}" onclick="window.toggleTargetActivePro('${t.id}')" title="Sakelar Pengingat Harian di Beranda">
                                 <div class="target-switch-track">
                                     <div class="target-switch-knob"></div>
                                 </div>
@@ -590,20 +651,22 @@
                             </div>
                         </div>
 
-                        <!-- BARIS 3: NOMINAL & BAR PROGRES -->
+                        <!-- BARIS 3: NOMINAL TERKUMPUL VS NOMINAL TARGET -->
                         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
                             <div>
                                 <span style="font-size:18px; font-weight:800; color:#0f172a;">${window.formatRupiah(st.currentVal)}</span>
-                                <span style="font-size:11.5px; font-weight:700; color:#64748b;"> / ${window.formatRupiah(goal)}</span>
+                                ${goal > 0
+                                    ? `<span style="font-size:12px; font-weight:700; color:#64748b;"> / Target ${window.formatRupiah(goal)}</span>`
+                                    : `<span style="font-size:11px; font-weight:700; color:#0f766e; cursor:pointer; margin-left:4px;" onclick="window.openModalTargetPro('${t.id}')">(+ Isi Nominal Target)</span>`}
                             </div>
-                            <span style="font-size:12.5px; font-weight:800; color:${accentColor};">${pct}%</span>
+                            ${goal > 0 ? `<span style="font-size:12.5px; font-weight:800; color:${accentColor};">${pct}%</span>` : ''}
                         </div>
 
                         <div style="width:100%; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
                             <div style="width:${pct}%; height:100%; background:${accentColor}; border-radius:4px; transition:width 0.3s ease;"></div>
                         </div>
 
-                        ${investReturnHTML}
+                        ${detailBoxHTML}
 
                         <div class="target-action-grid">
                             <button class="btn-target-act" style="background:#249a95; color:white;" onclick="window.openModalSetorPro('${t.id}', ${suggestedSetor})">
@@ -623,33 +686,52 @@
         };
 
         window.selectTargetTypePro = function(tipe) {
+            const isInvest = tipe === 'investasi';
             document.getElementById('target-pro-type').value = tipe;
-            document.getElementById('btn-type-biasa').classList.toggle('active', tipe === 'biasa');
-            document.getElementById('btn-type-investasi').classList.toggle('active', tipe === 'investasi');
+            document.getElementById('btn-type-biasa').classList.toggle('active', !isInvest);
+            document.getElementById('btn-type-investasi').classList.toggle('active', isInvest);
+
+            document.getElementById('label-target-name').innerText = isInvest
+                ? 'Nama Aset / Instrumen Investasi'
+                : 'Nama Target Impian / Kewajiban';
+            document.getElementById('label-target-goal').innerText = isInvest
+                ? 'Nominal Target Investasi (Rp)'
+                : 'Nominal Target yang Ingin Dicapai (Rp)';
+            document.getElementById('label-target-current').innerText = isInvest
+                ? 'Modal Awal / Nominal Sudah Diisi Saat Ini (Rp)'
+                : 'Nominal yang Sudah Diisi / Terkumpul Saat Ini (Rp)';
+
+            const marketGroup = document.getElementById('group-target-market-val');
+            if (marketGroup) marketGroup.style.display = isInvest ? 'block' : 'none';
+            window.updateTargetModalPreview();
         };
 
         window.updateTargetModalPreview = function() {
             const previewEl = document.getElementById('target-pro-calc-preview');
             if (!previewEl) return;
-            const amt = window.parseRupiah(document.getElementById('target-pro-amount').value || '0');
+            const goalAmt = window.parseRupiah(document.getElementById('target-pro-amount').value || '0');
+            const currentAmt = window.parseRupiah(document.getElementById('target-pro-current').value || '0');
             const deadline = document.getElementById('target-pro-deadline').value;
-            if (amt <= 0) {
+
+            const sisaAmt = Math.max(0, goalAmt - currentAmt);
+            if (goalAmt <= 0 || sisaAmt <= 0) {
                 previewEl.style.display = 'none';
                 return;
             }
+
             const todayObj = new Date();
             todayObj.setHours(0, 0, 0, 0);
-            let perDay = Math.ceil(amt / 30);
+            let perDay = Math.ceil(sisaAmt / 30);
             let info = 'estimasi 30 hari';
             if (deadline) {
                 const dDate = new Date(deadline);
                 dDate.setHours(0, 0, 0, 0);
                 const diff = Math.max(1, Math.ceil((dDate - todayObj) / (1000 * 60 * 60 * 24)));
-                perDay = Math.ceil(amt / diff);
+                perDay = Math.ceil(sisaAmt / diff);
                 info = `${diff} hari menuju tenggat`;
             }
             previewEl.style.display = 'block';
-            previewEl.innerHTML = `💡 Saran sisihan harian: <strong>${window.formatRupiah(perDay)} / hari</strong> (${info})`;
+            previewEl.innerHTML = `💡 Sisa yang dikejar <strong>${window.formatRupiah(sisaAmt)}</strong> ➔ Sisihan <strong>${window.formatRupiah(perDay)} / hari</strong> (${info})`;
         };
 
         window.openModalTargetPro = function(targetId = null) {
@@ -659,17 +741,27 @@
             if (targetId) {
                 const t = (window.targets || []).find(item => String(item.id) === String(targetId));
                 if (!t) return;
-                document.getElementById('modal-target-pro-title').innerText = 'Edit Target Keuangan';
+                const isInvest = t.tipe === 'investasi';
+                const goalVal = Number(t.targetAmount || 0);
+                const curModal = Number(t.currentAmount || 0);
+                const curMarket = Number(t.nilaiTerkini !== undefined && t.nilaiTerkini !== null ? t.nilaiTerkini : curModal);
+
+                document.getElementById('modal-target-pro-title').innerText = isInvest ? 'Edit Target Investasi' : 'Edit Target Tabungan';
                 document.getElementById('target-pro-name').value = window.unescapeHTML(t.name || '');
-                document.getElementById('target-pro-amount').value = window.formatNumberWithDot(String(t.targetAmount || 0));
+                document.getElementById('target-pro-amount').value = goalVal > 0 ? window.formatNumberWithDot(String(goalVal)) : '';
+                document.getElementById('target-pro-current').value = curModal > 0 ? window.formatNumberWithDot(String(curModal)) : '';
+                document.getElementById('target-pro-market').value = curMarket > 0 ? window.formatNumberWithDot(String(curMarket)) : '';
                 document.getElementById('target-pro-deadline').value = t.deadline || '';
                 window.selectTargetTypePro(t.tipe || 'biasa');
             } else {
                 document.getElementById('modal-target-pro-title').innerText = 'Buat Target Baru';
                 document.getElementById('target-pro-name').value = '';
                 document.getElementById('target-pro-amount').value = '';
+                document.getElementById('target-pro-current').value = '';
+                document.getElementById('target-pro-market').value = '';
                 document.getElementById('target-pro-deadline').value = '';
-                window.selectTargetTypePro('biasa');
+                const defaultType = window.currentTargetTabFilter === 'investasi' ? 'investasi' : 'biasa';
+                window.selectTargetTypePro(defaultType);
             }
             window.updateTargetModalPreview();
             document.getElementById('modal-target-pro').classList.add('show');
@@ -679,12 +771,19 @@
             const errEl = document.getElementById('target-pro-error');
             const id = document.getElementById('target-pro-id').value;
             const name = window.escapeHTML(document.getElementById('target-pro-name').value.trim());
-            const targetAmount = window.parseRupiah(document.getElementById('target-pro-amount').value);
-            const deadline = document.getElementById('target-pro-deadline').value || null;
             const tipe = document.getElementById('target-pro-type').value || 'biasa';
+            const isInvest = tipe === 'investasi';
+
+            const targetAmount = window.parseRupiah(document.getElementById('target-pro-amount').value || '0');
+            const currentAmount = window.parseRupiah(document.getElementById('target-pro-current').value || '0');
+            const rawMarketStr = document.getElementById('target-pro-market').value.trim();
+            const nilaiTerkini = isInvest
+                ? (rawMarketStr !== '' ? window.parseRupiah(rawMarketStr) : currentAmount)
+                : currentAmount;
+            const deadline = document.getElementById('target-pro-deadline').value || null;
 
             if (!name || targetAmount <= 0) {
-                errEl.innerText = 'Nama target dan nominal harus diisi dengan benar!';
+                errEl.innerText = 'Nama target dan Nominal Target (Rp) wajib diisi!';
                 errEl.style.display = 'block';
                 return;
             }
@@ -694,6 +793,8 @@
                 if (idx !== -1) {
                     window.targets[idx].name = name;
                     window.targets[idx].targetAmount = targetAmount;
+                    window.targets[idx].currentAmount = currentAmount;
+                    window.targets[idx].nilaiTerkini = nilaiTerkini;
                     window.targets[idx].deadline = deadline;
                     window.targets[idx].tipe = tipe;
                 }
@@ -702,8 +803,8 @@
                     id: window.generateUUID ? window.generateUUID() : ('tgt-' + Date.now()),
                     name,
                     targetAmount,
-                    currentAmount: 0,
-                    nilaiTerkini: 0,
+                    currentAmount,
+                    nilaiTerkini,
                     tipe,
                     deadline,
                     isActive: true
@@ -761,8 +862,8 @@
             document.getElementById('modal-setor-pro-title').innerText = `Setor: ${cleanName}`;
             document.getElementById('setor-pro-info-box').innerHTML = `
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <span>Terkumpul Saat Ini:</span>
-                    <strong style="color:#0f172a;">${window.formatRupiah(st.currentVal)} / ${window.formatRupiah(t.targetAmount)}</strong>
+                    <span>Sudah Terkumpul:</span>
+                    <strong style="color:#0f172a;">${window.formatRupiah(st.currentVal)} / ${window.formatRupiah(st.targetAmt)}</strong>
                 </div>
                 <div style="display:flex; justify-content:space-between; color:#0f766e;">
                     <span>Kewajiban Hari Ini:</span>
@@ -977,7 +1078,7 @@
             const curVal = Number(t.nilaiTerkini !== undefined ? t.nilaiTerkini : (t.currentAmount || 0));
             document.getElementById('invest-pro-val').value = window.formatNumberWithDot(String(curVal));
             document.getElementById('invest-pro-info-box').innerHTML = `
-                <div>Modal Pokok Disetor: <strong>${window.formatRupiah(t.currentAmount || 0)}</strong></div>
+                <div>Modal Pokok Sudah Diisi: <strong>${window.formatRupiah(t.currentAmount || 0)}</strong></div>
             `;
             document.getElementById('modal-invest-pro').classList.add('show');
         };
